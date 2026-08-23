@@ -9,6 +9,7 @@ tests
 myconfig
 .env
 .env.*
+!job_scout/templates/.env.example
 config.yaml
 profile.yaml
 outcomes.csv

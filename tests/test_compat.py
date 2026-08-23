@@ -110,6 +110,32 @@ def test_the_example_profile_is_the_fictional_one():
         )
 
 
+def test_the_templates_are_actually_committed():
+    """
+    A .gitignore rule once swallowed job_scout/templates/.env.example, so the
+    file existed on the author's disk and was missing from every clone. The
+    tests all passed. This is the check that would have caught it.
+    """
+    import subprocess
+
+    try:
+        tracked = subprocess.run(
+            ["git", "ls-files", "job_scout/templates"],
+            cwd=REPO_ROOT, capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        pytest.skip("git is not available")
+    if tracked.returncode != 0:
+        pytest.skip("not a git checkout")
+
+    files = {line.strip() for line in tracked.stdout.splitlines() if line.strip()}
+    for name in ("config.yaml", "profile.yaml", ".env.example"):
+        assert f"job_scout/templates/{name}" in files, (
+            f"job_scout/templates/{name} is not tracked by git, so it would be "
+            f"missing from a fresh clone. Check .gitignore."
+        )
+
+
 def test_the_env_example_carries_no_values():
     from job_scout.config import TEMPLATE_DIR
 

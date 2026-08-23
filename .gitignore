@@ -2,6 +2,10 @@
 .env
 .env.*
 
+# ...except the shipped template, which has no values in it and is what
+# `job-scout init` copies. The rule above matches it, so put it back.
+!job_scout/templates/.env.example
+
 # Your own config lives at the repo root and is yours, not ours. The versions
 # that ship are in job_scout/templates/ and get copied here on first run, so
 # your edits are never overwritten by a git pull and never accidentally pushed.
