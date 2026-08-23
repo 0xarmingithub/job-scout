@@ -107,7 +107,42 @@ def test_context_counts_and_names_the_outcomes(tmp_path):
     assert "2 reached interview or offer" in context
     assert "Northwind Energy" in context
     assert "Converted:" in context
-    assert "Did not convert:" in context
+    assert "Applied and did not convert:" in context
+
+
+def test_roles_read_and_skipped_reach_the_prompt(tmp_path):
+    """
+    A role the candidate read and decided against is the most direct negative
+    evidence there is — it is the same judgement the scorer is making. It gets
+    its own group so it is not read as "applied and lost".
+    """
+    path = _write(
+        tmp_path,
+        "title,company,status\n"
+        "ML Engineer,Northwind,withdrawn (not applied) - skipped before tailoring\n"
+        "Frontend Lead,Halden,withdrawn\n"
+        "Platform Engineer,Vestbridge,offer\n",
+    )
+    context = track_record.build_context(path)
+    assert "Read and chose not to apply:" in context
+    assert "ML Engineer" in context
+    assert "Frontend Lead" in context
+    # The status text is printed verbatim, so "never applied" stays
+    # distinguishable from "applied, then pulled out".
+    assert "skipped before tailoring" in context
+
+
+def test_the_three_groups_are_kept_apart(tmp_path):
+    path = _write(
+        tmp_path,
+        "title,company,status\n"
+        "A,X,offer\nB,X,rejected\nC,X,withdrawn\n",
+    )
+    context = track_record.build_context(path)
+    converted = context.index("Converted:")
+    lost = context.index("Applied and did not convert:")
+    skipped = context.index("Read and chose not to apply:")
+    assert converted < lost < skipped
 
 
 def test_context_is_capped_so_the_prompt_does_not_balloon(tmp_path):

@@ -157,9 +157,23 @@ alongside them if you like. Statuses are matched loosely: "rejected after final
 round" is rejected, "first screen booked" is interviewing, "ghosted" is no
 response.
 
-The scorer is shown which kinds of role converted and which did not, and told to
-find the pattern itself rather than being given a rule. The list is capped at 25
-outcomes so the prompt does not grow without adding information.
+The scorer is shown three groups and told to find the pattern itself rather than
+being given a rule:
+
+| Group | Statuses | Why it is separate |
+|---|---|---|
+| Converted | `interviewing`, `offer` | What worked |
+| Applied and did not convert | `rejected`, `no_response` | Applied, lost. Often about competition, not fit. |
+| Read and chose not to apply | `withdrawn` | The strongest signal of the three, and the one people leave out |
+
+That third group is worth filling in. A role you read in full and decided
+against is the same judgement the scorer is trying to make, made by you with the
+whole posting in front of you. Statuses are printed verbatim, so
+"withdrawn (not applied)" stays distinguishable from "withdrawn after second
+interview" — they mean different things and the model can tell.
+
+The list is capped at 25 outcomes so the prompt does not grow without adding
+information.
 
 If the file is missing, malformed, or has the wrong column names, the run logs
 one line and scores without it.

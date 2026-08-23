@@ -123,6 +123,12 @@ def build_context(path: Path) -> str:
 
     positive = [r for r in rows if r["class"] in ("interviewing", "offer")]
     negative = [r for r in rows if r["class"] in ("rejected", "no_response")]
+    # Roles the candidate read and decided not to apply for. This is a judgement
+    # about the job, made with the full posting in front of them — the same
+    # judgement the scorer is trying to reproduce — so it is the most direct
+    # negative evidence available. Listing it separately keeps it from being
+    # read as "applied and lost".
+    skipped = [r for r in rows if r["class"] == "withdrawn"]
 
     lines = [
         f"{len(rows)} applications with a recorded outcome; "
@@ -133,14 +139,21 @@ def build_context(path: Path) -> str:
         label = " at ".join(part for part in (row["title"], row["company"]) if part)
         return f'  - "{label}" -> {row["status"]}'
 
+    groups = (
+        ("Converted", positive),
+        ("Applied and did not convert", negative),
+        ("Read and chose not to apply", skipped),
+    )
+    total_listable = sum(len(group) for _, group in groups)
+
     listed = 0
-    for group_name, group in (("Converted", positive), ("Did not convert", negative)):
+    for group_name, group in groups:
         if not group:
             continue
         lines.append(f"{group_name}:")
         for row in group:
             if listed >= _MAX_LISTED:
-                lines.append(f"  - (+{len(positive) + len(negative) - listed} more)")
+                lines.append(f"  - (+{total_listable - listed} more)")
                 return "\n".join(lines)
             lines.append(_describe(row))
             listed += 1
