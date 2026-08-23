@@ -1,0 +1,122 @@
+"""
+notifiers — where results go.
+
+Four are built in. You need at least one; the file writer needs no credentials
+and is the right one for a first run.
+
+    file      write a Markdown, text, CSV or JSON file
+    telegram  a message per job in a Telegram chat
+    email     one email over SMTP
+    webhook   a Slack, Discord or plain JSON webhook
+
+Add your own by writing a subclass of Notifier and adding one line to REGISTRY.
+See docs/adding-a-notifier.md.
+
+Nothing here raises. A notifier that cannot send says so in the log and returns
+False, and the dispatcher moves on to the next one — losing today's results
+because one channel is down is not a trade worth making.
+"""
+
+import logging
+from pathlib import Path
+
+from .base import Notifier, RunStats
+from .email_smtp import EmailNotifier
+from .file_writer import FileNotifier
+from .telegram import TelegramNotifier
+from .webhook import WebhookNotifier
+
+logger = logging.getLogger(__name__)
+
+REGISTRY: dict[str, type[Notifier]] = {
+    "file": FileNotifier,
+    "telegram": TelegramNotifier,
+    "email": EmailNotifier,
+    "webhook": WebhookNotifier,
+}
+
+__all__ = [
+    "REGISTRY",
+    "Dispatcher",
+    "EmailNotifier",
+    "FileNotifier",
+    "Notifier",
+    "RunStats",
+    "TelegramNotifier",
+    "WebhookNotifier",
+    "build",
+]
+
+
+class UnknownNotifier(RuntimeError):
+    """A notifier type in config.yaml that nothing implements."""
+
+
+def build(specs: list[dict], data_dir: Path) -> list[Notifier]:
+    """Turn the `notifiers:` list from config.yaml into notifier objects."""
+    built: list[Notifier] = []
+    for spec in specs:
+        kind = str(spec.get("type") or "").strip().lower()
+        if kind not in REGISTRY:
+            raise UnknownNotifier(
+                f"config.yaml lists a notifier of type '{kind or '(missing)'}', "
+                f"which does not exist. Pick one of: {', '.join(sorted(REGISTRY))}."
+            )
+        built.append(REGISTRY[kind](spec=dict(spec), data_dir=Path(data_dir)))
+    return built
+
+
+class Dispatcher:
+    """Sends to every configured notifier and swallows their failures."""
+
+    def __init__(self, notifiers: list[Notifier]):
+        self.notifiers = notifiers
+
+    def check(self) -> list[tuple[str, str | None]]:
+        """[(name, None-if-ready-else-message), ...] for `job-scout check`."""
+        results = []
+        for notifier in self.notifiers:
+            try:
+                results.append((notifier.name, notifier.check()))
+            except Exception as exc:  # a broken check is still a failed check
+                results.append((notifier.name, f"check failed: {exc}"))
+        return results
+
+    def ready(self) -> list[Notifier]:
+        ready = []
+        for notifier in self.notifiers:
+            try:
+                problem = notifier.check()
+            except Exception as exc:
+                problem = str(exc)
+            if problem:
+                logger.warning("Notifier '%s' is not usable: %s", notifier.name, problem)
+            else:
+                ready.append(notifier)
+        return ready
+
+    def send_digest(self, matched_jobs: list[dict], stats: RunStats) -> int:
+        """Send to every notifier. Returns how many succeeded."""
+        sent = 0
+        for notifier in self.notifiers:
+            try:
+                if notifier.send_digest(matched_jobs, stats):
+                    sent += 1
+            except Exception as exc:
+                logger.error("Notifier '%s' failed: %s", notifier.name, exc, exc_info=True)
+        return sent
+
+    def send_alert(self, body: str) -> int:
+        """
+        Report a run-level failure everywhere. A run that dies quietly in a log
+        file is the failure mode that costs you a week of stale results, so this
+        is deliberately noisy.
+        """
+        sent = 0
+        for notifier in self.notifiers:
+            try:
+                if notifier.send_alert(body):
+                    sent += 1
+            except Exception as exc:
+                logger.error("Notifier '%s' could not alert: %s", notifier.name, exc)
+        return sent

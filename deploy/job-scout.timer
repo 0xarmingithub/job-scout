@@ -1,0 +1,20 @@
+[Unit]
+Description=Job Scout daily run
+Documentation=https://github.com/0xarmingithub/job-scout
+
+[Timer]
+# Midday local time. Change the timezone to yours — systemd handles daylight
+# saving for you, which is the reason to name a zone rather than use UTC.
+OnCalendar=*-*-* 12:00:00 Europe/Copenhagen
+
+# If the machine was off at 12:00, run as soon as it comes back. Without this a
+# reboot silently costs you a day.
+Persistent=true
+
+# A minute of jitter. Irrelevant on your own VM, good manners towards the boards.
+RandomizedDelaySec=60
+
+Unit=job-scout@%i.service
+
+[Install]
+WantedBy=timers.target

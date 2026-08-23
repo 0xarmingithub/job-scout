@@ -1,0 +1,47 @@
+# Secrets. Never commit this.
+.env
+.env.*
+
+# Your own config lives at the repo root and is yours, not ours. The versions
+# that ship are in job_scout/templates/ and get copied here on first run, so
+# your edits are never overwritten by a git pull and never accidentally pushed.
+/config.yaml
+/profile.yaml
+/.env.example
+
+# Run data: the seen-jobs database, the log, and anything a file notifier wrote.
+data/
+*.db
+*.db-wal
+*.db-shm
+scout.log
+matches.md
+matches.txt
+matches.csv
+matches.jsonl
+
+# Your own application outcomes.
+outcomes.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

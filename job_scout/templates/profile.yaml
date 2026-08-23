@@ -1,0 +1,242 @@
+# profile.yaml — who you are, and what counts as a match.
+#
+# This is the file that does the work. It is compiled into the prompt the model
+# reads for every posting, and into the free keyword filter that runs first.
+# Change this file and you change what the agent looks for. There is no code to
+# edit.
+#
+# What is in here now is a complete, fictional example: Morgan Reyes, a senior
+# platform engineer in Berlin. It is filled in properly so that a first run
+# scores real postings and you can see whether the scoring makes sense before
+# you have written a word about yourself. Replace it with your own.
+#
+# The single most valuable section is `confirmed_gaps`. Anyone can list skills.
+# Writing down what you genuinely cannot do is what stops the scorer sending you
+# a machine-learning role because it saw the word "Python".
+
+candidate:
+  name: Morgan Reyes
+
+  current_role: >
+    Senior Platform Engineer at a 300-person logistics SaaS company in Berlin,
+    since 2022. Owns the Kubernetes platform and the deployment pipelines that
+    about 60 engineers ship through.
+
+  years_experience: "8"
+
+  # Be blunt here. The scorer uses this to reject roles aimed below you.
+  seniority: >
+    Senior / Lead / Staff level. Not junior, not mid-level, not an internship,
+    not a graduate programme.
+
+  location: Berlin, Germany
+
+  # Anything that could disqualify you regardless of skill fit: visas, permits,
+  # clearances, notice periods.
+  work_authorization: >
+    EU citizen (Portuguese passport). No visa sponsorship needed anywhere in the
+    EU. Does not hold and cannot obtain a German government security clearance,
+    so roles requiring one are out.
+
+  target_geography: >
+    Berlin, on-site or hybrid. Fully remote is fine if the company is in the EU
+    and the contract is an EU one. Not relocating.
+
+  # Be honest about levels. A role that needs fluent German will be rejected
+  # outright if you say elementary here.
+  languages:
+    English: Native
+    Portuguese: Native
+    German: Elementary — can follow a stand-up, cannot run a workshop
+    Spanish: Conversational
+
+# ─── What you are looking for ─────────────────────────────────────────────────
+# Titles vary wildly between companies, so list every name the same job goes by.
+target_roles:
+  - Platform Engineer
+  - Site Reliability Engineer
+  - DevOps Engineer
+  - Cloud Infrastructure Engineer
+  - Staff Engineer (Infrastructure)
+  - Solution Architect
+  - Systems Architect
+  - Engineering Lead (Infrastructure)
+
+# ─── Skills ───────────────────────────────────────────────────────────────────
+# core_skills are things you would happily be interviewed on tomorrow.
+core_skills:
+  - Kubernetes — cluster operation, upgrades, autoscaling, multi-tenant namespaces
+  - AWS — EKS, EC2, S3, RDS, IAM, VPC design, cost management
+  - Terraform — modules, remote state, drift detection across 4 environments
+  - Go — internal tooling, operators, CLI utilities
+  - Python — automation, glue services, data plumbing
+  - Docker and container image supply chain (build, scan, sign)
+  - GitLab CI and GitHub Actions — pipeline design, self-hosted runners
+  - ArgoCD and GitOps deployment workflows
+  - Helm chart authoring and release management
+  - Prometheus, Grafana and Alertmanager — SLOs and alert design
+  - OpenTelemetry tracing across services
+  - PostgreSQL operation — replication, backups, query tuning
+  - Linux system administration and troubleshooting
+  - Incident response and on-call — ran the rotation for 3 years
+  - Infrastructure cost analysis and reduction
+  - Secrets management (Vault, sealed secrets, cloud KMS)
+  - Zero-downtime migration planning
+
+# secondary_skills are things you have used, could pick up quickly, or have
+# shipped once. The scorer weighs them lower than core skills.
+secondary_skills:
+  - Azure — AKS and basic networking, one migration project
+  - Pulumi
+  - Ansible
+  - Kafka — operating a cluster, not designing streaming applications
+  - Redis and Elasticsearch operation
+  - Service mesh (Istio, Linkerd) — evaluated both, ran Linkerd in staging
+  - gRPC and protocol buffers
+  - Datadog and New Relic
+  - Bash scripting
+  - Rust — learning, no production code
+  - Threat modelling and API security review
+  - Load testing (k6, Locust)
+  - Technical interviewing and mentoring
+  - Writing architecture decision records and runbooks
+  - Vendor evaluation and build-versus-buy decisions
+
+# ─── Confirmed gaps ───────────────────────────────────────────────────────────
+# Things you genuinely do not have. Be specific and be honest — vagueness here
+# is what lets a badly-fitting job through.
+#
+# If a posting's core day-to-day work needs one of these, the scorer caps it at
+# 40 no matter how many other keywords line up. A posting that lists one as a
+# nice-to-have is unaffected.
+confirmed_gaps:
+  - "Frontend development — React, Vue, Angular, CSS. Has never shipped a user interface."
+  - "Mobile development — iOS, Android, React Native, Flutter."
+  - "Machine learning and MLOps — training models, feature stores, model serving, MLflow, vector databases, RAG pipelines."
+  - "Data engineering ownership — Spark, dbt, Airflow, warehouse modelling. Has operated the databases, never owned the pipelines."
+  - "Embedded and firmware — C, C++, RTOS, microcontrollers, hardware debugging."
+  - "Enterprise application platforms — SAP, Salesforce, ServiceNow, Dynamics."
+  - "Mainframe, COBOL, and AS/400."
+  - "Security operations — SOC work, SIEM tuning, detection engineering, incident forensics. Has done threat modelling, which is not the same job."
+  - "People management — has mentored and led projects, has never had direct reports or owned headcount."
+
+# ─── Industry preference ──────────────────────────────────────────────────────
+# A soft signal, not a filter. Leave the list empty if you genuinely do not mind.
+industries_preferred:
+  - SaaS and developer tooling
+  - Logistics and supply chain
+  - Fintech and payments
+  - Energy and climate
+  - Healthcare technology
+
+# ─── Keyword pre-filter ───────────────────────────────────────────────────────
+# The free filter that runs before the model. Words from your search terms are
+# added automatically; these are the extras — synonyms, adjacent technology, and
+# anything your search terms would miss.
+#
+# A posting passes if ANY one of these appears in its title or description. So
+# more words means more postings reach the model, which means a bigger bill and
+# fewer things wrongly thrown away. Start broad, then trim.
+extra_pre_filter_keywords:
+  - kubernetes
+  - k8s
+  - terraform
+  - aws
+  - azure
+  - gcp
+  - cloud
+  - platform
+  - infrastructure
+  - sre
+  - reliability
+  - devops
+  - observability
+  - monitoring
+  - prometheus
+  - grafana
+  - docker
+  - container
+  - containerisation
+  - microservices
+  - distributed
+  - golang
+  - python
+  - ci/cd
+  - pipeline
+  - gitops
+  - argocd
+  - helm
+  - iac
+  - automation
+  - postgres
+  - postgresql
+  - kafka
+  - linux
+  - on-call
+  - incident
+  - scaling
+  - architect
+  - architecture
+  - api
+  - networking
+  - security
+  - migration
+  - staff engineer
+  - tech lead
+
+# ─── Location exclusions ──────────────────────────────────────────────────────
+# Postings whose location contains any of these are rejected before they cost
+# anything. Case-insensitive substring match.
+#
+# Use it for places you will not commute to. Be careful: these match the
+# location field as the board wrote it, so "york" would also catch "New York".
+hard_exclude_location_patterns:
+  - "munich"
+  - "münchen"
+  - "hamburg"
+  - "frankfurt"
+  - "cologne"
+  - "köln"
+  - "stuttgart"
+  - "düsseldorf"
+  - "dusseldorf"
+  - "leipzig"
+  - "dresden"
+  - "nuremberg"
+  - "nürnberg"
+
+# ─── Title exclusions ─────────────────────────────────────────────────────────
+# Postings whose title contains any of these are rejected before they cost
+# anything. Case-insensitive substring match.
+#
+# Mind the spaces. "hr " catches "HR Manager" but not "shrink". " intern"
+# catches "Intern" and "Marketing Intern" but not "Internal Tools Engineer".
+hard_exclude_title_patterns:
+  - "junior "
+  - " intern"
+  - "internship"
+  - "working student"
+  - "werkstudent"
+  - "praktikum"
+  - "graduate programme"
+  - "graduate program"
+  - "graduate trainee"
+  - "apprentice"
+  - "sales representative"
+  - "account executive"
+  - "account manager"
+  - "business development"
+  - "marketing manager"
+  - "hr "
+  - " recruiter"
+  - "talent acquisition"
+  - " accountant"
+  - " controller"
+  - "frontend developer"
+  - "front-end developer"
+  - "ios developer"
+  - "android developer"
+  - "data scientist"
+  - "machine learning"
+  - "ml engineer"
+  - "mlops"

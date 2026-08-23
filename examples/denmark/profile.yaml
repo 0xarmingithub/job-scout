@@ -1,0 +1,256 @@
+# profile.yaml — the Denmark example.
+#
+# The same fictional candidate as the default profile, moved to Copenhagen and
+# given the two constraints that make Denmark interesting to search:
+#
+#   - Elementary Danish. Perhaps a third of Danish postings require fluent or
+#     professional Danish, and no amount of skill overlap makes those work. The
+#     scorer rejects them outright on `language_barrier`.
+#   - Permanent residence, not citizenship. Public-sector and defence-adjacent
+#     roles in Denmark ask for Danish or EU citizenship. That is a different
+#     rejection from the language one and needs saying separately.
+#
+# If either of those describes you, this file is closer to a starting point than
+# the default profile is.
+
+candidate:
+  name: Morgan Reyes
+
+  current_role: >
+    IoT Specialist at a Danish industrial manufacturer, since 2022. Owns the
+    edge platform connecting about 400 devices across four production sites to
+    Azure.
+
+  years_experience: "8"
+
+  seniority: >
+    Senior / Lead / Architect level. Not junior, not mid-level, not an
+    internship, not a graduate programme.
+
+  location: Copenhagen, Denmark
+
+  work_authorization: >
+    Holds Danish permanent residence. Not a Danish or EU citizen. Can work
+    anywhere in Denmark with no sponsorship, but cannot take roles that require
+    Danish or EU citizenship, or a Danish security clearance — which rules out
+    most public-sector and defence work.
+
+  target_geography: >
+    Greater Copenhagen and the Capital Region, on-site or hybrid. Remote is fine
+    if the employer is Danish. Not relocating within Denmark.
+
+  languages:
+    English: Fluent
+    Portuguese: Native
+    Danish: >
+      Elementary. Can read a job advert and follow a stand-up. Cannot run a
+      workshop, write customer documentation, or work in a Danish-only team.
+      Roles asking for fluent, professional or business-level Danish are out.
+
+target_roles:
+  - IoT / IIoT Specialist
+  - Solution Architect
+  - Cloud / Azure Engineer
+  - Technical Lead
+  - Platform Engineer
+  - Digital Solutions Engineer
+  - Solution Engineer (vendor-side, technical pre-sales)
+  - DevOps / Site Reliability Engineer
+  - Systems / Integration Architect
+
+core_skills:
+  - Azure IoT Hub and IoT Edge
+  - Azure IoT Operations (Arc and AKS based edge broker)
+  - AKS / Kubernetes
+  - Azure Container Apps in production
+  - Docker and container image management
+  - Python — automation, backend services, scripting
+  - PowerShell — Windows and Azure scripting, deployment pipelines
+  - Over-the-air update orchestration for edge device fleets
+  - Patch and OS update rollout across distributed device fleets
+  - MQTT, OPC-UA and Modbus
+  - Azure API Management — OAuth2, rate limiting, managed identities
+  - CI/CD pipelines in Azure DevOps
+  - Bicep infrastructure as code
+  - Azure Data Explorer for time-series telemetry
+  - Azure Monitor, Log Analytics and Grafana
+  - Azure Key Vault and secrets management
+  - OT/IT integration architecture
+  - Event-driven integration patterns
+  - Domain-driven design in production
+
+secondary_skills:
+  - Terraform
+  - AVEVA PI / OSIsoft historian integration
+  - Seeq process intelligence
+  - ERP integration (SAP, Oracle) via API and database
+  - MES and factory system integration over REST
+  - Digital twin platform architecture
+  - Azure Logic Apps and Power Automate
+  - .NET / C# for API Management policies and backend components
+  - Raspberry Pi and edge hardware
+  - Threat modelling and API security
+  - Cloud cost modelling and FinOps
+  - Azure landing zone design and governance
+  - Linux hardening
+  - Hyper-V virtualisation
+  - Regulated-environment delivery and architecture traceability
+  - Vendor evaluation and build-versus-buy decisions
+
+confirmed_gaps:
+  - "Building production agentic LLM systems — tool orchestration, guardrails, agent frameworks."
+  - "Vector databases and vector search — Pinecone, Weaviate, pgvector, Azure AI Search."
+  - "RAG, retrieval pipelines and embeddings."
+  - "MLOps and LLMOps — Azure ML, MLflow, model serving, feature stores."
+  - "PostgreSQL, MongoDB and Databricks in production."
+  - "Security operations — SIEM, SOC, detection engineering, XDR, SOAR, incident forensics."
+  - "Data engineering and data science ownership — owning pipelines or building models."
+  - "GitOps tooling — ArgoCD, Flux, Helm."
+  - "GitHub Actions."
+  - "Laboratory data systems — LIMS, ELN, CDS, SDMS."
+  - "GxP and computer system validation — CSV, CSA, pharma audit trails."
+  - "Embedded firmware — C and C++ on bare metal or RTOS, drivers, hardware debugging."
+
+industries_preferred:
+  - Manufacturing and industrial automation
+  - Energy and utilities
+  - Pharma and life sciences
+  - IoT and IIoT product companies
+  - Technology and SaaS platforms
+
+extra_pre_filter_keywords:
+  - scada
+  - historian
+  - plc
+  - sensor
+  - telemetry
+  - edge
+  - microservices
+  - distributed
+  - integration
+  - observability
+  - monitoring
+  - industrial
+  - protocol
+  - infrastructure
+  - architect
+  - grafana
+  - modbus
+  - finops
+  - iac
+  - bicep
+  - terraform
+  - automation
+  - pipeline
+  - kubernetes
+  - container
+  - azure
+  - devops
+  - platform
+  - cloud
+  - api
+  - mqtt
+  - opc
+  - gateway
+  - orchestration
+  - erp
+  - sap
+  - mes
+  - digital twin
+  - consultant
+  - event-driven
+  - landing zone
+  - governance
+  - senior
+  - python
+  - powershell
+  - manufacturing
+  - compliance
+  - aks
+  - apim
+  - ota
+  - over-the-air
+  - patch
+  - virtualization
+  - hyper-v
+  - firewall
+  - vendor
+  - supplier
+  - feasibility
+  - enterprise architecture
+  - devsecops
+  - vulnerability scanning
+  - solution engineer
+  - pre-sales
+  - presales
+  - proof of value
+  - technical advisor
+
+# "Denmark" and "Danish" appear in nearly every posting here, so they carry no
+# signal and are dropped from the automatic keyword list.
+pre_filter_stop_words:
+  - denmark
+  - danish
+  - danmark
+
+# The three regions outside the Capital Region. All are two or more hours from
+# Copenhagen, so a daily commute is not realistic. Both region names and the
+# major cities are listed, because boards write the location either way.
+hard_exclude_location_patterns:
+  - "midtjylland"
+  - "syddanmark"
+  - "nordjylland"
+  - "north denmark"
+  - "aarhus"
+  - "herning"
+  - "silkeborg"
+  - "viborg"
+  - "horsens"
+  - "randers"
+  - "ikast"
+  - "holstebro"
+  - "skanderborg"
+  - "odense"
+  - "esbjerg"
+  - "kolding"
+  - "vejle"
+  - "fredericia"
+  - "sonderborg"
+  - "sønderborg"
+  - "aabenraa"
+  - "haderslev"
+  - "middelfart"
+  - "aalborg"
+  - "hjørring"
+  - "frederikshavn"
+
+# Danish-language equivalents are included, because a Danish board writes them
+# in Danish: "studiejob" is a student job, "praktik" is an internship.
+hard_exclude_title_patterns:
+  - "junior "
+  - " intern"
+  - "internship"
+  - "praktik"
+  - "studiejob"
+  - "student job"
+  - "graduate trainee"
+  - "elev "
+  - "sales representative"
+  - "account executive"
+  - "account manager"
+  - "marketing manager"
+  - "hr "
+  - " recruiter"
+  - " lawyer"
+  - " attorney"
+  - "financial analyst"
+  - " controller"
+  - " accountant"
+  - "graphic design"
+  - "ux designer"
+  - "ui designer"
+  - "data engineer"
+  - "machine learning"
+  - "ml engineer"
+  - "mlops"
+  - "data scientist"

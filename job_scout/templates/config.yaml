@@ -1,0 +1,172 @@
+# config.yaml — how the scout searches, and what it does with the results.
+#
+# This file holds nothing secret. Every API key and token lives in .env.
+# Who you are and what counts as a match lives in profile.yaml.
+#
+# The values below are a working example built around a fictional candidate
+# (see profile.yaml). Run it as-is to see the thing work, then change the
+# searches to your own.
+
+# ─── Threshold ────────────────────────────────────────────────────────────────
+# The lowest score, out of 100, that gets you told about a job. Everything below
+# it is still recorded, so it never comes back tomorrow.
+#
+# Start at 65. If you are getting more than about five a day, raise it. If you
+# are getting none for a week, lower it — and check `job-scout run --dry-run`
+# to see what scores the near-misses actually got.
+notify_threshold: 65
+
+# ─── Which model scores the jobs ──────────────────────────────────────────────
+# Format is "backend:model". All five backends are optional; you install what
+# the one you pick needs and nothing else. Run `job-scout check` to see the
+# state of all of them.
+#
+#   gemini:gemini-3.7-flash        Google API. Free tier covers a daily run
+#                                  comfortably. Needs GOOGLE_API_KEY.
+#   gemini:gemini-3.5-flash-lite   Cheaper and weaker.
+#   openrouter:google/gemini-3.7-flash
+#                                  Same models through OpenRouter, pay per token.
+#   claude:sonnet                  Claude Code CLI, on your subscription.
+#   grok:grok-4                    Grok CLI.
+#   codex:gpt-5                    Codex CLI.
+#
+# Model names change. If a run fails saying the model was not found, check
+# https://ai.google.dev/gemini-api/docs/models and put a current one here.
+scoring_model: "gemini:gemini-3.7-flash"
+
+# Retry a failed model call this many times before giving up on that posting.
+scoring_retries: 1
+
+# Seconds to wait between model calls. Raise this if you hit a rate limit.
+scoring_delay_seconds: 0
+
+# The free keyword pre-filter before the model sees anything. Leave it on: it is
+# what keeps the bill flat. Turn it off only to find out what it was throwing
+# away.
+pre_filter: true
+
+# Reject postings the model judges to be above your level as well as below it.
+reject_too_senior: false
+
+# ─── Where results go ─────────────────────────────────────────────────────────
+# You need at least one. `file` needs no credentials and is the right one to
+# start with — look at the output before you go and register a bot.
+notifiers:
+  - type: file
+    path: matches.md        # relative to your data directory
+    format: markdown        # markdown | text | csv | json
+    append: true
+
+  # A message per job on your phone. Needs TELEGRAM_BOT_TOKEN and
+  # TELEGRAM_CHAT_ID in .env. See docs/setup-local.md.
+  # - type: telegram
+
+  # One email per run. Needs SMTP_HOST, SMTP_USER and SMTP_PASSWORD in .env.
+  # - type: email
+  #   to: you@example.com
+
+  # Slack, Discord, or anything that takes a JSON body. Needs WEBHOOK_URL.
+  # - type: webhook
+  #   flavor: slack         # slack | discord | raw
+
+# ─── Application outcomes (optional) ──────────────────────────────────────────
+# If you keep a CSV of what happened to your applications, the scorer is told
+# about it and can weigh a new posting against what actually converted for you.
+# Absent by default, and everything works without it. Format:
+#
+#   title,company,status
+#   Platform Engineer,Northwind Energy,rejected
+#
+# outcomes_file: outcomes.csv
+
+# ─── Which board wins a tie ───────────────────────────────────────────────────
+# When the same advert turns up on several boards, the copy from the board
+# earliest in this list is kept. Anything not listed sorts last.
+# source_priority: [linkedin, indeed, careerjet, apify, jobindex]
+
+# ─── Searches ─────────────────────────────────────────────────────────────────
+# Each entry is one query, run against every board in its `sites` list.
+#
+#   term            what to search for
+#   sites           linkedin | indeed | glassdoor | zip_recruiter | google
+#                   | careerjet | apify | jobindex
+#   location        free text, passed to the board
+#   country_indeed  Indeed needs the country named, e.g. "Germany", "USA"
+#   hours_old       ignore anything older than this (LinkedIn and Indeed only)
+#   results_wanted  cap per board per term
+#
+# Before you turn LinkedIn and Indeed on: both prohibit automated scraping in
+# their terms of service. They are on by default because they are what actually
+# produces results, but using them is your call. The lower-risk options are
+# careerjet (a licensed partner API) and apify (a paid platform that does the
+# collection under its own terms). See the disclaimer in README.md.
+searches:
+  - term: "platform engineer"
+    sites: [linkedin, indeed]
+    location: "Berlin, Germany"
+    country_indeed: "Germany"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "site reliability engineer"
+    sites: [linkedin, indeed]
+    location: "Berlin, Germany"
+    country_indeed: "Germany"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "kubernetes infrastructure engineer"
+    sites: [linkedin, indeed]
+    location: "Berlin, Germany"
+    country_indeed: "Germany"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "cloud solution architect"
+    sites: [linkedin, indeed]
+    location: "Berlin, Germany"
+    country_indeed: "Germany"
+    hours_old: 96
+    results_wanted: 50
+
+# ─── Careerjet (optional) ─────────────────────────────────────────────────────
+# A licensed aggregator API. Needs CAREERJET_API_KEY, CAREERJET_REFERER and
+# CAREERJET_USER_IP in .env — Careerjet rejects calls whose referring site and
+# IP do not match what you registered. Add `careerjet` to a search's sites to
+# use it.
+# careerjet:
+#   locale_code: en_GB       # en_US, de_DE, da_DK, fr_FR ...
+
+# ─── Apify (optional, paid) ───────────────────────────────────────────────────
+# Apify runs the scraping on its own machines with its own proxies, which is the
+# fix for LinkedIn and Indeed throttling datacenter IPs — the reason the GitHub
+# Actions path returns thin results. Needs APIFY_API_TOKEN in .env, and at least
+# one Actor described here. There is no default Actor because every one of them
+# bills differently.
+#
+# Prices below were checked on 2026-08-23. Check the Actor's own page before you
+# point this at hundreds of postings a day.
+# apify:
+#   run_timeout_seconds: 300
+#   actors:
+#     - id: misceres/indeed-scraper      # $3.00 per 1,000 job listings
+#       site: indeed
+#       input:
+#         position: "{term}"
+#         location: "{location}"
+#         country: "{country}"
+#         maxItemsPerSearch: "{results_wanted}"
+#
+#     - id: bebity/linkedin-jobs-scraper # $29.99/month plus platform usage
+#       site: linkedin
+#       input:
+#         title: "{term}"
+#         location: "{location}"
+#         rows: "{results_wanted}"
+
+# ─── JobIndex (optional, Denmark only) ────────────────────────────────────────
+# The largest Danish job board, and the one place a lot of Danish postings
+# appear at all. Needs Playwright and a headless Chromium:
+#   pip install playwright beautifulsoup4 lxml
+#   playwright install chromium --with-deps
+# Then add `jobindex` to a search's sites. See examples/denmark/.

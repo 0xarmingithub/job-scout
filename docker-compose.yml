@@ -1,0 +1,31 @@
+# Job Scout under Docker Compose.
+#
+#   1. mkdir myconfig && job-scout init myconfig   (or copy job_scout/templates/)
+#   2. Put your API key in myconfig/.env
+#   3. docker compose run --rm scout check
+#   4. docker compose run --rm scout run
+#
+# Compose has no scheduler. To run this once a day, put the `docker compose run`
+# line in a cron entry or a systemd timer. See docs/setup-docker.md.
+
+services:
+  scout:
+    build: .
+    image: job-scout:latest
+    container_name: job-scout
+    env_file:
+      - ./myconfig/.env
+    volumes:
+      # Your config.yaml and profile.yaml. Read-only: the scout never writes here.
+      - ./myconfig:/config:ro
+      # The seen-jobs database, the log, and file-notifier output. This must
+      # survive the container, or every posting looks new every day.
+      - job-scout-data:/data
+    environment:
+      JOB_SCOUT_CONFIG_DIR: /config
+      JOB_SCOUT_DATA_DIR: /data
+    # One run and out. There is no daemon to keep alive.
+    restart: "no"
+
+volumes:
+  job-scout-data:

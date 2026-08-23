@@ -1,0 +1,105 @@
+# Run the scout on a schedule, on GitHub's machines.
+#
+# This is the least effort of the four deployment paths and the one that returns
+# the fewest results. LinkedIn and Indeed throttle datacenter IP addresses much
+# harder than home connections, and GitHub Actions runners are about as
+# datacenter as an IP gets. Expect a fraction of what the same config returns
+# from your laptop, and some days expect nothing.
+#
+# If you want this to actually work from a datacenter, turn on the Apify source,
+# which does the collection on its own infrastructure with its own proxies. See
+# docs/setup-github-actions.md.
+#
+# Before this will run you need:
+#
+#   1. Settings -> Secrets and variables -> Actions -> New repository secret
+#        GOOGLE_API_KEY     your Google AI Studio key
+#        TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, if you want notifications
+#        APIFY_API_TOKEN, if you turn Apify on
+#   2. A config.yaml and profile.yaml committed to the repository, or a
+#        JOB_SCOUT_CONFIG_DIR pointing at one.
+#
+# Never commit a real API key. Everything below reads from secrets.
+
+name: scout
+
+on:
+  schedule:
+    # 12:00 UTC every day. GitHub schedules are UTC only and do not follow
+    # daylight saving, so this drifts by an hour twice a year against local time.
+    # It also fires late when GitHub is busy — sometimes by 30 minutes or more.
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Two runs at once would both see the same postings as new.
+  group: scout
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[gemini,jobspy]"
+
+      # The database of postings already seen. Without this every run treats
+      # every posting as new and you get the same jobs every day.
+      #
+      # Caveat worth knowing: GitHub deletes a cache that has not been read for
+      # 7 days, and the total cache is capped at 10 GB per repository. A daily
+      # run keeps it warm, but if you pause for a fortnight the first run back
+      # will re-notify you about everything.
+      - name: Restore the seen-jobs database
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: job-scout-data-${{ github.run_id }}
+          restore-keys: |
+            job-scout-data-
+
+      - name: Check the setup
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: job-scout check
+
+      - name: Run
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          CAREERJET_API_KEY: ${{ secrets.CAREERJET_API_KEY }}
+          CAREERJET_REFERER: ${{ secrets.CAREERJET_REFERER }}
+          CAREERJET_USER_IP: ${{ secrets.CAREERJET_USER_IP }}
+        run: job-scout run
+
+      # Handy while you are still setting the threshold: the file notifier's
+      # output and the log, downloadable from the run page for a fortnight.
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-output
+          path: |
+            data/matches.md
+            data/scout.log
+          retention-days: 14
+          if-no-files-found: ignore

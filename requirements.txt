@@ -1,0 +1,30 @@
+# The documented easy path: LinkedIn and Indeed as sources, Gemini as the
+# scorer, the file notifier for output.
+#
+#   pip install -r requirements.txt
+#
+# If you want a smaller install, use the extras instead and take only what you
+# need. The core is the first three lines:
+#
+#   pip install -e .                # core only
+#   pip install -e ".[gemini]"      # + the Gemini scoring backend
+#   pip install -e ".[jobspy]"      # + LinkedIn / Indeed / Glassdoor / etc.
+#   pip install -e ".[jobindex]"    # + jobindex.dk (Denmark, needs a browser)
+#   pip install -e ".[all]"         # everything
+
+pyyaml>=6.0
+python-dotenv>=1.0
+requests>=2.31
+
+# Sources: LinkedIn, Indeed, Glassdoor, ZipRecruiter, Google Jobs.
+python-jobspy>=1.1.80
+pandas>=2.0
+
+# Scoring backend: Google Gemini.
+google-genai>=1.0
+
+# Optional — jobindex.dk only. Uncomment, then run:
+#   playwright install chromium --with-deps
+# playwright>=1.40
+# beautifulsoup4>=4.12
+# lxml>=5.0

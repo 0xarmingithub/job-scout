@@ -1,0 +1,111 @@
+# config.yaml — the Denmark setup.
+#
+# This is the shape of the author's own deployment, with the personal details
+# replaced by the fictional candidate in this folder's profile.yaml. It is here
+# because Denmark exercises three things the default config does not: a national
+# job board that nothing else indexes, a non-English locale, and a hard language
+# requirement that disqualifies otherwise-perfect roles.
+#
+# What is different from the default config:
+#
+#   - jobindex is in the sites list. It is the largest Danish board and a large
+#     share of Danish postings never reach LinkedIn or Indeed. It needs
+#     Playwright and a headless Chromium.
+#   - careerjet runs with locale da_DK, which returns Danish-language listings
+#     the English-language search terms would otherwise miss.
+#   - The threshold is 70 rather than 65. Four sources produce a lot of volume;
+#     70 keeps it to two or three notifications a day.
+#   - hard_exclude_location_patterns in profile.yaml removes the three Danish
+#     regions that are not commutable from Copenhagen.
+#
+# Setup:
+#   pip install -e ".[all]"
+#   playwright install chromium --with-deps
+#   job-scout run --config-dir examples/denmark
+
+notify_threshold: 70
+
+scoring_model: "gemini:gemini-3.7-flash"
+scoring_retries: 1
+pre_filter: true
+
+notifiers:
+  - type: file
+    path: matches.md
+    format: markdown
+    append: true
+  # The real deployment uses Telegram. Uncomment once TELEGRAM_BOT_TOKEN and
+  # TELEGRAM_CHAT_ID are in your .env.
+  # - type: telegram
+
+# Careerjet returns Danish-language listings under this locale. Without it you
+# get only the postings written in English, which in Denmark is roughly half.
+careerjet:
+  locale_code: da_DK
+
+# When the same advert turns up on several boards, LinkedIn's copy usually has
+# the fullest description, and JobIndex's the thinnest.
+source_priority: [linkedin, indeed, careerjet, jobindex]
+
+# Eight searches, four sources each. On the author's deployment this produces
+# roughly 50-60 new postings a day after deduplication, of which two or three
+# clear the threshold.
+#
+# hours_old is 96 rather than 48 because the Danish market is small enough that
+# a two-day window regularly returns nothing at all.
+searches:
+  - term: "IoT solution architect"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "IIoT specialist engineer"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "Azure cloud solutions architect"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "DevOps engineer Azure"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Copenhagen"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "digital solutions engineer"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "platform engineer cloud"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "technical lead IoT cloud"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50
+
+  - term: "OT IT integration engineer"
+    sites: [linkedin, indeed, jobindex, careerjet]
+    location: "Denmark"
+    country_indeed: "Denmark"
+    hours_old: 96
+    results_wanted: 50

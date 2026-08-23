@@ -1,0 +1,38 @@
+[Unit]
+Description=Job Scout — search job boards, score every posting, send the good ones
+Documentation=https://github.com/0xarmingithub/job-scout
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=%i
+WorkingDirectory=/opt/job-scout
+ExecStart=/opt/job-scout/.venv/bin/job-scout run
+
+# Secrets are read from /opt/job-scout/.env by the scout itself, so there is no
+# EnvironmentFile here. Keep that file mode 600 and owned by the service user.
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=job-scout
+
+# A hard cap, so a hung scrape cannot sit there all afternoon. Sizing: the
+# author's four-source run over eight search terms takes about 12 minutes; the
+# longest measured was 736 seconds. 45 minutes leaves room for a slow day
+# without letting a genuine hang run for an hour and a half.
+TimeoutStartSec=2700
+
+# The scout writes only to its own data directory. Nothing else needs to be
+# reachable, so nothing else is.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/job-scout/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
