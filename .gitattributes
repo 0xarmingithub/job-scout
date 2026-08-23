@@ -1,0 +1,19 @@
+# Normalise line endings, so a checkout on Windows and a checkout on Linux
+# produce the same files.
+* text=auto eol=lf
+
+# These must have LF whatever the platform. A shell script or a systemd unit
+# checked out with CRLF fails on Linux — the script with "bad interpreter", the
+# unit with a silently ignored directive.
+*.sh            text eol=lf
+*.service       text eol=lf
+*.timer         text eol=lf
+Dockerfile      text eol=lf
+*.yaml          text eol=lf
+*.yml           text eol=lf
+
+# Binary, never touched.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.db binary
