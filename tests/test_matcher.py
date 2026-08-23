@@ -8,6 +8,7 @@ import yaml
 
 from job_scout import matcher
 from job_scout.config import TEMPLATE_DIR
+from job_scout.matcher import build_prompt_template
 
 
 @pytest.fixture
@@ -363,3 +364,52 @@ def test_the_cheap_filters_run_before_the_model(monkeypatch):
 
 def test_empty_input_costs_nothing():
     assert matcher.score_jobs([], config={}, profile={}) == []
+
+
+# ─── Profiles that would otherwise break str.format() ─────────────────────────
+
+def test_a_brace_in_the_profile_does_not_break_the_prompt():
+    """
+    Found in production. A skill written as "Python (extensive: automation)"
+    parses as a YAML mapping rather than a string, and its repr carries braces,
+    which str.format() then reads as a field name and dies on.
+    """
+    profile = {
+        "candidate": {"name": "Test", "current_role": {"Python (extensive": "automation"}},
+        "core_skills": [{"Python (extensive": "automation, backend services"}],
+        "target_roles": ["Platform {Engineer}"],
+        "confirmed_gaps": ["No {braces} allowed"],
+    }
+    template = build_prompt_template(profile)
+    filled = template.format(title="SRE", company="Acme", location="Berlin", description="k8s")
+    assert "Title: SRE" in filled
+    assert "Python (extensive" in filled
+    assert "Platform {Engineer}" in filled
+
+
+def test_a_dict_skill_is_rendered_readably_not_as_a_repr():
+    profile = {
+        "candidate": {"name": "Test"},
+        "core_skills": [{"Python (extensive": "automation, scripting"}],
+    }
+    template = build_prompt_template(profile)
+    assert "Python (extensive: automation, scripting" in template
+    assert "{'Python" not in template
+
+
+def test_braces_anywhere_in_the_candidate_block_survive():
+    profile = {"candidate": {"name": "A {B} C", "location": "{here}"}}
+    template = build_prompt_template(profile)
+    filled = template.format(title="t", company="c", location="l", description="d")
+    assert "A {B} C" in filled
+    assert "{here}" in filled
+
+
+def test_braces_in_the_outcomes_block_survive(tmp_path):
+    outcomes = tmp_path / "outcomes.csv"
+    outcomes.write_text(
+        "title,company,status\nRole {x},Acme {y},offer\n", encoding="utf-8"
+    )
+    template = build_prompt_template({"candidate": {"name": "T"}}, outcomes)
+    filled = template.format(title="t", company="c", location="l", description="d")
+    assert "Role {x}" in filled

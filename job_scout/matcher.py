@@ -120,8 +120,37 @@ def passes_location_filter(job: dict, exclude_location_patterns: list) -> bool:
 
 # ─── Prompt ───────────────────────────────────────────────────────────────────
 
+def _escape_braces(text: str) -> str:
+    """
+    Protect user content from str.format().
+
+    The prompt is assembled as a template and then formatted with the posting's
+    title, company and description. Anything in profile.yaml that contains a
+    brace would be read as a format field and blow the whole run up with a
+    KeyError. Profiles are written by hand and drafted from CVs, so braces do
+    turn up.
+    """
+    return str(text).replace("{", "{{").replace("}", "}}")
+
+
+def _readable(item) -> str:
+    """
+    One profile list entry as a string.
+
+    An entry containing ": " that was not quoted parses as a mapping rather
+    than a string, so "Python (extensive: automation)" arrives here as a dict.
+    Render it back into something the model can read instead of printing a
+    Python repr into the prompt.
+    """
+    if isinstance(item, dict):
+        return "; ".join(f"{key}: {value}" for key, value in item.items())
+    if isinstance(item, (list, tuple)):
+        return ", ".join(_readable(part) for part in item)
+    return str(item)
+
+
 def _bullets(items) -> str:
-    lines = [f"  - {item}" for item in (items or [])]
+    lines = [f"  - {_escape_braces(_readable(item))}" for item in (items or [])]
     return "\n".join(lines) if lines else "  (none listed)"
 
 
@@ -158,19 +187,28 @@ def build_prompt_template(profile: dict, outcomes_path: Path | None = None) -> s
             "gap item only as a nice-to-have or a bonus is not affected.\n\n"
         )
 
+    # Every value below comes from a file somebody wrote by hand or had drafted
+    # from a CV, so all of it goes through _escape_braces. Without that, one
+    # brace anywhere in the profile turns the whole run into a KeyError.
+    def field(key: str, default: str = "not stated") -> str:
+        return _escape_braces(_readable(candidate.get(key, default) or default))
+
+    def joined(key: str, empty: str) -> str:
+        values = [_readable(item) for item in (profile.get(key) or [])]
+        return _escape_braces(", ".join(values)) if values else empty
+
     return (
-        f"You are evaluating a job posting for {candidate.get('name', 'the candidate')}.\n\n"
+        f"You are evaluating a job posting for {field('name', 'the candidate')}.\n\n"
         "CANDIDATE PROFILE:\n"
-        f"- Experience: {candidate.get('years_experience', 'not stated')} years\n"
-        f"- Current role: {candidate.get('current_role', 'not stated')}\n"
-        f"- Seniority: {candidate.get('seniority', 'not stated')}\n"
-        f"- Based in: {candidate.get('location', 'not stated')}\n"
-        f"- Work authorisation: {candidate.get('work_authorization', 'not stated')}\n"
-        f"- Will work in: {candidate.get('target_geography', 'not stated')}\n"
-        f"- Languages: {_languages(candidate)}\n"
-        f"- Target roles: {', '.join(profile.get('target_roles', [])) or 'not stated'}\n"
-        f"- Preferred industries: "
-        f"{', '.join(profile.get('industries_preferred', [])) or 'no preference'}\n"
+        f"- Experience: {field('years_experience')} years\n"
+        f"- Current role: {field('current_role')}\n"
+        f"- Seniority: {field('seniority')}\n"
+        f"- Based in: {field('location')}\n"
+        f"- Work authorisation: {field('work_authorization')}\n"
+        f"- Will work in: {field('target_geography')}\n"
+        f"- Languages: {_escape_braces(_languages(candidate))}\n"
+        f"- Target roles: {joined('target_roles', 'not stated')}\n"
+        f"- Preferred industries: {joined('industries_preferred', 'no preference')}\n"
         f"- Core skills:\n{_bullets(profile.get('core_skills'))}\n"
         f"- Secondary skills:\n{_bullets(profile.get('secondary_skills'))}\n\n"
         f"CONFIRMED GAPS (the candidate does NOT have these, no exceptions):\n"
@@ -179,7 +217,7 @@ def build_prompt_template(profile: dict, outcomes_path: Path | None = None) -> s
         "REAL APPLICATION OUTCOMES. This is ground truth. Use it as a directional "
         "signal and work out the pattern yourself: which titles and domains "
         "actually convert for this candidate, and which do not.\n"
-        f"{outcomes}\n\n"
+        f"{_escape_braces(outcomes)}\n\n"
         "JOB POSTING:\n"
         "Title: {title}\n"
         "Company: {company}\n"
