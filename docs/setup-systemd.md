@@ -182,6 +182,25 @@ OnFailure=job-scout-alert.service
 with a `job-scout-alert.service` that sends you something. Or simply check
 `systemctl list-timers` when a quiet day feels too quiet.
 
+## Choosing an Oracle always-free shape
+
+Oracle's free tier offers two very different machines, and the choice matters
+here more than it looks.
+
+| Shape | Architecture | Free allowance | Catch |
+|---|---|---|---|
+| VM.Standard.E2.1.Micro | x86-64 | 2 instances, 1 GB RAM each | Tight on memory. This is what the author runs. |
+| VM.Standard.A1.Flex | ARM64 (Ampere) | 4 cores, 24 GB RAM total | **Playwright cannot install Chromium on ARM64 Linux.** |
+
+If you want the JobIndex source, take the x86 shape. Playwright lists Ubuntu
+arm64 as a supported platform, but Chromium is not published for it, so
+`playwright install chromium` fails on Ampere. Everything else in the scout —
+LinkedIn, Indeed, Careerjet, Apify, all five scoring backends — works fine on
+ARM, so if you are not searching Denmark, take the ARM shape and its 24 GB.
+
+Anywhere else with a Linux box, this section does not apply. Check with
+`uname -m`: `x86_64` is fine, `aarch64` means no JobIndex.
+
 ## Small VMs
 
 The always-free Oracle VM has under 1 GB of RAM, which is enough — but two things

@@ -133,7 +133,7 @@ deploy/             systemd units and an install script
 
 The job dictionary that flows through the whole pipeline is documented at the top
 of `job_scout/sources/__init__.py`. Do not change its keys without updating
-every source, `dedup.py` and `notifiers/base.py`.
+every source, `dedup.py` and `job_scout/notifiers/base.py`.
 
 ---
 
@@ -192,7 +192,7 @@ directory. Every step you had to guess is a documentation bug.
 - **Do not add a default Apify Actor.** Actors bill individually and none should
   start charging someone because a name appeared in a list.
 - **Do not remove the terms-of-service disclaimer** from the README or from
-  `sources/jobspy_source.py`. LinkedIn and Indeed prohibit automated scraping;
+  `job_scout/sources/jobspy_source.py`. LinkedIn and Indeed prohibit automated scraping;
   people should know that before they turn them on.
 - **Do not make the scout write to its config directory** during a run. Config in,
   data out, and they can be on different filesystems.

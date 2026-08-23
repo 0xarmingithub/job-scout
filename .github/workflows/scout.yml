@@ -16,8 +16,9 @@
 #        GOOGLE_API_KEY     your Google AI Studio key
 #        TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, if you want notifications
 #        APIFY_API_TOKEN, if you turn Apify on
-#   2. A config.yaml and profile.yaml committed to the repository, or a
-#        JOB_SCOUT_CONFIG_DIR pointing at one.
+#   2. A config.yaml and profile.yaml committed under myconfig/ — the root
+#        copies are gitignored, so they cannot be committed. Run:
+#          job-scout init myconfig && git add myconfig && git commit
 #
 # Never commit a real API key. Everything below reads from secrets.
 
@@ -57,6 +58,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[gemini,jobspy]"
 
+      # Your config lives in myconfig/, not the repo root. The root copies are
+      # gitignored on purpose — they are the scratch copies a local run creates,
+      # and committing them would mean a git pull could clobber your edits.
+      # myconfig/ is committed, so it is what a runner can actually see.
+      - name: Make sure there is a config
+        run: |
+          if [ ! -f myconfig/config.yaml ]; then
+            job-scout init myconfig
+            echo "::warning::No committed config in myconfig/ — running against \
+            the shipped example profile (a fictional Berlin platform engineer). \
+            Run 'job-scout init myconfig', edit both files, and commit them."
+          fi
+
       # The database of postings already seen. Without this every run treats
       # every posting as new and you get the same jobs every day.
       #
@@ -77,7 +91,7 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: job-scout check
+        run: job-scout check --config-dir myconfig --data-dir data
 
       - name: Run
         env:
@@ -89,7 +103,7 @@ jobs:
           CAREERJET_API_KEY: ${{ secrets.CAREERJET_API_KEY }}
           CAREERJET_REFERER: ${{ secrets.CAREERJET_REFERER }}
           CAREERJET_USER_IP: ${{ secrets.CAREERJET_USER_IP }}
-        run: job-scout run
+        run: job-scout run --config-dir myconfig --data-dir data
 
       # Handy while you are still setting the threshold: the file notifier's
       # output and the log, downloadable from the run page for a fortnight.

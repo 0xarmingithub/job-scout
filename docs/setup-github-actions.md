@@ -53,12 +53,29 @@ Careerjet has a wrinkle here: it checks that the calling IP matches the one you
 registered, and a runner's IP changes every time. Careerjet is effectively not
 usable from Actions unless your account is registered against a wide range.
 
-### 3. Commit a config
+### 3. Commit a config, in `myconfig/`
 
-`config.yaml` and `profile.yaml` need to be in the repository, or the run has
-nothing to work from. Run `job-scout init .` locally, edit both, commit them.
+The runner is a fresh machine. It can only see what is committed, so your
+`config.yaml` and `profile.yaml` have to be in the repository.
 
-Nothing secret goes in either file.
+**Put them in `myconfig/`, not the repo root.** The root copies are gitignored on
+purpose — they are the scratch copies a local run creates, and if they were
+committed a `git pull` could clobber your edits. `git add config.yaml` at the
+root will simply refuse.
+
+```bash
+job-scout init myconfig
+# edit myconfig/profile.yaml and myconfig/config.yaml
+git add myconfig
+git commit -m "My job search config"
+git push
+```
+
+The shipped workflow already runs with `--config-dir myconfig`. If `myconfig/` is
+missing it falls back to the fictional example profile and prints a warning on
+the run page, so a first run works either way — it just will not be about you.
+
+Nothing secret goes in either file. Keys come from repository secrets.
 
 ### 4. Turn the workflow on
 

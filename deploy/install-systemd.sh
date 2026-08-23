@@ -34,6 +34,25 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+# Check the tools this script needs before it starts moving files around, so a
+# missing one is a sentence rather than a half-finished install.
+for tool in python3 rsync; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "This script needs '$tool', which is not installed." >&2
+        echo "On Debian or Ubuntu: sudo apt-get install -y $tool" >&2
+        [ "$tool" = "python3" ] && echo "  (you probably also want python3-venv)" >&2
+        exit 1
+    }
+done
+
+# python3 -m venv is a separate package on Debian and Ubuntu, and the failure it
+# gives without it is famously unhelpful.
+python3 -c "import venv" 2>/dev/null || {
+    echo "python3 is installed but the venv module is not." >&2
+    echo "On Debian or Ubuntu: sudo apt-get install -y python3-venv" >&2
+    exit 1
+}
+
 # ─── 1. Copy the code into place ──────────────────────────────────────────────
 echo "[1/5] Copying into $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"

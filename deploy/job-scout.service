@@ -6,6 +6,12 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+
+# NOTE: %i and the paths below are placeholders. deploy/install-systemd.sh
+# rewrites them for your machine. If you are installing by hand, replace User=
+# with a real username first — systemd rejects %i in a unit that is not a
+# template, and copying this file unedited will not work. The hand-written
+# version is in docs/setup-systemd.md.
 User=%i
 WorkingDirectory=/opt/job-scout
 ExecStart=/opt/job-scout/.venv/bin/job-scout run

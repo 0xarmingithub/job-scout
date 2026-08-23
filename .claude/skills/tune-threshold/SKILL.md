@@ -111,7 +111,7 @@ grep "Fetched" data/scout.log | tail -5
 ```
 
 If the answer is zero, this is not a threshold problem. Go to
-[docs/troubleshooting.md](../../docs/troubleshooting.md) — usually a blocked
+[docs/troubleshooting.md](../../../docs/troubleshooting.md) — usually a blocked
 source or a datacenter IP.
 
 **Is the pre-filter eating everything?**

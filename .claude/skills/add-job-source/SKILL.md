@@ -7,7 +7,7 @@ description: Add a new job board to Job Scout. Use when someone wants postings f
 
 A source is one function returning a list of dictionaries. About 40 lines. The
 full contract and a complete worked example are in
-[docs/adding-a-job-source.md](../../docs/adding-a-job-source.md) — read it before
+[docs/adding-a-job-source.md](../../../docs/adding-a-job-source.md) — read it before
 writing code, and follow it rather than this file where they differ.
 
 ## Check the two cheaper options first
@@ -157,7 +157,7 @@ ruff check job_scout tests
 - A docstring at the top of the module: what it needs, where to sign up, which
   country. That docstring is what people find.
 - A row in the site-names table in
-  [docs/configuration.md](../../docs/configuration.md).
+  [docs/configuration.md](../../../docs/configuration.md).
 - A commented block in `job_scout/templates/config.yaml` if it takes settings.
 - A row in `job_scout/templates/.env.example` for any credential.
 

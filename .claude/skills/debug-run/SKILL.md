@@ -9,7 +9,7 @@ Work through this in order. Skipping to the interesting hypothesis is how people
 spend an hour on a missing environment variable.
 
 The written version of everything here, in more detail, is
-[docs/troubleshooting.md](../../docs/troubleshooting.md).
+[docs/troubleshooting.md](../../../docs/troubleshooting.md).
 
 ## 1. Ask the machine first
 

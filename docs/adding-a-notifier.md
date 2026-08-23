@@ -67,7 +67,7 @@ gets committed. Put a variable *name* in config if you want it configurable:
 **Implement `send_alert`.** It is how a failed run reaches you. A notifier that
 only sends good news is half a notifier.
 
-**Use the shared formatters** in `notifiers/base.py`, so every channel describes
+**Use the shared formatters** in `job_scout/notifiers/base.py`, so every channel describes
 a job the same way:
 
 | Function | Gives you |
