@@ -121,7 +121,7 @@ class JobStore:
         new_jobs: list[dict] = []
         skipped_url = 0
         skipped_content = 0
-        for job, job_id in zip(jobs, ids):
+        for job, job_id in zip(jobs, ids, strict=True):
             if job_id in already_seen_ids:
                 skipped_url += 1
                 continue

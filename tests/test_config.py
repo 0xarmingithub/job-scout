@@ -7,7 +7,6 @@ import pytest
 
 from job_scout import config as cfg
 
-
 # ─── Finding the config directory ─────────────────────────────────────────────
 
 def test_cli_flag_wins(tmp_path):

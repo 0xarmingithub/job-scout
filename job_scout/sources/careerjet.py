@@ -212,7 +212,7 @@ def _get(session, params: dict, term: str, page: int) -> dict | None:
 
 def _auth_header(api_key: str) -> str:
     """Careerjet wants base64(api_key + ':')."""
-    credentials = base64.b64encode(f"{api_key}:".encode("utf-8")).decode("ascii")
+    credentials = base64.b64encode(f"{api_key}:".encode()).decode("ascii")
     return f"Basic {credentials}"
 
 

@@ -241,11 +241,11 @@ def validate(settings: Settings) -> None:
     """Fail early, with a message that says exactly what to change."""
     if not settings.searches:
         raise ConfigError(
-            f"config.yaml has no searches. Add at least one:\n\n"
-            f"searches:\n"
-            f"  - term: \"platform engineer\"\n"
-            f"    sites: [linkedin, indeed]\n"
-            f"    location: \"Berlin\"\n"
+            "config.yaml has no searches. Add at least one:\n\n"
+            "searches:\n"
+            "  - term: \"platform engineer\"\n"
+            "    sites: [linkedin, indeed]\n"
+            "    location: \"Berlin\"\n"
         )
     for index, search in enumerate(settings.searches):
         if not isinstance(search, dict):

@@ -12,6 +12,10 @@
 #   pip install -e ".[jobindex]"    # + jobindex.dk (Denmark, needs a browser)
 #   pip install -e ".[all]"         # everything
 
+# Job Scout itself. Without this line pip installs the dependencies but not the
+# package, and the `job-scout` command does not exist.
+-e .
+
 pyyaml>=6.0
 python-dotenv>=1.0
 requests>=2.31

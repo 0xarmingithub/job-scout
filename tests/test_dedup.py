@@ -11,7 +11,6 @@ from job_scout.dedup import (
     make_job_id,
 )
 
-
 # ─── Job ids ──────────────────────────────────────────────────────────────────
 
 def test_job_id_is_stable_and_short():

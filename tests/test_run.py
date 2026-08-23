@@ -8,7 +8,8 @@ in a log file, and --dry-run really does write nothing.
 
 import pytest
 
-from job_scout import matcher, run as run_module, sources
+from job_scout import matcher, sources
+from job_scout import run as run_module
 from job_scout.config import load_settings
 from job_scout.matcher import ScoringUnavailable
 

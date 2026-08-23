@@ -13,7 +13,6 @@ import pytest
 from job_scout import sources
 from job_scout.sources import apify, careerjet
 
-
 # ─── Smoke test 4: everything imports ─────────────────────────────────────────
 
 def test_every_module_imports():

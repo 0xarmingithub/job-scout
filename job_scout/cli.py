@@ -25,7 +25,6 @@ from .config import (
     Settings,
     load_settings,
     resolve_config_dir,
-    resolve_data_dir,
     seed_config_dir,
 )
 

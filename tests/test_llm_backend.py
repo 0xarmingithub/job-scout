@@ -8,7 +8,6 @@ import pytest
 
 from job_scout.llm import backend
 
-
 # ─── Spec parsing ─────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize(
