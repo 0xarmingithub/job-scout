@@ -359,8 +359,44 @@ job-scout run --dry-run          score and print, record nothing, send nothing
 job-scout run --limit 5          stop after 5 postings reach the scorer
 job-scout check                  what is set up and what is missing
 job-scout init DIR               put a config.yaml and profile.yaml somewhere
+job-scout init DIR --from-cv CV  draft profile.yaml from your CV instead
 job-scout version
 ```
+
+### `init --from-cv`
+
+Reads your CV and drafts `profile.yaml` from it, using whichever backend
+`scoring_model` names. `.txt` and `.md` work with no extra packages; `.pdf` and
+`.docx` need `pip install -e ".[cv]"`.
+
+```bash
+job-scout init ~/job-search --from-cv ~/cv.pdf
+```
+
+Three fields come back empty on purpose, because a CV cannot supply them:
+
+| Field | Why |
+|---|---|
+| `confirmed_gaps` | A CV lists what you have done. Nothing in it says what you cannot do. |
+| `hard_exclude_location_patterns` | Your CV does not know which commutes you refuse. |
+| `hard_exclude_title_patterns` | Same. |
+
+If the model fills `confirmed_gaps` in anyway, the entries are dropped and a
+warning is logged. A gap invented from a CV is worse than no gap at all: it caps
+matching jobs at 40 and you will not notice for weeks.
+
+Read `candidate.work_authorization` and `candidate.languages` too. Most CVs
+state neither properly, and both reject a job outright rather than scoring it
+low.
+
+**Where your CV goes.** The text is sent to whichever backend `scoring_model`
+names. On the default that is Google's API, and a CV carries your name, address,
+phone number and employment history. To keep it on your own machine, point
+`scoring_model` at `claude:`, `grok:` or `codex:` and run the CLI locally. The
+scout keeps no copy of the CV and sends it nowhere else.
+
+Re-running against an edited `profile.yaml` is refused unless you pass `--force`,
+because the parts you wrote by hand are exactly the parts a CV cannot replace.
 
 Every command takes `--config-dir`, `--data-dir` and `-v/--verbose`.
 

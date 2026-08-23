@@ -92,6 +92,24 @@ it again — everything already scored is recorded and will not be paid for twic
 
 ## 4. Make it yours
 
+### The fast way: from your CV
+
+```bash
+pip install -e ".[cv]"                      # only needed for .pdf and .docx
+job-scout init . --from-cv ~/my-cv.pdf --force
+```
+
+That fills in your roles, skills, languages, industries and keywords from what
+your CV already says, and writes "not stated" rather than guessing at anything
+it does not. Roughly half an hour of typing, gone.
+
+It leaves three lists empty, and you have to write them yourself:
+`confirmed_gaps`, `hard_exclude_location_patterns` and
+`hard_exclude_title_patterns`. None of them can be read off a CV. Carry on to the
+list below for those.
+
+### The rest, by hand
+
 Edit `profile.yaml`. In rough order of how much difference each change makes:
 
 1. **`confirmed_gaps`** — what you genuinely cannot do. This is the section that

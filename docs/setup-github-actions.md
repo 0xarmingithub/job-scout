@@ -3,40 +3,66 @@
 Free, needs no machine of your own, and returns fewer results than any other
 path. Read the next section before you invest an afternoon in this.
 
-## The catch, up front
+## Read this before you invest an afternoon
 
-**LinkedIn and Indeed throttle datacenter IP addresses much harder than home
-connections.** GitHub Actions runners are about as datacenter as an IP gets.
-The same `config.yaml` that returns 50 postings from your laptop can return 5
-from a runner, or zero.
+**Do not scrape LinkedIn or Indeed from GitHub Actions. Use the Apify source
+instead.** The rest of this page assumes you will.
 
-This is not a bug in the scout and there is nothing to configure around it. It
-is what the boards do.
+Two separate problems, and the second is the one people miss.
 
-Three honest options:
+**Your requests come from a shared pool.** A GitHub-hosted runner is a
+throwaway machine on Azure, and its IP address is recycled between everybody's
+jobs. When LinkedIn or Indeed blocks that address, you inherit the block without
+having done anything, and your own scraping helps get the next person blocked.
+You cannot fix this from your side, because the address is not yours. You do not
+even get a stable one to be blocked consistently.
+
+**Datacenter addresses are throttled harder anyway.** The same `config.yaml`
+that returns 200 postings from a home connection can return a handful from a
+runner, or nothing.
+
+Neither is a bug in the scout, and no setting works around them.
+
+The fix is [Apify](#making-apify-work-from-actions). It runs the collection on
+its own machines through its own proxy pool, so nothing is ever requested from
+GitHub's addresses. It also puts the scraping under Apify's agreements rather
+than yours. It costs money. That is the trade.
+
+If you would rather not pay, the honest options are:
 
 | | |
 |---|---|
-| **Accept it** | Use the sources that do not care where you call from: Careerjet, and any national board. Drop LinkedIn and Indeed. |
-| **Pay for Apify** | It does the collection on its own infrastructure with its own proxy pool. This is the real fix. See below. |
-| **Use a VM instead** | [setup-systemd.md](setup-systemd.md). An Oracle always-free VM costs nothing and does not have this problem. |
+| **Use only sources that do not care where you call from** | Careerjet is a licensed API. Drop `linkedin` and `indeed` from every `sites:` list. |
+| **Use a VM instead** | [setup-systemd.md](setup-systemd.md). An Oracle always-free VM costs nothing, has a stable address, and does not have either problem. |
 
-If you want a scheduled scout that reliably works and costs nothing, the VM is
-the answer, not this page.
+For a scheduled scout that reliably works and costs nothing, the VM is the
+answer, not this page.
 
 ## Setup
 
-### 1. Fork or clone the repository
+### 1. Get your own copy of the repository
 
-You need a repository you control, because the schedule and the secrets live in
-it.
+The schedule and the secrets live in the repository, so it has to be one you
+control. Forking works, but a private copy is better, because your
+`profile.yaml` is a document about you and step 3 commits it.
 
-If your `profile.yaml` is going to be committed, **make the repository private**.
-It is a document about you.
+```bash
+git clone https://github.com/0xarmingithub/job-scout.git my-job-scout
+cd my-job-scout
+git remote remove origin
+gh repo create my-job-scout --private --source=. --push
+```
+
+Without the `gh` command line tool: create an empty private repository on
+github.com, then `git remote add origin <its-url>` and `git push -u origin main`.
+
+Forks have one extra wrinkle worth knowing. GitHub disables scheduled workflows
+in a fork until you enable them by hand, on the Actions tab.
 
 ### 2. Add your secrets
 
-Settings → Secrets and variables → Actions → New repository secret.
+On github.com, in your repository: Settings, then Secrets and variables, then
+Actions, then New repository secret. Add one per row.
 
 | Secret | Needed for |
 |---|---|
@@ -79,17 +105,37 @@ Nothing secret goes in either file. Keys come from repository secrets.
 
 ### 4. Turn the workflow on
 
-`.github/workflows/scout.yml` ships ready to go. It runs at 12:00 UTC daily.
+Before you do: the config `job-scout init` wrote uses `sites: [linkedin, indeed]`,
+which is the thing this page opened by telling you not to do from a runner. Set
+up [Apify](#making-apify-work-from-actions) first, or expect thin results and
+know why.
 
-Change the time in the `cron:` line. Two things about GitHub's scheduler that
-catch people out:
+`.github/workflows/scout.yml` ships ready to go and runs at 12:00 UTC daily.
+Being in the repository is not enough to make it fire, though.
 
-- **It is UTC only** and does not follow daylight saving, so a fixed cron drifts
-  by an hour twice a year against your local time.
+Open the Actions tab. If GitHub shows a banner asking whether to enable
+workflows, say yes. Then find **scout** in the left-hand list. If it says
+disabled, use the menu on the right to enable it.
+
+Three reasons a schedule silently never runs, all of which look identical from
+the outside:
+
+- **Forks have scheduled workflows disabled by default.** You have to enable
+  them by hand.
+- **GitHub disables a schedule after 60 days of no activity** in the repository.
+  A commit turns it back on.
+- The workflow file is on a branch other than your default one. Schedules only
+  run from the default branch.
+
+Run it once by hand before trusting the schedule: Actions, then scout, then Run
+workflow.
+
+Two things about GitHub's scheduler worth knowing once it is running:
+
+- **It is UTC only** and ignores daylight saving, so a fixed cron drifts by an
+  hour twice a year against your local time.
 - **It fires late when GitHub is busy**, sometimes by 30 minutes or more. For a
   daily job that does not matter.
-
-Run it once by hand first: Actions → scout → Run workflow.
 
 ### 5. Check what happened
 
@@ -132,47 +178,90 @@ enough for most people.
 
 ## Making Apify work from Actions
 
-This is the configuration that makes the Actions path genuinely useful.
+Do this. It is what turns the Actions path from a disappointment into something
+that works, and it keeps GitHub's shared addresses out of the job boards
+entirely.
 
-1. Sign up at [apify.com](https://apify.com). The free plan includes $5 of
-   platform usage a month and asks for no card.
-2. Copy your token from Settings → Integrations and add it as the
-   `APIFY_API_TOKEN` secret.
-3. Pick an Actor from [apify.com/store](https://apify.com/store) and put it in
-   `config.yaml`:
+### 1. Get a token
 
-   ```yaml
-   apify:
-     run_timeout_seconds: 300
-     actors:
-       - id: misceres/indeed-scraper
-         site: indeed
-         input:
-           position: "{term}"
-           location: "{location}"
-           country: "{country}"
-           maxItemsPerSearch: "{results_wanted}"
-   ```
+Sign up at [apify.com](https://apify.com). The free plan includes $5 of platform
+usage a month and asks for no card.
 
-4. Change your searches to use it, and drop the boards that will not answer a
-   runner:
+Then: Settings, then Integrations, then copy the Personal API token. It starts
+with `apify_api_`.
 
-   ```yaml
-   searches:
-     - term: "platform engineer"
-       sites: [apify]          # instead of [linkedin, indeed]
-       location: "Berlin, Germany"
-       country_indeed: "Germany"
-       results_wanted: 50
-   ```
+Add it to your repository as the `APIFY_API_TOKEN` secret.
 
-Cost, checked on 2026-08-23: `misceres/indeed-scraper` charges $3.00 per 1,000
-job listings. At 50 listings a term across four terms, that is 200 a day — about
-$0.60 a day, or $18 a month. Check the Actor's own page for the current price
-before you turn it on.
+### 2. Pick an Actor
+
+Search [apify.com/store](https://apify.com/store) for the board you want. Open
+it and read two things before you commit: the pricing tab, and the input schema.
+
+Two that were checked against Apify's live documentation on 2026-08-23:
+
+| Actor | Price then | What it scrapes |
+|---|---|---|
+| `misceres/indeed-scraper` | $3.00 per 1,000 listings | Indeed |
+| `bebity/linkedin-jobs-scraper` | $29.99/month plus usage | LinkedIn |
+
+Prices change. Check the Actor's page yourself.
+
+### 3. Put it in `myconfig/config.yaml`
+
+```yaml
+apify:
+  run_timeout_seconds: 300
+  actors:
+    - id: misceres/indeed-scraper
+      site: indeed
+      input:
+        position: "{term}"
+        location: "{location}"
+        country: "{country}"
+        maxItemsPerSearch: "{results_wanted}"
+```
+
+`{term}`, `{location}`, `{country}` and `{results_wanted}` are filled in from
+each search. A placeholder that is the whole value keeps its type, so
+`"{results_wanted}"` reaches the Actor as the number 50.
 
 Set `run_timeout_seconds` deliberately. The scout aborts a run that overruns so
-it stops charging you, but a timeout set too low wastes what it already spent.
+it stops charging you, but too low a value throws away what it already paid for.
+
+### 4. Point your searches at it
+
+This is the step people forget, and without it nothing changes.
+
+```yaml
+searches:
+  - term: "platform engineer"
+    sites: [apify]          # not [linkedin, indeed]
+    location: "Berlin, Germany"
+    country_indeed: "Germany"
+    results_wanted: 50
+```
+
+Every search that still lists `linkedin` or `indeed` goes on hitting the boards
+directly from GitHub's addresses. Change all of them.
+
+### 5. Commit and check
+
+```bash
+git add myconfig && git commit -m "Use Apify" && git push
+```
+
+Then run the workflow by hand from the Actions tab and read the log. The Apify
+console at [console.apify.com](https://console.apify.com) shows each run, what
+it cost, and its own log when something fails.
+
+### What it costs
+
+At 50 listings a term across four terms, `misceres/indeed-scraper` is 200
+listings a day. About $0.60 a day, or $18 a month, on top of Apify's free $5.
+
+Cut it by lowering `results_wanted`, running fewer search terms, or moving the
+schedule to every other day. The seen-jobs database means a less frequent run
+does not lose you postings, it just finds them later.
 
 ## What this path costs
 

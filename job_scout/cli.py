@@ -75,6 +75,11 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument(
         "--force", action="store_true", help="overwrite files that are already there"
     )
+    init_parser.add_argument(
+        "--from-cv", metavar="PATH",
+        help="draft profile.yaml from your CV (.txt, .md, .pdf or .docx) instead "
+             "of copying the example. Needs a working model backend.",
+    )
 
     subparsers.add_parser("version", help="print the version")
     return parser
@@ -100,21 +105,118 @@ def main(argv: list[str] | None = None) -> int:
 def _cmd_init(args) -> int:
     target = Path(args.directory).expanduser()
     written = seed_config_dir(target, overwrite=args.force)
-    if not written:
+
+    if not written and not args.from_cv:
         print(f"{target} already has a {CONFIG_FILENAME} and a {PROFILE_FILENAME}. "
               f"Pass --force to overwrite them.")
         return 0
-    print(f"Wrote into {target}:")
-    for path in written:
-        print(f"  {path.name}")
+
+    if written:
+        print(f"Wrote into {target}:")
+        for path in written:
+            print(f"  {path.name}")
+
+    if args.from_cv:
+        return _draft_profile_from_cv(target, Path(args.from_cv), overwrite=args.force)
+
     print(
         "\nNext:\n"
         f"  1. Edit {target / PROFILE_FILENAME} — it decides what counts as a match.\n"
         f"  2. Edit {target / CONFIG_FILENAME} — set your search terms.\n"
         f"  3. Copy .env.example to .env and fill in one API key.\n"
-        f"  4. job-scout run --config-dir {target}"
+        f"  4. job-scout run --config-dir {target}\n"
+        f"\nFaster: job-scout init {target} --from-cv path/to/your-cv.pdf"
     )
     return 0
+
+
+def _draft_profile_from_cv(target: Path, cv_path: Path, overwrite: bool) -> int:
+    """Replace the example profile with one drafted from the user's CV."""
+    import yaml
+
+    from .config import load_env
+    from .cv_import import CvImportError, profile_from_cv, review_notes
+
+    profile_path = target / PROFILE_FILENAME
+
+    # A profile that is already yours is worth more than anything a CV can
+    # produce, because the parts you wrote by hand are the parts a CV cannot
+    # supply. Never overwrite one without being told to.
+    if profile_path.exists() and not _is_shipped_example(profile_path) and not overwrite:
+        print(
+            f"{profile_path} already exists and has been edited.\n"
+            f"Drafting from a CV would replace it, including anything you wrote "
+            f"in confirmed_gaps.\n"
+            f"\n"
+            f"Back it up first, then pass --force:\n"
+            f"  cp {profile_path} {profile_path}.bak\n"
+            f"  job-scout init {target} --from-cv {cv_path} --force",
+            file=sys.stderr,
+        )
+        return 1
+
+    load_env(target)
+
+    config_path = target / CONFIG_FILENAME
+    model_spec = "gemini:gemini-3.7-flash"
+    if config_path.exists():
+        try:
+            with open(config_path, encoding="utf-8") as handle:
+                loaded = yaml.safe_load(handle) or {}
+            model_spec = str(loaded.get("scoring_model") or model_spec).strip()
+        except (OSError, yaml.YAMLError):
+            pass  # fall back to the default and let preflight complain usefully
+
+    print(f"\nReading {cv_path} and drafting a profile with {model_spec} ...")
+    try:
+        profile_yaml, parsed = profile_from_cv(cv_path, model_spec)
+    except CvImportError as exc:
+        print(f"\n{exc}\n", file=sys.stderr)
+        print(
+            f"The example profile is still in place at {target / PROFILE_FILENAME}, "
+            f"so you can edit that by hand instead.",
+            file=sys.stderr,
+        )
+        return 1
+
+    header = (
+        "# profile.yaml — drafted from a CV by `job-scout init --from-cv`.\n"
+        "#\n"
+        "# Read it before you trust it. confirmed_gaps is empty on purpose: a CV\n"
+        "# says what you have done, not what you cannot do, and that section is\n"
+        "# what stops the scorer sending you the wrong discipline.\n"
+        "#\n"
+        "# The full field reference is in docs/configuration.md.\n\n"
+    )
+    profile_path.write_text(header + profile_yaml, encoding="utf-8")
+
+    print()
+    print(review_notes(parsed, profile_path))
+    print(f"Then: job-scout check --config-dir {target}")
+    return 0
+
+
+def _is_shipped_example(profile_path: Path) -> bool:
+    """
+    True if this profile is still the untouched example we ship.
+
+    Used to decide whether overwriting it would lose anybody's work. Compared by
+    content rather than by timestamp, so copying the file around does not make it
+    look edited.
+    """
+    from .config import PROFILE_FILENAME as name
+    from .config import TEMPLATE_DIR
+
+    shipped = TEMPLATE_DIR / name
+    if not shipped.exists():
+        return False
+    try:
+        return (
+            profile_path.read_text(encoding="utf-8").strip()
+            == shipped.read_text(encoding="utf-8").strip()
+        )
+    except OSError:
+        return False
 
 
 def _cmd_check(args) -> int:

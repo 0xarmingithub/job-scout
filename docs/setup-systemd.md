@@ -182,24 +182,119 @@ OnFailure=job-scout-alert.service
 with a `job-scout-alert.service` that sends you something. Or simply check
 `systemctl list-timers` when a quiet day feels too quiet.
 
-## Choosing an Oracle always-free shape
+## Getting a free Oracle Cloud VM, step by step
 
-Oracle's free tier offers two very different machines, and the choice matters
-here more than it looks.
+Skip this if you already have a Linux box. This is the free option, and it is
+the one the author uses.
 
-| Shape | Architecture | Free allowance | Catch |
-|---|---|---|---|
-| VM.Standard.E2.1.Micro | x86-64 | 2 instances, 1 GB RAM each | Tight on memory. This is what the author runs. |
-| VM.Standard.A1.Flex | ARM64 (Ampere) | 4 cores, 24 GB RAM total | **Playwright cannot install Chromium on ARM64 Linux.** |
+### Which shape to pick
 
-If you want the JobIndex source, take the x86 shape. Playwright lists Ubuntu
-arm64 as a supported platform, but Chromium is not published for it, so
-`playwright install chromium` fails on Ampere. Everything else in the scout —
-LinkedIn, Indeed, Careerjet, Apify, all five scoring backends — works fine on
-ARM, so if you are not searching Denmark, take the ARM shape and its 24 GB.
+Oracle's Always Free tier has two very different machines.
 
-Anywhere else with a Linux box, this section does not apply. Check with
-`uname -m`: `x86_64` is fine, `aarch64` means no JobIndex.
+| Shape | CPU | RAM | Instances | The catch |
+|---|---|---|---|---|
+| VM.Standard.E2.1.Micro | 1/8 OCPU, x86-64 | 1 GB | 2 | Slow and tight on memory, but always available |
+| VM.Standard.A1.Flex | up to 2 OCPU, ARM64 | up to 12 GB | 1 or 2 | Often "out of capacity", and no Chromium |
+
+**Take the E2.1.Micro unless you have a reason not to.** It is enough, and you
+can create one immediately. The ARM shape has two problems: it is in such demand
+that creation fails with "Out of host capacity" for hours or days at a time, and
+Playwright publishes no Chromium build for ARM64 Linux, so the JobIndex source
+cannot run there. Everything else works on ARM.
+
+Oracle halved the ARM allowance from 4 OCPU and 24 GB to 2 OCPU and 12 GB in
+June 2026. Older guides still quote the bigger number. Check the current
+allowance on
+[Oracle's Always Free page](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm).
+
+### 1. Sign up
+
+[cloud.oracle.com/free](https://www.oracle.com/cloud/free/). It asks for a card
+to prove you are a person. Always Free resources do not charge it, and the
+account stays Always Free after the 30-day trial credit expires.
+
+**Choose your home region carefully. You cannot change it later**, and your free
+resources only exist there. Pick the one closest to you.
+
+### 2. Create the instance
+
+Menu, then Compute, then Instances, then Create instance.
+
+| Field | What to choose |
+|---|---|
+| Name | anything |
+| Image | Canonical Ubuntu 24.04 |
+| Shape | Change shape, then pick VM.Standard.E2.1.Micro. Oracle moves it between tabs; at the time of writing it is under "Specialty and previous generation". |
+| Networking | leave the defaults, and keep "Assign a public IPv4 address" on |
+| SSH keys | Generate a key pair for me, then **download both the private and public key** |
+
+Look for the "Always Free eligible" label next to the shape before you create
+it. If it is not there, you will be billed.
+
+The private key downloads once. Lose it and the only fix is a new instance.
+
+### 3. Connect
+
+```bash
+chmod 600 ~/Downloads/ssh-key-*.key
+ssh -i ~/Downloads/ssh-key-*.key ubuntu@<your-public-ip>
+```
+
+The public IP is on the instance page. The user is `ubuntu` on Ubuntu images and
+`opc` on Oracle Linux. Port 22 is open in the default security list already, so
+there is no firewall rule to add.
+
+### 4. Install
+
+```bash
+sudo apt-get update && sudo apt-get install -y git python3-venv rsync
+git clone https://github.com/0xarmingithub/job-scout.git
+cd job-scout
+sudo bash deploy/install-systemd.sh
+```
+
+Then put your API key in `/opt/job-scout/.env`, edit
+`/opt/job-scout/profile.yaml`, and run it once:
+
+```bash
+sudo systemctl start job-scout.service
+sudo journalctl -u job-scout -f
+```
+
+### 5. Stop Oracle taking the machine back
+
+This one catches people, and it is specific to this use case.
+
+Oracle reclaims Always Free compute instances it considers idle. An instance is
+idle when, across a 7-day window, **all** of these are true:
+
+- CPU use, 95th percentile, below 20%
+- network use below 20%
+- memory use below 20%, on ARM shapes only
+
+A scout that runs for twelve minutes a day is idle by that definition. You get
+an email first, and then the instance is stopped.
+
+Three ways out, cheapest first:
+
+1. **Run something else on the box too.** A tiny always-on service is enough to
+   keep network or CPU above the line. This is the honest answer if you were
+   going to use the VM for something anyway.
+2. **Upgrade to Pay As You Go.** Always Free resources stay free, and upgraded
+   accounts are treated differently. You are billed only if you exceed the free
+   allowances.
+3. **Accept it and watch your email.** Reclamation stops the instance rather
+   than deleting it, and you can restart it. Annoying, and you lose runs in the
+   meantime.
+
+Read
+[Oracle's own description](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)
+before deciding. The policy changes.
+
+Worth saying plainly: for a job that runs twelve minutes a day, a small paid VPS
+from anyone at around 4 euros a month has none of this. No reclamation policy,
+no capacity lottery, no shape to get wrong. Oracle is free, and free has a
+price. Pick whichever annoyance you mind less.
 
 ## Small VMs
 

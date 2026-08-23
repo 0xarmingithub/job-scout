@@ -13,6 +13,24 @@ Doing this by hand instead? Copy `job_scout/templates/profile.yaml`, read the
 comments in it, and fill it in. This skill is a guided version of that, not a
 different mechanism.
 
+## Ask for the CV first
+
+Before anything else, ask whether they have their CV as a file. If they do:
+
+```bash
+job-scout init <config-dir> --from-cv <path-to-cv>
+```
+
+That drafts the roles, skills, languages, industries and keywords from the CV
+and saves roughly half an hour of interviewing. `.pdf` and `.docx` need
+`pip install -e ".[cv]"`; `.txt` and `.md` need nothing.
+
+Then read the draft back to them and interview only about what a CV cannot say.
+That is sections 1, 4 and 5 below, and section 4 is the important one. Skip
+sections 2 and 3 unless the draft got something wrong.
+
+Without a CV, run the whole interview.
+
 ## Rules
 
 **Never invent a skill, a job, or a level.** Everything in the file comes from

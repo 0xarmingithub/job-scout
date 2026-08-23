@@ -361,6 +361,13 @@ def _run_ssh(backend: str, model: str, prompt: str, timeout: int) -> str:
 
 
 def _run_gemini(model: str, system: str, user: str) -> str:
+    # google-genai warns on every generate_content call that we should be using
+    # its chat API. We send one prompt and want one reply, so there is nothing
+    # to act on, and the warning lands in the user's terminal on every run.
+    import logging
+
+    logging.getLogger("google_genai").setLevel(logging.ERROR)
+
     try:
         from google import genai
     except ImportError as exc:
