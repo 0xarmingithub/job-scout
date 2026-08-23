@@ -1,5 +1,5 @@
 """
-cv_import.py — draft a profile.yaml from a CV.
+cv_import.py. Draft a profile.yaml from a CV.
 
 Writing profile.yaml by hand takes half an hour. Most of what goes in it is
 already written down in your CV, so this reads the CV and drafts the file for
@@ -227,8 +227,8 @@ def profile_from_cv(cv_path: Path, model_spec: str) -> tuple[str, dict]:
     # them: a wrong gap silently caps good jobs at 40 and is hard to notice.
     if parsed.get("confirmed_gaps"):
         logger.warning(
-            "The model filled in confirmed_gaps from the CV. Dropping them — a "
-            "CV cannot show what somebody cannot do."
+            "The model filled in confirmed_gaps from the CV. Dropping them, "
+            "because a CV cannot show what somebody cannot do."
         )
         parsed["confirmed_gaps"] = []
 

@@ -3,7 +3,7 @@
 About 40 lines of work. A source is one function that returns a list of
 dictionaries.
 
-Do this when your country has a board that the existing sources do not reach —
+Do this when your country has a board that the existing sources do not reach
 which is most countries. jobindex.dk in Denmark, StepStone in Germany,
 Werk.nl in the Netherlands, Seek in Australia. National boards carry postings
 that never reach LinkedIn.
@@ -17,7 +17,7 @@ boards and is a licensed API, so you get the listings without writing a scraper
 or breaking anyone's terms. Add `careerjet` to your `sites` and set the locale.
 
 **Is there an Apify Actor?** Search [apify.com/store](https://apify.com/store).
-If there is, you need no code at all — just a block in `config.yaml`. It costs
+If there is, you need no code at all. Just a block in `config.yaml`. It costs
 money, and it is somebody else's job to keep it working when the board changes
 its markup.
 
@@ -42,7 +42,7 @@ Return a list of dictionaries with exactly these keys:
     "title":       str,   # required
     "company":     str,   # required
     "location":    str,
-    "description": str,   # the scorer reads this — get as much as you can
+    "description": str,   # the scorer reads this. Get as much as you can
     "url":         str,   # required, unique, stable. This is the job's identity.
     "site":        str,   # your source name, used for duplicate priority
     "date_posted": str,   # ISO date, or "" if the board does not say
@@ -57,7 +57,7 @@ Two of those matter more than the rest.
 
 **`url` is the job's identity.** It is hashed into the id that stops a posting
 being shown twice. It must be stable between runs. If the board hands out
-rotating tracking URLs, find the canonical one — otherwise the same job arrives
+rotating tracking URLs, find the canonical one. Otherwise the same job arrives
 every day. (There is a title-and-company fallback for exactly this case, but it
 only looks back 7 days.)
 
@@ -95,10 +95,10 @@ on. Eight terms and one bad response should cost you one term.
 
 ```python
 """
-myboard.py — MyBoard.example.
+myboard.py. MyBoard.example.
 
 A REST API. Needs MYBOARD_API_KEY in .env. Sign up at
-https://myboard.example/api — free for personal use.
+https://myboard.example/api. Free for personal use.
 """
 
 import logging
@@ -224,7 +224,7 @@ LinkedIn's. Lower number wins.
 ## Optional dependencies
 
 If your source needs a package the core does not, add an extra rather than a
-dependency — nobody should install a browser for a source they do not use.
+dependency. Nobody should install a browser for a source they do not use.
 
 ```toml
 [project.optional-dependencies]

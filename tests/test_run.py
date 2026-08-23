@@ -77,7 +77,7 @@ def test_a_full_run_scores_and_writes(config_dir, fake_boards, fake_model):
     assert result.notified == 1
 
     output = (settings.data_dir / "matches.md").read_text(encoding="utf-8")
-    assert "88% — Senior Platform Engineer" in output
+    assert "88% Senior Platform Engineer" in output
     assert "Northwind Energy" in output
 
 
@@ -94,7 +94,7 @@ def test_the_second_run_finds_nothing_new(config_dir, fake_boards, fake_model):
 def test_a_run_finishes_with_none_of_the_optional_pieces(config_dir, fake_model, monkeypatch):
     """
     No Playwright, no Careerjet key, no Apify token, no outcomes.csv. The real
-    source modules run — they are the ones that have to decline politely.
+    source modules run, they are the ones that have to decline politely.
     """
     settings = load_settings(str(config_dir))
     for search in settings.config["searches"]:
@@ -172,7 +172,9 @@ def test_a_failure_message_never_carries_a_credential(config_dir, monkeypatch):
     settings = load_settings(str(config_dir))
 
     def explode(searches, config):
-        raise RuntimeError("auth failed for https://user:hunter2@example.com")
+        raise RuntimeError(
+            "auth failed for https://user:hunter2@example.com"  # pre-push-check: allow
+        )
 
     monkeypatch.setattr(run_module.sources, "fetch_jobs", explode)
     run_module.run_once(settings)

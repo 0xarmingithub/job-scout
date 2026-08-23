@@ -5,7 +5,7 @@ Three files, and only one of them holds anything secret.
 | File | Holds | Commit it? |
 |---|---|---|
 | `config.yaml` | Searches, threshold, which model, where results go | Yes, if it is yours to commit |
-| `profile.yaml` | Who you are and what counts as a match | Your call — it is personal |
+| `profile.yaml` | Who you are and what counts as a match | Your call, it is personal |
 | `.env` | Every API key and token | **Never** |
 
 The shipped copies live in `job_scout/templates/` and are copied to the repo
@@ -21,7 +21,7 @@ so a `git pull` cannot overwrite them and you cannot accidentally push them.
 3. the directory you ran the command from, if it has a `config.yaml`
 4. the directory this package was installed from
 
-Run data — `jobs.db`, `scout.log`, whatever the file notifier writes:
+Run data. `jobs.db`, `scout.log`, whatever the file notifier writes:
 
 1. `--data-dir PATH`
 2. `$JOB_SCOUT_DATA_DIR`
@@ -50,10 +50,10 @@ job-scout run --config-dir ~/job-search --data-dir /var/lib/job-scout
 | `reject_too_senior` | bool | `false` | Also reject postings judged above your level. |
 | `outcomes_file` | path | `outcomes.csv` | Relative to the config directory, or absolute. |
 | `source_priority` | list | see below | Which board wins when the same advert appears on several. |
-| `notifiers` | list | — | **Required.** At least one. |
-| `searches` | list | — | **Required.** At least one. |
-| `careerjet` | mapping | — | Careerjet settings. |
-| `apify` | mapping | — | Apify settings. |
+| `notifiers` | list | | **Required.** At least one. |
+| `searches` | list | | **Required.** At least one. |
+| `careerjet` | mapping | | Careerjet settings. |
+| `apify` | mapping | | Apify settings. |
 
 ### `scoring_model`
 
@@ -71,7 +71,7 @@ needs and nothing else.
 A bare `vendor/model` with a slash and no prefix is treated as OpenRouter.
 
 Model names change. If a run fails saying the model was not found, look up a
-current one — for Gemini, at
+current one. For Gemini, at
 [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models).
 
 `job-scout check` reports all five at once.
@@ -94,14 +94,14 @@ Each entry is one query, run against every board in its `sites` list.
 
 | Key | Type | Default | Notes |
 |---|---|---|---|
-| `term` | string | — | **Required.** |
+| `term` | string | | **Required.** |
 | `sites` | list | `[linkedin, indeed]` | See the table below. |
 | `location` | string | `""` | Free text, passed to the board. |
 | `country_indeed` | string | `""` | Indeed needs the country named: `"Germany"`, `"USA"`. |
 | `hours_old` | int | `72` | LinkedIn and Indeed only. |
 | `results_wanted` | int | `50` | Per board, per term. |
 | `is_remote` | bool | `false` | Ask the board for remote-only. |
-| `locale_code` | string | — | Careerjet only, overrides the global setting. |
+| `locale_code` | string | | Careerjet only, overrides the global setting. |
 
 ```yaml
 searches:
@@ -131,7 +131,7 @@ searches:
 At least one is required. Write an entry as a mapping, or as a bare name when it
 needs no settings.
 
-### `file` — no credentials
+### `file`, no credentials
 
 ```yaml
 notifiers:
@@ -234,7 +234,7 @@ A placeholder that is the whole value keeps its type, so `"{results_wanted}"`
 arrives as the number 50.
 
 Actors disagree about field names, so each scout field is filled from the first
-key present out of a list of aliases — `title`, `positionName` and `jobTitle` all
+key present out of a list of aliases. `title`, `positionName` and `jobTitle` all
 become `title`. Override per Actor when yours uses something unusual:
 
 ```yaml
@@ -280,7 +280,7 @@ if you say elementary, and that rejection is separate from the work-permit one:
 ```yaml
   languages:
     English: Native
-    German: Elementary — can follow a stand-up, cannot run a workshop
+    German: Elementary. Can follow a stand-up, cannot run a workshop
 ```
 
 ## Lists
@@ -303,9 +303,9 @@ Specific beats short:
 
 ```yaml
 confirmed_gaps:
-  - "Frontend development — React, Vue, Angular, CSS. Has never shipped a
+  - "Frontend development. React, Vue, Angular, CSS. Has never shipped a
      user interface."
-  - "Machine learning and MLOps — training models, feature stores, model
+  - "Machine learning and MLOps. Training models, feature stores, model
      serving, MLflow, vector databases, RAG pipelines."
 ```
 
@@ -325,7 +325,7 @@ Watch the spaces in title patterns: `"hr "` catches "HR Manager" and not
 Engineer".
 
 Add words that appear in every posting in your market to
-`pre_filter_stop_words` — in Denmark, "denmark" and "danish" carry no signal.
+`pre_filter_stop_words`. In Denmark, "denmark" and "danish" carry no signal.
 
 ---
 

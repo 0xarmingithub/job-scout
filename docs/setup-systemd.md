@@ -44,7 +44,7 @@ sudo INSTALL_DIR=/srv/job-scout \
 
 ## Doing it by hand
 
-If you would rather not run someone else's install script — reasonable.
+If you would rather not run someone else's install script. Reasonable.
 
 ### 1. Install
 
@@ -123,7 +123,7 @@ RandomizedDelaySec=60
 WantedBy=timers.target
 ```
 
-Name a timezone rather than using UTC — systemd handles daylight saving for you.
+Name a timezone rather than using UTC. systemd handles daylight saving for you.
 
 `Persistent=true` earns its place: without it, a reboot at the wrong moment
 silently costs you a day.
@@ -164,7 +164,7 @@ pull cannot touch them.
 
 A run that dies quietly is the failure that costs you a week. The scout sends any
 run-level failure to your notifiers, with credentials stripped out of the message
-first — so a broken key or a blocked source arrives on your phone rather than
+first, so a broken key or a blocked source arrives on your phone rather than
 sitting in a log.
 
 That covers failures inside a run. It does not cover the run never starting. For
@@ -298,7 +298,7 @@ price. Pick whichever annoyance you mind less.
 
 ## Small VMs
 
-The always-free Oracle VM has under 1 GB of RAM, which is enough — but two things
+The always-free Oracle VM has under 1 GB of RAM, which is enough, but two things
 matter:
 
 - **The CLI backends need 200-400 MB each.** They run one at a time by default

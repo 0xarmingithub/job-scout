@@ -16,7 +16,7 @@
 #        GOOGLE_API_KEY     your Google AI Studio key
 #        TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, if you want notifications
 #        APIFY_API_TOKEN, if you turn Apify on
-#   2. A config.yaml and profile.yaml committed under myconfig/ — the root
+#   2. A config.yaml and profile.yaml committed under myconfig/, the root
 #        copies are gitignored, so they cannot be committed. Run:
 #          job-scout init myconfig && git add myconfig && git commit
 #
@@ -28,7 +28,7 @@ on:
   schedule:
     # 12:00 UTC every day. GitHub schedules are UTC only and do not follow
     # daylight saving, so this drifts by an hour twice a year against local time.
-    # It also fires late when GitHub is busy — sometimes by 30 minutes or more.
+    # It also fires late when GitHub is busy, sometimes by 30 minutes or more.
     - cron: "0 12 * * *"
   workflow_dispatch:
 
@@ -59,14 +59,14 @@ jobs:
           pip install -e ".[gemini,jobspy]"
 
       # Your config lives in myconfig/, not the repo root. The root copies are
-      # gitignored on purpose — they are the scratch copies a local run creates,
+      # gitignored on purpose, they are the scratch copies a local run creates,
       # and committing them would mean a git pull could clobber your edits.
       # myconfig/ is committed, so it is what a runner can actually see.
       - name: Make sure there is a config
         run: |
           if [ ! -f myconfig/config.yaml ]; then
             job-scout init myconfig
-            echo "::warning::No committed config in myconfig/ — running against \
+            echo "::warning::No committed config in myconfig/. Running against \
             the shipped example profile (a fictional Berlin platform engineer). \
             Run 'job-scout init myconfig', edit both files, and commit them."
           fi

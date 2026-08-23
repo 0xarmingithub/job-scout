@@ -1,5 +1,5 @@
 """
-careerjet.py — Careerjet partner search API.
+careerjet.py. Careerjet partner search API.
 
 Careerjet is an aggregator with a licensed partner API, which makes it the
 lowest-risk source in this repo: you are querying an interface built to be
@@ -21,7 +21,7 @@ a run.
 API reference: https://www.careerjet.com/partners/api
 
 Authentication:
-    Basic auth — key as username, empty password.
+    Basic auth. Key as username, empty password.
     Authorization: Basic base64(API_KEY + ":")
 
 Endpoint:
@@ -102,7 +102,7 @@ def fetch_careerjet_jobs(searches: list[dict], config: dict | None = None) -> li
         logger.warning(
             "Careerjet skipped: %s not set. Careerjet rejects calls whose "
             "Referer and IP do not match the ones you registered at "
-            "https://www.careerjet.com/partners/api — set all three in your .env "
+            "https://www.careerjet.com/partners/api. Set all three in your .env "
             "file, or remove 'careerjet' from your sites list.",
             ", ".join(missing),
         )
@@ -154,7 +154,7 @@ def fetch_careerjet_jobs(searches: list[dict], config: dict | None = None) -> li
                 # Careerjet could not resolve the location. Retry without it
                 # rather than returning nothing.
                 logger.warning(
-                    "Careerjet: could not resolve location '%s' for '%s' — "
+                    "Careerjet: could not resolve location '%s' for '%s'. "
                     "retrying nationwide", location, term,
                 )
                 params.pop("location", None)

@@ -1,5 +1,5 @@
 """
-Drafting a profile from a CV. No network, no keys — the model call is stubbed.
+Drafting a profile from a CV. No network, no keys, the model call is stubbed.
 
 The test that matters most is the one asserting confirmed_gaps comes back empty
 even when the model fills it in. A CV cannot show what somebody cannot do, and a

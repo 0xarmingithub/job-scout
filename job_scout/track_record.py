@@ -1,5 +1,5 @@
 """
-track_record.py — Feed real application outcomes back into the scorer.
+track_record.py. Feed real application outcomes back into the scorer.
 
 Completely optional. If the file is not there, the scorer works exactly as it
 otherwise would; nothing degrades and nothing warns.
@@ -74,7 +74,7 @@ def read_outcomes(path: Path) -> list[dict]:
     try:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
     except OSError as exc:
-        logger.warning("Could not read %s (%s) — scoring without outcome data", path, exc)
+        logger.warning("Could not read %s (%s). Scoring without outcome data", path, exc)
         return []
 
     rows: list[dict] = []
@@ -83,7 +83,7 @@ def read_outcomes(path: Path) -> list[dict]:
     missing = [column for column in _REQUIRED_COLUMNS if column not in fieldnames]
     if missing:
         logger.warning(
-            "%s is missing the column(s) %s — expected a header row of "
+            "%s is missing the column(s) %s. Expected a header row of "
             "'title,company,status'. Scoring without outcome data.",
             path, ", ".join(missing),
         )
@@ -115,7 +115,7 @@ def read_outcomes(path: Path) -> list[dict]:
 def build_context(path: Path) -> str:
     """
     Return a short block of real outcomes for the scoring prompt, or "" when
-    there is no data — the caller then tells the model there is none.
+    there is no data, the caller then tells the model there is none.
     """
     rows = read_outcomes(path)
     if not rows:
@@ -124,8 +124,8 @@ def build_context(path: Path) -> str:
     positive = [r for r in rows if r["class"] in ("interviewing", "offer")]
     negative = [r for r in rows if r["class"] in ("rejected", "no_response")]
     # Roles the candidate read and decided not to apply for. This is a judgement
-    # about the job, made with the full posting in front of them — the same
-    # judgement the scorer is trying to reproduce — so it is the most direct
+    # about the job, made with the full posting in front of them, the same
+    # judgement the scorer is trying to reproduce, so it is the most direct
     # negative evidence available. Listing it separately keeps it from being
     # read as "applied and lost".
     skipped = [r for r in rows if r["class"] == "withdrawn"]

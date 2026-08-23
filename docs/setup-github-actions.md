@@ -85,7 +85,7 @@ The runner is a fresh machine. It can only see what is committed, so your
 `config.yaml` and `profile.yaml` have to be in the repository.
 
 **Put them in `myconfig/`, not the repo root.** The root copies are gitignored on
-purpose — they are the scratch copies a local run creates, and if they were
+purpose, they are the scratch copies a local run creates, and if they were
 committed a `git pull` could clobber your edits. `git add config.yaml` at the
 root will simply refuse.
 
@@ -99,7 +99,7 @@ git push
 
 The shipped workflow already runs with `--config-dir myconfig`. If `myconfig/` is
 missing it falls back to the fictional example profile and prints a warning on
-the run page, so a first run works either way — it just will not be about you.
+the run page, so a first run works either way, it just will not be about you.
 
 Nothing secret goes in either file. Keys come from repository secrets.
 
@@ -140,7 +140,7 @@ Two things about GitHub's scheduler worth knowing once it is running:
 ### 5. Check what happened
 
 The run page shows the log. It also uploads `data/matches.md` and
-`data/scout.log` as an artifact, downloadable for 14 days — useful while you are
+`data/scout.log` as an artifact, downloadable for 14 days. Useful while you are
 still tuning the threshold.
 
 ## Remembering what it has already seen
@@ -274,6 +274,6 @@ does not lose you postings, it just finds them later.
 ## When to give up on it
 
 If you have tried this and the results are thin, and you do not want to pay for
-Apify — put it on a VM. An Oracle Cloud always-free instance costs nothing, has
+Apify. Put it on a VM. An Oracle Cloud always-free instance costs nothing, has
 a residential-ish reputation as far as the boards are concerned, and runs the
 same scout with a systemd timer. [setup-systemd.md](setup-systemd.md).

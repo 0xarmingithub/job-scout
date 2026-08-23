@@ -1,5 +1,5 @@
 [Unit]
-Description=Job Scout — search job boards, score every posting, send the good ones
+Description=Job Scout. Search job boards, score every posting, send the good ones
 Documentation=https://github.com/0xarmingithub/job-scout
 After=network-online.target
 Wants=network-online.target
@@ -9,7 +9,7 @@ Type=oneshot
 
 # NOTE: %i and the paths below are placeholders. deploy/install-systemd.sh
 # rewrites them for your machine. If you are installing by hand, replace User=
-# with a real username first — systemd rejects %i in a unit that is not a
+# with a real username first. Systemd rejects %i in a unit that is not a
 # template, and copying this file unedited will not work. The hand-written
 # version is in docs/setup-systemd.md.
 User=%i

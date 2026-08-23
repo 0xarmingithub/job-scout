@@ -27,7 +27,7 @@ pandas>=2.0
 # Scoring backend: Google Gemini.
 google-genai>=1.0
 
-# Optional — jobindex.dk only. Uncomment, then run:
+# Optional. Jobindex.dk only. Uncomment, then run:
 #   playwright install chromium --with-deps
 # playwright>=1.40
 # beautifulsoup4>=4.12

@@ -1,7 +1,7 @@
 """
 Sources. Nothing here touches the network: the Careerjet and Apify mapping
 functions are pure, the dispatcher is driven with stubs, and every source is
-checked for the one property that matters most — failing without taking the run
+checked for the one property that matters most. Failing without taking the run
 down.
 
 Two of these are the smoke tests that used to live inside deploy_vm.sh, rewritten

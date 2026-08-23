@@ -1,5 +1,5 @@
 """
-jobindex.py — jobindex.dk, the largest Danish job board.
+jobindex.py. Jobindex.dk, the largest Danish job board.
 
 Denmark only. Skip this source entirely unless you are looking for work in
 Denmark; it is here because it is the one board where a large share of Danish
@@ -53,7 +53,7 @@ def fetch_jobindex_jobs(searches: list[dict], config: dict | None = None) -> lis
         logger.warning(
             "JobIndex skipped: playwright is not installed. Install it with: "
             "pip install playwright && playwright install chromium --with-deps "
-            "— or remove 'jobindex' from your sites list."
+            ", or remove 'jobindex' from your sites list."
         )
         return []
 
@@ -113,7 +113,7 @@ def fetch_jobindex_jobs(searches: list[dict], config: dict | None = None) -> lis
                     try:
                         page.wait_for_selector('a[href*="/bruger/dine-job/"]', timeout=5_000)
                     except Exception:
-                        pass  # no results on this page — handled below
+                        pass  # no results on this page. Handled below
                     html = page.content()
                 except Exception as exc:
                     logger.error(
@@ -227,7 +227,7 @@ def _extract_job(card, save_link, search_term: str) -> dict | None:
     if not title:
         return None
 
-    # Prefer the "Se jobbet" action link — that is the canonical advert URL.
+    # Prefer the "Se jobbet" action link, that is the canonical advert URL.
     action = _find_action_link(save_link, "Se jobbet")
     raw_url = (action.get("href") if action else None) or title_anchor.get("href", "")
     url = _resolve_url(raw_url)

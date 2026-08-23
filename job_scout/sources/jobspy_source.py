@@ -1,5 +1,5 @@
 """
-jobspy_source.py — LinkedIn, Indeed, Glassdoor, ZipRecruiter and Google Jobs.
+jobspy_source.py. LinkedIn, Indeed, Glassdoor, ZipRecruiter and Google Jobs.
 
 All of these go through python-jobspy, which is the only dependency you need for
 the default setup.

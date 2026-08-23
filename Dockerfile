@@ -11,12 +11,12 @@
 #     job-scout
 #
 # /config holds config.yaml and profile.yaml. /data holds the jobs database, the
-# log, and anything the file notifier writes — put it on a named volume, or the
+# log, and anything the file notifier writes. Put it on a named volume, or the
 # scout forgets every posting it has seen each time the container exits.
 #
 # The image does not include Playwright or Chromium, because that roughly
 # triples its size and only the Denmark example needs it. If you want the
-# JobIndex source, use the playwright base image instead — see the comment at
+# JobIndex source, use the playwright base image instead. See the comment at
 # the bottom.
 
 FROM python:3.12-slim
@@ -47,7 +47,7 @@ USER scout
 VOLUME ["/config", "/data"]
 
 # With no config mounted, this seeds the example config into /config and runs
-# against the fictional profile — enough to see whether the thing works.
+# against the fictional profile. Enough to see whether the thing works.
 ENTRYPOINT ["job-scout"]
 CMD ["run"]
 

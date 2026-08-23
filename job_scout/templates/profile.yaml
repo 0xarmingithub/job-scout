@@ -1,4 +1,4 @@
-# profile.yaml — who you are, and what counts as a match.
+# profile.yaml. Who you are, and what counts as a match.
 #
 # This is the file that does the work. It is compiled into the prompt the model
 # reads for every posting, and into the free keyword filter that runs first.
@@ -47,7 +47,7 @@ candidate:
   languages:
     English: Native
     Portuguese: Native
-    German: Elementary — can follow a stand-up, cannot run a workshop
+    German: Elementary. Can follow a stand-up, cannot run a workshop
     Spanish: Conversational
 
 # ─── What you are looking for ─────────────────────────────────────────────────
@@ -65,20 +65,20 @@ target_roles:
 # ─── Skills ───────────────────────────────────────────────────────────────────
 # core_skills are things you would happily be interviewed on tomorrow.
 core_skills:
-  - Kubernetes — cluster operation, upgrades, autoscaling, multi-tenant namespaces
-  - AWS — EKS, EC2, S3, RDS, IAM, VPC design, cost management
-  - Terraform — modules, remote state, drift detection across 4 environments
-  - Go — internal tooling, operators, CLI utilities
-  - Python — automation, glue services, data plumbing
+  - Kubernetes. Cluster operation, upgrades, autoscaling, multi-tenant namespaces
+  - AWS. EKS, EC2, S3, RDS, IAM, VPC design, cost management
+  - Terraform. Modules, remote state, drift detection across 4 environments
+  - Go. Internal tooling, operators, CLI utilities
+  - Python. Automation, glue services, data plumbing
   - Docker and container image supply chain (build, scan, sign)
-  - GitLab CI and GitHub Actions — pipeline design, self-hosted runners
+  - GitLab CI and GitHub Actions. Pipeline design, self-hosted runners
   - ArgoCD and GitOps deployment workflows
   - Helm chart authoring and release management
-  - Prometheus, Grafana and Alertmanager — SLOs and alert design
+  - Prometheus, Grafana and Alertmanager. SLOs and alert design
   - OpenTelemetry tracing across services
-  - PostgreSQL operation — replication, backups, query tuning
+  - PostgreSQL operation. Replication, backups, query tuning
   - Linux system administration and troubleshooting
-  - Incident response and on-call — ran the rotation for 3 years
+  - Incident response and on-call. Ran the rotation for 3 years
   - Infrastructure cost analysis and reduction
   - Secrets management (Vault, sealed secrets, cloud KMS)
   - Zero-downtime migration planning
@@ -86,16 +86,16 @@ core_skills:
 # secondary_skills are things you have used, could pick up quickly, or have
 # shipped once. The scorer weighs them lower than core skills.
 secondary_skills:
-  - Azure — AKS and basic networking, one migration project
+  - Azure. AKS and basic networking, one migration project
   - Pulumi
   - Ansible
-  - Kafka — operating a cluster, not designing streaming applications
+  - Kafka. Operating a cluster, not designing streaming applications
   - Redis and Elasticsearch operation
-  - Service mesh (Istio, Linkerd) — evaluated both, ran Linkerd in staging
+  - Service mesh (Istio, Linkerd). Evaluated both, ran Linkerd in staging
   - gRPC and protocol buffers
   - Datadog and New Relic
   - Bash scripting
-  - Rust — learning, no production code
+  - Rust. Learning, no production code
   - Threat modelling and API security review
   - Load testing (k6, Locust)
   - Technical interviewing and mentoring
@@ -103,22 +103,22 @@ secondary_skills:
   - Vendor evaluation and build-versus-buy decisions
 
 # ─── Confirmed gaps ───────────────────────────────────────────────────────────
-# Things you genuinely do not have. Be specific and be honest — vagueness here
+# Things you genuinely do not have. Be specific and be honest. Vagueness here
 # is what lets a badly-fitting job through.
 #
 # If a posting's core day-to-day work needs one of these, the scorer caps it at
 # 40 no matter how many other keywords line up. A posting that lists one as a
 # nice-to-have is unaffected.
 confirmed_gaps:
-  - "Frontend development — React, Vue, Angular, CSS. Has never shipped a user interface."
-  - "Mobile development — iOS, Android, React Native, Flutter."
-  - "Machine learning and MLOps — training models, feature stores, model serving, MLflow, vector databases, RAG pipelines."
-  - "Data engineering ownership — Spark, dbt, Airflow, warehouse modelling. Has operated the databases, never owned the pipelines."
-  - "Embedded and firmware — C, C++, RTOS, microcontrollers, hardware debugging."
-  - "Enterprise application platforms — SAP, Salesforce, ServiceNow, Dynamics."
+  - "Frontend development. React, Vue, Angular, CSS. Has never shipped a user interface."
+  - "Mobile development: iOS, Android, React Native, Flutter."
+  - "Machine learning and MLOps. Training models, feature stores, model serving, MLflow, vector databases, RAG pipelines."
+  - "Data engineering ownership. Spark, dbt, Airflow, warehouse modelling. Has operated the databases, never owned the pipelines."
+  - "Embedded and firmware. C, C++, RTOS, microcontrollers, hardware debugging."
+  - "Enterprise application platforms. SAP, Salesforce, ServiceNow, Dynamics."
   - "Mainframe, COBOL, and AS/400."
-  - "Security operations — SOC work, SIEM tuning, detection engineering, incident forensics. Has done threat modelling, which is not the same job."
-  - "People management — has mentored and led projects, has never had direct reports or owned headcount."
+  - "Security operations, SOC work, SIEM tuning, detection engineering, incident forensics. Has done threat modelling, which is not the same job."
+  - "People management. Has mentored and led projects, has never had direct reports or owned headcount."
 
 # ─── Industry preference ──────────────────────────────────────────────────────
 # A soft signal, not a filter. Leave the list empty if you genuinely do not mind.
@@ -131,7 +131,7 @@ industries_preferred:
 
 # ─── Keyword pre-filter ───────────────────────────────────────────────────────
 # The free filter that runs before the model. Words from your search terms are
-# added automatically; these are the extras — synonyms, adjacent technology, and
+# added automatically; these are the extras. Synonyms, adjacent technology, and
 # anything your search terms would miss.
 #
 # A posting passes if ANY one of these appears in its title or description. So

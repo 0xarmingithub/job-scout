@@ -3,7 +3,7 @@
 Every posting goes through three tiers, cheapest first. Most never reach the one
 that costs money.
 
-## Tier 0 — location
+## Tier 0. Location
 
 If the posting's location contains any string from
 `hard_exclude_location_patterns`, it is dropped. Case-insensitive substring
@@ -21,7 +21,7 @@ Two traps. A posting whose location is empty is **let through**, on the grounds
 that no information is not the same as bad information. And these are substrings,
 so `"york"` matches New York, and `"berlin"` matches Berlin, New Hampshire.
 
-## Tier 1 — keywords
+## Tier 1. Keywords
 
 Two checks, both free.
 
@@ -42,7 +42,7 @@ description. The keyword list is built from two places:
 
 Status written: `rejected_prefilter`.
 
-This filter is deliberately generous — one hit out of a hundred words is enough.
+This filter is deliberately generous, one hit out of a hundred words is enough.
 It is not there to judge fit. It is there to stop you paying a model to read a
 pastry chef vacancy. If you want to know what it is throwing away, set
 `pre_filter: false` and compare a day's results. Expect the bill to go up by
@@ -57,7 +57,7 @@ pre_filter_stop_words:
   - danish
 ```
 
-## Tier 2 — the model
+## Tier 2, the model
 
 What survives is sent to your chosen backend with a prompt built from
 `profile.yaml`. The reply is JSON:
@@ -82,7 +82,7 @@ Three of those fields are hard rejections and override the score entirely:
 | `work_authorization_barrier` | needs citizenship, a permit or a clearance you lack | `rejected_work_authorization` |
 | `seniority_match: too_junior` | aimed below your level | `rejected_seniority` |
 
-`too_senior` is not rejected by default — being told about a stretch role is
+`too_senior` is not rejected by default. Being told about a stretch role is
 usually welcome. Set `reject_too_senior: true` if you disagree.
 
 If the model call fails, it is retried `scoring_retries` times (default 1). If
@@ -132,7 +132,7 @@ confirmed_gaps:
   - "Machine learning"
 
   # Specific. The model can tell whether the posting needs this.
-  - "Machine learning and MLOps — training models, feature stores, model
+  - "Machine learning and MLOps. Training models, feature stores, model
      serving, MLflow, vector databases, RAG pipelines. Has consumed model
      APIs, has never owned a model."
 ```
@@ -170,7 +170,7 @@ That third group is worth filling in. A role you read in full and decided
 against is the same judgement the scorer is trying to make, made by you with the
 whole posting in front of you. Statuses are printed verbatim, so
 "withdrawn (not applied)" stays distinguishable from "withdrawn after second
-interview" — they mean different things and the model can tell.
+interview", they mean different things and the model can tell.
 
 The list is capped at 25 outcomes so the prompt does not grow without adding
 information.
@@ -199,7 +199,7 @@ To see what the near misses actually scored without changing anything:
 job-scout run --dry-run
 ```
 
-That scores everything and prints it, records nothing, and sends nothing — so
+That scores everything and prints it, records nothing, and sends nothing, so
 you can run it repeatedly against the same day's postings.
 
 The bands in a notification are fixed and separate from your threshold:

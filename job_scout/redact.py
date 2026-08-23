@@ -1,5 +1,5 @@
 """
-redact.py — Strip credentials out of text before it leaves the machine.
+redact.py. Strip credentials out of text before it leaves the machine.
 
 Error text from git, HTTP libraries and subprocesses routinely echoes back the
 thing you least want in a chat message: a token, or a URL with a password in it.

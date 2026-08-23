@@ -1,5 +1,5 @@
 """
-job_scout — a job-hunting agent that runs once a day without supervision.
+job_scout is a job-hunting agent that runs once a day without supervision.
 
 It searches job boards, throws away anything it has already seen, scores every
 remaining posting from 0 to 100 against a written profile of the candidate, and

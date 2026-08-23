@@ -3,7 +3,7 @@ Description=Job Scout daily run
 Documentation=https://github.com/0xarmingithub/job-scout
 
 [Timer]
-# Midday local time. Change the timezone to yours — systemd handles daylight
+# Midday local time. Change the timezone to yours. Systemd handles daylight
 # saving for you, which is the reason to name a zone rather than use UTC.
 OnCalendar=*-*-* 12:00:00 Europe/Copenhagen
 

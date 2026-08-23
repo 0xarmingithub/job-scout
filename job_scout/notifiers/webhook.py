@@ -1,5 +1,5 @@
 """
-webhook.py — post the digest to a Slack or Discord incoming webhook.
+webhook.py. Post the digest to a Slack or Discord incoming webhook.
 
 Config:
 
@@ -8,14 +8,14 @@ Config:
         flavor: slack          # slack | discord | raw
         url_env: WEBHOOK_URL   # which environment variable holds the URL
 
-The URL is a credential — anyone holding it can post into your channel — so it
+The URL is a credential. Anyone holding it can post into your channel, so it
 lives in .env, never in config.yaml:
 
     WEBHOOK_URL=https://hooks.slack.com/services/...
 
 Where to get one:
 
-    Slack    https://api.slack.com/messaging/webhooks — create an app, turn on
+    Slack    https://api.slack.com/messaging/webhooks. Create an app, turn on
              Incoming Webhooks, add one to a channel.
     Discord  Channel settings -> Integrations -> Webhooks -> New Webhook.
 

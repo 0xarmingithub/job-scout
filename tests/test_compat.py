@@ -90,8 +90,8 @@ def test_the_example_profile_is_the_fictional_one():
     """
     No real person's details ship in this repository.
 
-    This asserts the positive — that the shipped profile is still the fictional
-    candidate — rather than listing names to look for. A blocklist of real
+    This asserts the positive, that the shipped profile is still the fictional
+    candidate. Rather than listing names to look for. A blocklist of real
     details would publish those details in a public repository, which is the
     thing it was meant to prevent.
     """

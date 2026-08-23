@@ -45,7 +45,7 @@ raise ImportError("playwright not found")
 logger.warning(
     "JobIndex skipped: playwright is not installed. Install it with: "
     "pip install playwright && playwright install chromium --with-deps "
-    "— or remove 'jobindex' from your sites list."
+    ", or remove 'jobindex' from your sites list."
 )
 return []
 ```
@@ -98,7 +98,7 @@ checks the shipped profile for this.
 
 Log lines, error messages, docstrings and documentation are read by someone
 trying to get something working. Say what happened and what to do. Keep exact
-terms exact — variable names, file paths, commands, error codes and numbers are
+terms exact. Variable names, file paths, commands, error codes and numbers are
 never softened.
 
 ### 10. Two files hold behaviour, and neither is code
@@ -172,11 +172,17 @@ JSON the model returns, handle it in `score_jobs()`, document it in
 ## Before you say you are done
 
 ```bash
-pytest -q                    # all green, no network
-ruff check job_scout tests
-job-scout check              # every backend and notifier reports honestly
-job-scout run --dry-run      # a real run that records and sends nothing
+pytest -q                          # all green, no network
+ruff check job_scout tests tools
+python tools/pre_push_check.py     # nothing private is about to be published
+job-scout check                    # every backend and notifier reports honestly
+job-scout run --dry-run            # a real run that records and sends nothing
 ```
+
+That third command matters more than it looks. This repository is public and
+whoever is working on it probably has a private workspace nearby. Never push
+without it passing, and never silence it by adding a file to `ALLOWED_FILES`.
+Put a `# pre-push-check: allow` comment on the single line that needs it.
 
 Then, for anything user-facing, follow your own instructions literally in a clean
 directory. Every step you had to guess is a documentation bug.

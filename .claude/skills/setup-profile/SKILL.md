@@ -40,12 +40,12 @@ cannot use.
 
 **`confirmed_gaps` is the most valuable section.** Spend real time on it. Anyone
 can list skills; the gaps are what stop the scorer sending an ML role because it
-saw "Python". Users under-report gaps — they are trained to sell themselves. Ask
+saw "Python". Users under-report gaps, they are trained to sell themselves. Ask
 directly and make it easy to say no.
 
 **Be specific in gaps.** "Machine learning" caps every posting that mentions ML
 anywhere. "Training models, feature stores, model serving, MLflow, vector
-databases — has consumed model APIs, has never owned a model" is a gap the model
+databases. Has consumed model APIs, has never owned a model" is a gap the model
 can actually judge a posting against.
 
 **Keep the pre-filter broad.** It exists to skip pastry chefs, not to judge fit.
@@ -56,12 +56,12 @@ keywords.
 
 ## The interview
 
-Ask in this order. One topic at a time — this is a lot of questions and dumping
+Ask in this order. One topic at a time. This is a lot of questions and dumping
 them all at once gets you shallow answers.
 
 ### 1. Where they are and what would disqualify them
 
-- Where do they live? Where will they actually work — on-site, hybrid, remote?
+- Where do they live? Where will they actually work. On-site, hybrid, remote?
 - Are there places they will not commute to? (This becomes
   `hard_exclude_location_patterns`. Ask for cities and regions, and warn that
   these are substring matches, so "york" catches New York.)
@@ -76,7 +76,7 @@ them all at once gets you shallow answers.
 
 - Current role, in a sentence or two. What do they actually own?
 - Years of experience.
-- What level are they aiming at? Be blunt — this rejects roles below them.
+- What level are they aiming at? Be blunt. This rejects roles below them.
 - **Every title the job goes by.** Companies name the same job five ways.
   "Platform Engineer", "SRE", "Infrastructure Engineer", "DevOps Engineer" may
   all be the same job. Push for the full list.
@@ -86,7 +86,7 @@ them all at once gets you shallow answers.
 - **Core**: what would they happily be interviewed on tomorrow?
 - **Secondary**: what have they used once, or could pick up in a fortnight?
 
-Ask for the specific version. "Cloud" is useless. "AWS — EKS, RDS, IAM, VPC
+Ask for the specific version. "Cloud" is useless. "AWS. EKS, RDS, IAM, VPC
 design" is what the scorer can match against a posting.
 
 ### 4. Gaps
@@ -95,7 +95,7 @@ Ask straight out, and give permission:
 
 > What comes up in job adverts in your field that you genuinely have not done?
 > Nobody has done everything, and this is the section that makes the scout
-> useful — it is not a weakness audit.
+> useful, it is not a weakness audit.
 
 Prompt by category if they stall: frontend, mobile, machine learning, data
 engineering, embedded, security operations, enterprise platforms like SAP or
@@ -106,11 +106,11 @@ the pipelines" is worth ten times "no data engineering".
 
 ### 5. Search terms and sources
 
-- Four to eight search terms. Not their job title — the terms they would type
+- Four to eight search terms. Not their job title, the terms they would type
   into a board.
 - Which country? That decides the sources:
   - Everywhere: `linkedin`, `indeed`
-  - Denmark: add `jobindex` (needs Playwright — say so)
+  - Denmark: add `jobindex` (needs Playwright. Say so)
   - Non-English market: mention Careerjet with a locale
 - Tell them plainly: LinkedIn and Indeed prohibit automated scraping in their
   terms. They are on by default because they work. It is the user's call.
@@ -123,7 +123,7 @@ the pipelines" is worth ten times "no data engineering".
 
 ## Writing the files
 
-Write `profile.yaml` and `config.yaml` into the config directory — the repo root
+Write `profile.yaml` and `config.yaml` into the config directory, the repo root
 unless they told you otherwise, or wherever `--config-dir` points.
 
 Keep the section comments from the template. They are the documentation people

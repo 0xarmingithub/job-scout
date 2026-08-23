@@ -7,7 +7,7 @@ description: Add a new job board to Job Scout. Use when someone wants postings f
 
 A source is one function returning a list of dictionaries. About 40 lines. The
 full contract and a complete worked example are in
-[docs/adding-a-job-source.md](../../../docs/adding-a-job-source.md) — read it before
+[docs/adding-a-job-source.md](../../../docs/adding-a-job-source.md). Read it before
 writing code, and follow it rather than this file where they differ.
 
 ## Check the two cheaper options first
@@ -24,7 +24,7 @@ careerjet:
 
 **An Apify Actor** may already exist. Search
 [apify.com/store](https://apify.com/store) for the board's name. If there is one,
-it is a config block — and keeping it working when the board redesigns is
+it is a config block, and keeping it working when the board redesigns is
 somebody else's job:
 
 ```yaml
@@ -45,7 +45,7 @@ Only write a source when neither covers it.
 ## Decide what kind of source it is
 
 **A REST API.** The easy case. Model it on
-`job_scout/sources/careerjet.py`. Read the API docs — do not guess parameter
+`job_scout/sources/careerjet.py`. Read the API docs. Do not guess parameter
 names from memory.
 
 **A rendered page.** The board builds its results in the browser, so a plain HTTP
@@ -108,7 +108,7 @@ on.
 
 ## Wire it in
 
-`job_scout/sources/__init__.py` — three edits:
+`job_scout/sources/__init__.py`, three edits:
 
 1. add the name to `STANDALONE_SITES`
 2. add a `_load_<name>()` that imports lazily
@@ -117,7 +117,7 @@ on.
 The lazy import matters: someone who never uses this source must never have to
 install what it needs.
 
-Then `job_scout/dedup.py` — add it to `DEFAULT_SITE_PRIORITY`. Lower number wins
+Then `job_scout/dedup.py`. Add it to `DEFAULT_SITE_PRIORITY`. Lower number wins
 when the same advert appears on two boards. Put it above LinkedIn only if its
 descriptions are genuinely fuller.
 

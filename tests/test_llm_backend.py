@@ -131,8 +131,8 @@ def test_check_all_covers_every_backend(no_clis):
 def test_run_gemini_names_whatever_is_missing(monkeypatch):
     """
     Runs in any environment. Which of the two things is missing depends on
-    whether the gemini extra is installed — CI installs only [dev], a developer
-    who runs the scout has the package — and the message has to be useful either
+    whether the gemini extra is installed. CI installs only [dev], a developer
+    who runs the scout has the package, and the message has to be useful either
     way.
     """
     monkeypatch.setattr(backend, "_module_installed", lambda name: True)

@@ -1,5 +1,5 @@
 """
-The pre-filter and the prompt builder. Both run with no network and no keys —
+The pre-filter and the prompt builder. Both run with no network and no keys
 the model call itself is stubbed out.
 """
 

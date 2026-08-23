@@ -1,5 +1,5 @@
 """
-telegram.py — send results to a Telegram chat.
+telegram.py. Send results to a Telegram chat.
 
 This is the reference implementation, and the one the author actually uses: a
 phone notification at midday with three jobs in it is the whole point of the

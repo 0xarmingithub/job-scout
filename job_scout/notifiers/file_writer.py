@@ -1,5 +1,5 @@
 """
-file_writer.py — write results to a file. Needs no credentials at all.
+file_writer.py. Write results to a file. Needs no credentials at all.
 
 This is the zero-setup default, and the one to use for your first run: you get
 to see whether the scoring is any good before you go and register a bot.
@@ -109,7 +109,7 @@ class FileNotifier(Notifier):
 
     def _as_markdown(self, jobs: list[dict], stats: RunStats) -> str:
         stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        out = [f"## {stamp} — {len(jobs)} match(es)", ""]
+        out = [f"## {stamp}: {len(jobs)} match(es)", ""]
         out.append(f"- Fetched {stats.total_fetched}, {stats.total_new} new, "
                    f"{stats.total_rejected} below {stats.threshold}")
         if stats.source_summary:
@@ -121,8 +121,8 @@ class FileNotifier(Notifier):
             return "\n".join(out) + "\n"
         for job in jobs:
             verdict = job.get("verdict") or {}
-            out.append(f"### {job.get('score', 0)}% — {job.get('title', '?')}")
-            out.append(f"**{job.get('company', '?')}** — {job.get('location', '')} "
+            out.append(f"### {job.get('score', 0)}% {job.get('title', '?')}")
+            out.append(f"**{job.get('company', '?')}**. {job.get('location', '')} "
                        f"({job.get('site', '')})")
             if job.get("salary"):
                 out.append(f"Salary: {job['salary']}")

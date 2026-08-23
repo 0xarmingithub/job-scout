@@ -1,4 +1,4 @@
-# config.yaml — how the scout searches, and what it does with the results.
+# config.yaml. How the scout searches, and what it does with the results.
 #
 # This file holds nothing secret. Every API key and token lives in .env.
 # Who you are and what counts as a match lives in profile.yaml.
@@ -12,7 +12,7 @@
 # it is still recorded, so it never comes back tomorrow.
 #
 # Start at 65. If you are getting more than about five a day, raise it. If you
-# are getting none for a week, lower it — and check `job-scout run --dry-run`
+# are getting none for a week, lower it, and check `job-scout run --dry-run`
 # to see what scores the near-misses actually got.
 notify_threshold: 65
 
@@ -50,7 +50,7 @@ reject_too_senior: false
 
 # ─── Where results go ─────────────────────────────────────────────────────────
 # You need at least one. `file` needs no credentials and is the right one to
-# start with — look at the output before you go and register a bot.
+# start with. Look at the output before you go and register a bot.
 notifiers:
   - type: file
     path: matches.md        # relative to your data directory
@@ -131,7 +131,7 @@ searches:
 
 # ─── Careerjet (optional) ─────────────────────────────────────────────────────
 # A licensed aggregator API. Needs CAREERJET_API_KEY, CAREERJET_REFERER and
-# CAREERJET_USER_IP in .env — Careerjet rejects calls whose referring site and
+# CAREERJET_USER_IP in .env. Careerjet rejects calls whose referring site and
 # IP do not match what you registered. Add `careerjet` to a search's sites to
 # use it.
 # careerjet:
@@ -139,7 +139,7 @@ searches:
 
 # ─── Apify (optional, paid) ───────────────────────────────────────────────────
 # Apify runs the scraping on its own machines with its own proxies, which is the
-# fix for LinkedIn and Indeed throttling datacenter IPs — the reason the GitHub
+# fix for LinkedIn and Indeed throttling datacenter IPs, the reason the GitHub
 # Actions path returns thin results. Needs APIFY_API_TOKEN in .env, and at least
 # one Actor described here. There is no default Actor because every one of them
 # bills differently.

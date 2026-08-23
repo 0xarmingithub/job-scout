@@ -45,7 +45,7 @@ Raise `notify_threshold` by 5. Only this case.
 notify_threshold: 70    # was 65
 ```
 
-Re-check after a few days. Three a day is the target — a tool that sends forty is
+Re-check after a few days. Three a day is the target, a tool that sends forty is
 a tool people stop reading.
 
 ## Case 2: too many, and they are irrelevant
@@ -55,13 +55,13 @@ is.
 
 Read three or four of the bad matches with the user and find the pattern.
 
-**Wrong discipline** — an ML role, a data engineering role, a frontend role:
+**Wrong discipline**, an ML role, a data engineering role, a frontend role:
 
 `confirmed_gaps` is too vague or missing the category. Make it specific:
 
 ```yaml
 confirmed_gaps:
-  - "Machine learning and MLOps — training models, feature stores, model
+  - "Machine learning and MLOps. Training models, feature stores, model
      serving, MLflow, vector databases, RAG pipelines. Has consumed model
      APIs, has never owned a model."
 ```
@@ -76,7 +76,7 @@ hard_exclude_title_patterns:
   - "data scientist"
 ```
 
-**Wrong level** — roles clearly below them:
+**Wrong level**. Roles clearly below them:
 
 Sharpen `candidate.seniority`, and add title patterns:
 
@@ -87,7 +87,7 @@ hard_exclude_title_patterns:
   - "graduate programme"
 ```
 
-**Wrong place** — commutes they will not do:
+**Wrong place**. Commutes they will not do:
 
 ```yaml
 hard_exclude_location_patterns:
@@ -96,7 +96,7 @@ hard_exclude_location_patterns:
 
 Warn about substrings: `"york"` catches New York.
 
-**Wrong language or permit** — these should already be rejected. If they are
+**Wrong language or permit**. These should already be rejected. If they are
 not, `candidate.languages` or `candidate.work_authorization` is too vague. Both
 need to state the level and the boundary explicitly.
 
@@ -111,7 +111,7 @@ grep "Fetched" data/scout.log | tail -5
 ```
 
 If the answer is zero, this is not a threshold problem. Go to
-[docs/troubleshooting.md](../../../docs/troubleshooting.md) — usually a blocked
+[docs/troubleshooting.md](../../../docs/troubleshooting.md), usually a blocked
 source or a datacenter IP.
 
 **Is the pre-filter eating everything?**
@@ -121,7 +121,7 @@ synonyms and adjacent technology to `extra_pre_filter_keywords`. Aim for 30 to
 60 words. Broad is correct here.
 
 Also check `hard_exclude_title_patterns` for a pattern that is too short or
-missing a trailing space — `"hr"` without the space matches "Chromium".
+missing a trailing space. `"hr"` without the space matches "Chromium".
 
 **What did the near misses score?**
 
@@ -130,7 +130,7 @@ missing a trailing space — `"hr"` without the space matches "Chromium".
   Fix the profile. Lowering the threshold here just gives them bad matches.
 - **Lots of `rejected_language` or `rejected_work_authorization`**: the market
   genuinely wants something they do not have. That is information, not a bug.
-  Worth saying out loud — it may change where they look.
+  Worth saying out loud, it may change where they look.
 
 **Are the search terms right?**
 
@@ -170,5 +170,5 @@ itself. Optional, and everything works without it.
 job-scout run --dry-run
 ```
 
-Compare with what you saw before. Change one thing at a time — two changes at
+Compare with what you saw before. Change one thing at a time, two changes at
 once and you learn nothing.

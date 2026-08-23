@@ -46,4 +46,16 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install ruff
-      - run: ruff check job_scout tests
+      - run: ruff check job_scout tests tools
+
+  private-content:
+    # This repository is public and most people working on it also have a
+    # private workspace. One careless `git add` is all it takes, so the check
+    # runs on every push and every pull request as well as in the local hook.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/pre_push_check.py

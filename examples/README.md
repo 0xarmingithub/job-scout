@@ -21,7 +21,7 @@ told what actually converted for you.
 cp examples/outcomes.csv ./outcomes.csv
 ```
 
-Three columns are required — `title`, `company`, `status` — and any others are
+Three columns are required. `title`, `company`, `status`, and any others are
 ignored, so you can keep a date or a note alongside them. Statuses are matched
 loosely: "rejected after final round" counts as rejected, "first screen booked"
 counts as interviewing. See [../docs/scoring.md](../docs/scoring.md).

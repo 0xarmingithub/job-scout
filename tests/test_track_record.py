@@ -113,7 +113,7 @@ def test_context_counts_and_names_the_outcomes(tmp_path):
 def test_roles_read_and_skipped_reach_the_prompt(tmp_path):
     """
     A role the candidate read and decided against is the most direct negative
-    evidence there is — it is the same judgement the scorer is making. It gets
+    evidence there is, it is the same judgement the scorer is making. It gets
     its own group so it is not read as "applied and lost".
     """
     path = _write(

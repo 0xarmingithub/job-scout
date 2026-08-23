@@ -1,5 +1,5 @@
 """
-apify.py — run any Apify job-scraping Actor and fold its results into the scout.
+apify.py. Run any Apify job-scraping Actor and fold its results into the scout.
 
 Why this exists. LinkedIn and Indeed rate-limit datacenter IP addresses much
 harder than home connections, so the direct scrapers get thin results on a cloud
@@ -10,7 +10,7 @@ collection under its own agreements rather than scraping the board yourself.
 
 It costs money. Apify's free plan includes $5 of platform usage a month and does
 not ask for a card; the cheapest paid plan is $29/month. Individual Actors charge
-on top of that — some per result, some as a monthly rental. Check the price on
+on top of that, some per result, some as a monthly rental. Check the price on
 the Actor's own page before you point this at 400 postings a day.
 
 Setup:
@@ -54,7 +54,7 @@ A placeholder that is the entire value keeps its type, so "{results_wanted}"
 arrives at the Actor as the number 50, not the string "50".
 
 Reading the results. Actors do not agree on field names, so each scout field is
-filled from the first key present out of a list of known aliases — `title`,
+filled from the first key present out of a list of known aliases. `title`,
 `positionName` and `jobTitle` all become `title`. If your Actor uses a name that
 is not on the list, override it per Actor:
 
@@ -156,7 +156,7 @@ def fetch_apify_jobs(searches: list[dict], config: dict | None = None) -> list[d
     for actor in actors:
         actor_id = str(actor.get("id") or "").strip()
         if not actor_id:
-            logger.error("Apify: an entry under `actors:` has no `id` — skipping it")
+            logger.error("Apify: an entry under `actors:` has no `id`. Skipping it")
             continue
 
         site_label = str(actor.get("site") or "apify").strip().lower()
@@ -215,7 +215,7 @@ def _run_actor(session, actor_id: str, payload: dict, run_timeout: int,
     if response.status_code == 404:
         raise RuntimeError(
             f"Apify has no Actor called '{actor_id}'. Check the id on the "
-            f"Actor's page — it is the username and the Actor name, e.g. "
+            f"Actor's page, it is the username and the Actor name, e.g. "
             f"misceres/indeed-scraper."
         )
     if response.status_code in (401, 403):
@@ -256,7 +256,7 @@ def _wait_for_run(session, run_id: str, run_timeout: int) -> tuple[str, str]:
             _abort_run(session, run_id)
             raise RuntimeError(
                 f"Apify run {run_id} was still {status or 'starting'} after "
-                f"{run_timeout}s — aborted it so it stops charging. Raise "
+                f"{run_timeout}s. Aborted it so it stops charging. Raise "
                 f"apify.run_timeout_seconds if the Actor is genuinely this slow."
             )
         time.sleep(POLL_INTERVAL)

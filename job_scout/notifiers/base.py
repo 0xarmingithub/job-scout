@@ -1,5 +1,5 @@
 """
-base.py — what every notifier has in common.
+base.py. What every notifier has in common.
 
 A notifier takes the finished run and puts it somewhere you will see it. The
 formatting helpers live here so a Telegram message, an email and a Markdown file
@@ -78,7 +78,7 @@ def job_lines(job: dict) -> list[str]:
     if site:
         where = f"{location} [{site}]" if location else f"[{site}]"
 
-    lines = [f"[{score_label(score)}] {score}% — {job.get('title', '?')}"]
+    lines = [f"[{score_label(score)}] {score}% {job.get('title', '?')}"]
     lines.append(f"Company:  {job.get('company', '?')}")
     if where:
         lines.append(f"Location: {where}")
@@ -107,7 +107,7 @@ def format_job(job: dict) -> str:
 def digest_header(matched_jobs: list[dict], stats: RunStats) -> str:
     count = len(matched_jobs)
     return (
-        f"Job Scout — {date.today().strftime('%d %b %Y')}\n"
+        f"Job Scout, {date.today().strftime('%d %b %Y')}\n"
         f"{count} match{'' if count == 1 else 'es'} "
         f"| {stats.total_new} new "
         f"| {stats.total_rejected} below {stats.threshold} "
@@ -154,5 +154,5 @@ def full_digest_text(matched_jobs: list[dict], stats: RunStats) -> str:
 def alert_text(body: str) -> str:
     """A run-level failure, with anything that looks like a credential removed."""
     return (
-        f"Job Scout ALERT — {date.today().strftime('%d %b %Y')}\n\n{redact(body)}"
+        f"Job Scout ALERT, {date.today().strftime('%d %b %Y')}\n\n{redact(body)}"
     )

@@ -3,7 +3,7 @@
 About 30 lines. A notifier is a class with three methods.
 
 Four ship: `file`, `telegram`, `email` and `webhook`. Before writing one, check
-whether the `webhook` notifier with `flavor: raw` already covers your service —
+whether the `webhook` notifier with `flavor: raw` already covers your service
 it posts `{"text": "..."}` to any URL, which is what Mattermost, Google Chat,
 Zulip, ntfy and most others accept.
 
@@ -75,13 +75,13 @@ a job the same way:
 | `format_job(job)` | one job as plain text |
 | `job_lines(job)` | the same, as a list, if you need to restructure it |
 | `digest_header(jobs, stats)` | the counts line |
-| `no_match_body(stats)` | what to say when nothing matched — three different cases |
+| `no_match_body(stats)` | what to say when nothing matched, three different cases |
 | `full_digest_text(jobs, stats)` | the whole thing as one block |
 | `alert_text(body)` | a failure message, with credentials already stripped |
 | `score_label(score)` | STRONG / POSSIBLE / LONG SHOT |
 
 `alert_text` runs the body through `redact()`. If you build a failure message
-yourself, call `redact()` on it — error text routinely contains the token that
+yourself, call `redact()` on it. Error text routinely contains the token that
 caused the error.
 
 ## Worked example
@@ -90,7 +90,7 @@ caused the error.
 
 ```python
 """
-myservice.py — send the digest to MyService.
+myservice.py. Send the digest to MyService.
 
     notifiers:
       - type: myservice
@@ -196,7 +196,7 @@ The name in `REGISTRY` is what people write as `type:` in `config.yaml`.
 ## Message limits
 
 Most services cap a message. The file writer does not care; the others chunk on
-line boundaries. Copy the `_split` helper from `telegram.py` or `webhook.py` —
+line boundaries. Copy the `_split` helper from `telegram.py` or `webhook.py`
 splitting mid-line makes a job listing unreadable.
 
 Current limits used here: Telegram 4,000 characters per message; Discord 1,900;

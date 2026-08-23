@@ -54,7 +54,7 @@ sqlite3 data/jobs.db \
 
 **Your keyword list is too narrow.** It is built from the words in your search
 terms plus `extra_pre_filter_keywords`. Add synonyms and adjacent technology.
-Broad is right here — the filter exists to skip pastry chefs, not to judge fit.
+Broad is right here, the filter exists to skip pastry chefs, not to judge fit.
 
 **A title pattern is too greedy.** `"hr "` is fine. `"hr"` without the space
 matches "Chromium". Check `hard_exclude_title_patterns` for a pattern with no
@@ -91,7 +91,7 @@ you can run it repeatedly.
   genuinely wants something you do not have. That is information, not a bug.
 
 **Are your `confirmed_gaps` too broad?** A gap listed as "Machine learning" caps
-any posting that mentions ML anywhere. Write the specific version instead — see
+any posting that mentions ML anywhere. Write the specific version instead. See
 [scoring.md](scoring.md#confirmed-gaps-do-most-of-the-work).
 
 ---
@@ -104,7 +104,7 @@ any posting that mentions ML anywhere. Write the specific version instead — se
 |---|---|
 | Locally | `data/` was deleted, or `--data-dir` changed |
 | Docker | `/data` is not a persisted volume |
-| GitHub Actions | the cache expired — GitHub deletes one unread for 7 days |
+| GitHub Actions | the cache expired. GitHub deletes one unread for 7 days |
 | systemd | `ReadWritePaths` does not include the data directory |
 
 Check it is being written:
@@ -139,7 +139,7 @@ and put it in `scoring_model`.
 **"model reply contained no JSON object".** A weaker model wrapping its answer in
 prose. Try a stronger one. `scoring_retries: 2` helps with the occasional case.
 
-**A CLI backend timing out.** They are slow — roughly 14 seconds a posting
+**A CLI backend timing out.** They are slow, roughly 14 seconds a posting
 against 2 for the API. Raise `LLM_CLI_TIMEOUT`, or use the API.
 
 ---
@@ -152,7 +152,7 @@ against 2 for the API. Raise `LLM_CLI_TIMEOUT`, or use the API.
 |---|---|
 | needs the google-genai package | `pip install google-genai` |
 | needs GOOGLE_API_KEY | get one at [aistudio.google.com/apikey](https://aistudio.google.com/apikey), put it in `.env` |
-| 429 from the API | free tier limit — add `scoring_delay_seconds: 2` |
+| 429 from the API | free tier limit. Add `scoring_delay_seconds: 2` |
 
 ### openrouter
 
@@ -166,7 +166,7 @@ against 2 for the API. Raise `LLM_CLI_TIMEOUT`, or use the API.
 | Message | Fix |
 |---|---|
 | needs the `claude` command | install the CLI, or set `LLM_CLI_SSH_HOST=user@host` |
-| CLI exited 1 | run the CLI by hand — it is usually not logged in |
+| CLI exited 1 | run the CLI by hand, it is usually not logged in |
 | over SSH exited 255 | an SSH problem. Test `ssh -i $LLM_CLI_SSH_KEY $LLM_CLI_SSH_HOST true` |
 | returned no output | the CLI is waiting for an interactive login on the remote host |
 
@@ -181,7 +181,7 @@ against 2 for the API. Raise `LLM_CLI_TIMEOUT`, or use the API.
 | 401 Unauthorized | wrong `TELEGRAM_BOT_TOKEN` |
 | 400 chat not found | wrong chat id, or you never messaged the bot. Message it, then re-read `getUpdates`. |
 | 403 bot was blocked | you blocked it |
-| Nothing arrives, no error | check `job-scout check` — the notifier is probably not in `config.yaml` at all |
+| Nothing arrives, no error | check `job-scout check`, the notifier is probably not in `config.yaml` at all |
 
 ### Email
 
@@ -196,7 +196,7 @@ against 2 for the API. Raise `LLM_CLI_TIMEOUT`, or use the API.
 | Symptom | Cause |
 |---|---|
 | 404 | the webhook was deleted or the URL is wrong |
-| 400 from Discord | set `flavor: discord` — Discord wants `content`, not `text` |
+| 400 from Discord | set `flavor: discord`. Discord wants `content`, not `text` |
 | message truncated | expected. Discord caps at 2,000 characters and the scout chunks at 1,900. |
 
 ---
@@ -209,7 +209,7 @@ Denmark only, and the fiddliest source.
 |---|---|
 | playwright is not installed | `pip install playwright && playwright install chromium --with-deps` |
 | Chromium is not installed | `playwright install chromium --with-deps` |
-| returns 0 jobs with no error | the site's markup changed — see below |
+| returns 0 jobs with no error | the site's markup changed. See below |
 | the process is killed | not enough memory. Chromium needs ~500 MB. Add swap. |
 
 If it returns nothing without complaining, JobIndex has redesigned. The parser
@@ -244,11 +244,11 @@ Actions.
 | Message | Fix |
 |---|---|
 | APIFY_API_TOKEN is not set | get one at [console.apify.com/settings/integrations](https://console.apify.com/settings/integrations) |
-| no `apify: actors:` block | there is no default Actor. Add one — see [configuration.md](configuration.md#apify) |
+| no `apify: actors:` block | there is no default Actor. Add one. See [configuration.md](configuration.md#apify) |
 | has no Actor called '...' | check the id on the Actor's page: `username/actor-name` |
 | rejected the token | wrong or revoked token |
 | finished as FAILED | open the run URL in the message; the Actor's own log says why |
-| still running after N seconds — aborted | raise `apify.run_timeout_seconds` |
+| still running after N seconds, aborted | raise `apify.run_timeout_seconds` |
 
 **Results come back with empty titles or URLs.** The Actor uses field names not
 on the alias list. Look at one item in the Apify console and add a `field_map`:
@@ -269,7 +269,7 @@ The scout sends run-level failures to your notifiers. If nothing arrived:
 logs an error and puts the results in `scout.log` only.
 
 **The run never started.** Under systemd, `systemctl list-timers job-scout.timer`.
-On Actions, look at the Actions tab — a scheduled workflow is disabled
+On Actions, look at the Actions tab, a scheduled workflow is disabled
 automatically after 60 days of no repository activity.
 
 **The process was killed.** `TimeoutStartSec` hit, or the kernel's OOM killer.
@@ -307,5 +307,5 @@ Include:
 3. Your `config.yaml`, minus anything private.
 4. Python version and operating system.
 
-**Read what you paste.** `scout.log` should not contain credentials — the scout
-redacts them from anything it sends — but check anyway.
+**Read what you paste.** `scout.log` should not contain credentials, the scout
+redacts them from anything it sends, but check anyway.

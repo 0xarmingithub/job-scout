@@ -20,7 +20,7 @@ job-scout check
 Reports every backend, every notifier and every source, with the reason each one
 is or is not ready. Most reports are one line of this output.
 
-If it says NOT READY for the scoring backend or for every notifier, stop —
+If it says NOT READY for the scoring backend or for every notifier, stop
 that is the answer.
 
 ## 2. Read the log
@@ -48,7 +48,7 @@ Those six lines tell you which stage lost the jobs. Find that first, then dig.
 
 ### "Every source returned 0 jobs"
 
-Not a quiet market — a source problem, nine times in ten.
+Not a quiet market, a source problem, nine times in ten.
 
 - **Datacenter IP.** LinkedIn and Indeed throttle these hard. A cloud VM gets
   fewer results than a laptop, a GitHub Actions runner often gets none. The fix
@@ -67,7 +67,7 @@ sqlite3 data/jobs.db \
 ```
 
 A large `rejected_prefilter` count means the keyword list is too narrow, or a
-title pattern is too greedy — `"hr"` without a trailing space matches "Chromium".
+title pattern is too greedy. `"hr"` without a trailing space matches "Chromium".
 
 To measure it, run one day with `pre_filter: false` and compare. Expect the model
 bill to be roughly ten times higher.
@@ -82,7 +82,7 @@ skill.
 
 The error is in the log with a traceback. The scout also sends run-level failures
 to the notifiers, with credentials stripped, so ask whether they got an ALERT
-message — that message usually names the cause.
+message, that message usually names the cause.
 
 ### "The same jobs arrive every day"
 

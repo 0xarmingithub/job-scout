@@ -1,5 +1,5 @@
 """
-email_smtp.py — send the digest as one email over SMTP.
+email_smtp.py. Send the digest as one email over SMTP.
 
 Config:
 
@@ -130,19 +130,19 @@ class EmailNotifier(Notifier):
             logger.info("Email sent to %s", ", ".join(self.recipients))
             return True
         except (smtplib.SMTPException, OSError) as exc:
-            logger.error("Email send failed via %s:%d — %s", self.host, self.port, exc)
+            logger.error("Email send failed via %s:%d. %s", self.host, self.port, exc)
             return False
 
     def send_digest(self, matched_jobs: list[dict], stats: RunStats) -> bool:
         prefix = str(self.spec.get("subject") or "Job Scout")
         count = len(matched_jobs)
         subject = (
-            f"{prefix} — {count} match{'' if count == 1 else 'es'} "
-            f"— {date.today().strftime('%d %b %Y')}"
+            f"{prefix}: {count} match{'' if count == 1 else 'es'} "
+            f". {date.today().strftime('%d %b %Y')}"
         )
         return self._send(subject, full_digest_text(matched_jobs, stats))
 
     def send_alert(self, body: str) -> bool:
         prefix = str(self.spec.get("subject") or "Job Scout")
-        return self._send(f"{prefix} ALERT — {date.today().strftime('%d %b %Y')}",
+        return self._send(f"{prefix} ALERT, {date.today().strftime('%d %b %Y')}",
                           alert_text(body))

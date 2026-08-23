@@ -126,7 +126,7 @@ def test_markdown_output(tmp_path, matches, stats):
     assert notifier.send_digest(matches, stats)
 
     text = (tmp_path / "matches.md").read_text(encoding="utf-8")
-    assert "### 84% — Platform Engineer" in text
+    assert "### 84% Platform Engineer" in text
     assert "**Northwind Energy**" in text
     assert "<https://example.com/job/1>" in text
     assert "Sources: jobspy: 57" in text
@@ -179,7 +179,7 @@ def test_append_keeps_the_previous_run(tmp_path, matches, stats):
     notifier.send_digest(matches, stats)
     notifier.send_digest(matches, stats)
     text = (tmp_path / "matches.md").read_text(encoding="utf-8")
-    assert text.count("### 84% — Platform Engineer") == 2
+    assert text.count("### 84% Platform Engineer") == 2
 
 
 def test_append_false_replaces_the_file(tmp_path, matches, stats):
@@ -187,7 +187,7 @@ def test_append_false_replaces_the_file(tmp_path, matches, stats):
     notifier.send_digest(matches, stats)
     notifier.send_digest(matches, stats)
     text = (tmp_path / "matches.md").read_text(encoding="utf-8")
-    assert text.count("### 84% — Platform Engineer") == 1
+    assert text.count("### 84% Platform Engineer") == 1
 
 
 def test_an_absolute_path_is_honoured(tmp_path, matches, stats):
@@ -210,7 +210,10 @@ def test_the_file_writer_can_alert(tmp_path):
 
 def test_an_alert_never_leaks_a_token(tmp_path):
     notifier = build([{"type": "file"}], tmp_path)[0]
-    notifier.send_alert("git failed: https://user:hunter2@github.com/x ghp_" + "a" * 36)
+    notifier.send_alert(  # pre-push-check: allow
+        "git failed: https://user:hunter2@github.com/x ghp_"  # pre-push-check: allow
+        + "a" * 36
+    )
     text = (tmp_path / "matches.md").read_text(encoding="utf-8")
     assert "hunter2" not in text
     assert "ghp_" not in text

@@ -1,5 +1,5 @@
 """
-notifiers — where results go.
+notifiers. Where results go.
 
 Four are built in. You need at least one; the file writer needs no credentials
 and is the right one for a first run.
@@ -13,7 +13,7 @@ Add your own by writing a subclass of Notifier and adding one line to REGISTRY.
 See docs/adding-a-notifier.md.
 
 Nothing here raises. A notifier that cannot send says so in the log and returns
-False, and the dispatcher moves on to the next one — losing today's results
+False, and the dispatcher moves on to the next one. Losing today's results
 because one channel is down is not a trade worth making.
 """
 

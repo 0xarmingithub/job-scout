@@ -22,7 +22,7 @@ runs anywhere and takes a few seconds.
 ## Adding a job source
 
 The one most worth doing. Most countries have a national board that carries
-postings LinkedIn never sees — jobindex.dk in Denmark, StepStone in Germany, Seek
+postings LinkedIn never sees. jobindex.dk in Denmark, StepStone in Germany, Seek
 in Australia.
 
 **Check two cheaper options first.** Careerjet may already aggregate the board,
@@ -40,7 +40,7 @@ account.
 
 [docs/adding-a-notifier.md](docs/adding-a-notifier.md). About 30 lines.
 
-Check first whether `webhook` with `flavor: raw` already works for your service —
+Check first whether `webhook` with `flavor: raw` already works for your service
 it posts `{"text": "..."}` to any URL, which covers Mattermost, Google Chat,
 Zulip, ntfy and most others.
 
@@ -50,7 +50,7 @@ Zulip, ntfy and most others.
   sample of 20, one profile, one country. Numbers from a different profile or
   market would be genuinely useful. State your sample size.
 - **Fixing a broken scraper.** Boards redesign. If JobIndex stops returning
-  anything, the parser needs updating — save a real page as a fixture and use it
+  anything, the parser needs updating. Save a real page as a fixture and use it
   in the test.
 - **Documentation.** If you followed a guide and had to guess at a step, that is
   a bug. Say where.
@@ -69,7 +69,7 @@ Five of them, and they are all one idea: a run must survive things going wrong.
 4. **Credentials never appear in a message.** Everything sent goes through
    `redact()`. New credential shape means a new pattern and a new test.
 5. **Nothing personal ships.** The example profile is fictional. No real names,
-   employers, IP addresses, keys or personal domains anywhere — comments and
+   employers, IP addresses, keys or personal domains anywhere. Comments and
    example values included.
 
 The full version, with the reasoning, is in [AGENTS.md](AGENTS.md). It is written
@@ -78,7 +78,7 @@ for AI coding tools but it is the same set of rules.
 ## Style
 
 - Plain language in anything a user reads: log lines, error messages, docs. Say
-  what happened and what to do about it. Keep exact terms exact — variable names,
+  what happened and what to do about it. Keep exact terms exact. Variable names,
   paths, commands, error codes and numbers are never softened.
 - Comments explain **why**, not what. If a line looks wrong but is right, say why
   it is right.
@@ -93,7 +93,7 @@ Required for anything with logic in it.
 - **No API keys.** `tests/conftest.py` scrubs the environment, so a developer
   with `GOOGLE_API_KEY` set gets the same result as CI.
 - Test the failure path. For a source, the most valuable test is "what happens
-  when the key is missing" — not the happy path.
+  when the key is missing", not the happy path.
 - For a scraper, save one real page as a fixture. See
   `test_jobindex_parses_a_card_from_saved_html`.
 
@@ -102,14 +102,56 @@ pytest -q
 pytest -q tests/test_sources.py -k apify     # one file, one topic
 ```
 
+## Keeping private things out
+
+This repository is public, and most people working on it also keep a private
+workspace with a real profile, real keys and real server notes in it. One
+careless `git add -A` in the wrong directory is all it takes.
+
+Install the guard once:
+
+```bash
+bash tools/install-git-hooks.sh
+```
+
+That makes `git push` run `tools/pre_push_check.py` first and stop on a failure.
+It checks three things:
+
+| | |
+|---|---|
+| Credential shapes | GitHub, Google, Apify and OpenAI-style keys, Telegram bot tokens, private key blocks, passwords inside URLs |
+| Filenames | a real `.env`, `config.yaml`, `profile.yaml`, `outcomes.csv`, `jobs.db`, anything under `data/`, any `.pem` or `.key` |
+| Your own words | names, employers, towns, server addresses |
+
+That last one needs a word list, and it cannot live in this repository, because
+writing your details here would publish the very thing it exists to keep out.
+Put one term per line in `.git/denylist.txt`, which git cannot commit, or point
+`$JOB_SCOUT_DENYLIST` at a file elsewhere.
+
+Run it by hand any time:
+
+```bash
+python tools/pre_push_check.py                     # everything tracked
+python tools/pre_push_check.py --staged            # what you are about to commit
+python tools/pre_push_check.py --range origin/main..HEAD
+```
+
+CI runs the same script on every push and pull request, so a missing local hook
+is caught, just later.
+
+If a fixture genuinely has to look like a credential, put
+`# pre-push-check: allow` on that line rather than adding the file to the
+allowlist. The rest of the file stays checked that way.
+
 ## Pull requests
 
 1. Branch from `main`.
-2. `pytest -q` and `ruff check job_scout tests` both clean.
-3. Update the docs the change touches — the configuration reference and the
+2. `pytest -q` and `ruff check job_scout tests tools` both clean.
+3. `python tools/pre_push_check.py` clean.
+4. Update the docs the change touches, the configuration reference and the
    shipped template in `job_scout/templates/` are the two people miss.
-4. In the description: what it does, why, and how you tested it. If you added a
-   source, say whether you ran it against the live board.
+5. In the description, say what it does, why, and how you tested it. If you
+   added a source, say whether you ran it against the live board.
 
 CI runs the suite on Python 3.10 through 3.13.
 

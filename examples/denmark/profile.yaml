@@ -1,4 +1,4 @@
-# profile.yaml — the Denmark example.
+# profile.yaml, the Denmark example.
 #
 # The same fictional candidate as the default profile, moved to Copenhagen and
 # given the two constraints that make Denmark interesting to search:
@@ -32,7 +32,7 @@ candidate:
   work_authorization: >
     Holds Danish permanent residence. Not a Danish or EU citizen. Can work
     anywhere in Denmark with no sponsorship, but cannot take roles that require
-    Danish or EU citizenship, or a Danish security clearance — which rules out
+    Danish or EU citizenship, or a Danish security clearance, which rules out
     most public-sector and defence work.
 
   target_geography: >
@@ -64,12 +64,12 @@ core_skills:
   - AKS / Kubernetes
   - Azure Container Apps in production
   - Docker and container image management
-  - Python — automation, backend services, scripting
-  - PowerShell — Windows and Azure scripting, deployment pipelines
+  - Python. Automation, backend services, scripting
+  - PowerShell. Windows and Azure scripting, deployment pipelines
   - Over-the-air update orchestration for edge device fleets
   - Patch and OS update rollout across distributed device fleets
   - MQTT, OPC-UA and Modbus
-  - Azure API Management — OAuth2, rate limiting, managed identities
+  - Azure API Management. OAuth2, rate limiting, managed identities
   - CI/CD pipelines in Azure DevOps
   - Bicep infrastructure as code
   - Azure Data Explorer for time-series telemetry
@@ -98,18 +98,18 @@ secondary_skills:
   - Vendor evaluation and build-versus-buy decisions
 
 confirmed_gaps:
-  - "Building production agentic LLM systems — tool orchestration, guardrails, agent frameworks."
-  - "Vector databases and vector search — Pinecone, Weaviate, pgvector, Azure AI Search."
+  - "Building production agentic LLM systems. Tool orchestration, guardrails, agent frameworks."
+  - "Vector databases and vector search. Pinecone, Weaviate, pgvector, Azure AI Search."
   - "RAG, retrieval pipelines and embeddings."
-  - "MLOps and LLMOps — Azure ML, MLflow, model serving, feature stores."
+  - "MLOps and LLMOps. Azure ML, MLflow, model serving, feature stores."
   - "PostgreSQL, MongoDB and Databricks in production."
-  - "Security operations — SIEM, SOC, detection engineering, XDR, SOAR, incident forensics."
-  - "Data engineering and data science ownership — owning pipelines or building models."
-  - "GitOps tooling — ArgoCD, Flux, Helm."
+  - "Security operations. SIEM, SOC, detection engineering, XDR, SOAR, incident forensics."
+  - "Data engineering and data science ownership. Owning pipelines or building models."
+  - "GitOps tooling. ArgoCD, Flux, Helm."
   - "GitHub Actions."
-  - "Laboratory data systems — LIMS, ELN, CDS, SDMS."
-  - "GxP and computer system validation — CSV, CSA, pharma audit trails."
-  - "Embedded firmware — C and C++ on bare metal or RTOS, drivers, hardware debugging."
+  - "Laboratory data systems. LIMS, ELN, CDS, SDMS."
+  - "GxP and computer system validation. CSV, CSA, pharma audit trails."
+  - "Embedded firmware. C and C++ on bare metal or RTOS, drivers, hardware debugging."
 
 industries_preferred:
   - Manufacturing and industrial automation

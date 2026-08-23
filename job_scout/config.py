@@ -1,5 +1,5 @@
 """
-config.py — Find and load config.yaml, profile.yaml and .env.
+config.py. Find and load config.yaml, profile.yaml and .env.
 
 Your configuration does not have to live inside this repository. That matters if
 you keep a private profile in a private repo and clone this one read-only, or if
@@ -203,7 +203,7 @@ def load_settings(config_dir: str | None = None, data_dir: str | None = None) ->
 
     # A fresh clone has no config.yaml of its own. Rather than fail on the first
     # command anyone runs, copy the shipped example in and say so. This only
-    # happens inside the checkout itself — an explicit --config-dir that is empty
+    # happens inside the checkout itself. An explicit --config-dir that is empty
     # is an error, because guessing what you meant there would be worse.
     if cfg_dir == PACKAGE_ROOT and not (cfg_dir / CONFIG_FILENAME).exists():
         written = seed_config_dir(cfg_dir)

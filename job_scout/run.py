@@ -1,5 +1,5 @@
 """
-run.py — one complete run, start to finish.
+run.py, one complete run, start to finish.
 
     load config -> fetch -> dedup within the run -> dedup against history
     -> score -> record -> notify
@@ -82,8 +82,8 @@ def run_once(settings: Settings, dry_run: bool = False, limit: int | None = None
     dispatcher = Dispatcher(build(settings.notifier_specs, settings.data_dir))
     usable = dispatcher.ready()
     if not usable and not dry_run:
-        # Not fatal — the run still records what it saw, and the log holds the
-        # results — but say it loudly, because it means nobody will see them.
+        # Not fatal, the run still records what it saw, and the log holds the
+        # results, but say it loudly, because it means nobody will see them.
         logger.error(
             "No notifier is usable, so this run's results will only reach "
             "scout.log. Run `job-scout check` to see what each one needs."
@@ -128,7 +128,7 @@ def _execute(settings: Settings, dispatcher: Dispatcher, dry_run: bool,
         logger.warning("No jobs returned by any source.")
         return _finish(dispatcher, [], stats, dry_run, started)
 
-    # 2. Same advert on several boards — keep the best copy.
+    # 2. Same advert on several boards. Keep the best copy.
     raw_jobs = dedup_by_content(raw_jobs, site_priority)
 
     # 3. Anything seen on a previous run is dropped before it costs anything.
@@ -189,7 +189,7 @@ def _finish(dispatcher: Dispatcher, matched: list[dict], stats: RunStats,
 def _site_priority(config: dict) -> dict[str, int]:
     """
     Which board wins when the same advert comes from several. Override in
-    config.yaml with `source_priority: [linkedin, careerjet, indeed]` — anything
+    config.yaml with `source_priority: [linkedin, careerjet, indeed]`. Anything
     you leave out sorts last.
     """
     configured = config.get("source_priority")

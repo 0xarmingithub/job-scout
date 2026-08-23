@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-systemd.sh — install Job Scout as a daily systemd timer on a Linux box.
+# install-systemd.sh. Install Job Scout as a daily systemd timer on a Linux box.
 #
 #   sudo bash deploy/install-systemd.sh
 #
@@ -20,7 +20,7 @@ EXTRAS="${EXTRAS:-gemini,jobspy}"
 
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "=== Job Scout — systemd install ==="
+echo "=== Job Scout systemd install ==="
 echo "  source     : $SOURCE_DIR"
 echo "  install to : $INSTALL_DIR"
 echo "  run as     : $SERVICE_USER"

@@ -1,7 +1,7 @@
 # Running it in Docker
 
 Reasonable if you already run everything this way. It buys you a clean Python
-environment and nothing else — the scout has no server, no database daemon and
+environment and nothing else, the scout has no server, no database daemon and
 no background process.
 
 Note before you start: **Docker Compose has no scheduler.** The container runs
@@ -55,7 +55,7 @@ If you would rather see the output directly:
 ## Secrets
 
 Keep them in `myconfig/.env`, which `docker-compose.yml` loads with `env_file`.
-Do not put them in `docker-compose.yml` — that file usually ends up committed.
+Do not put them in `docker-compose.yml`, that file usually ends up committed.
 
 Passing them on the command line works too, and is what you want in CI:
 
@@ -100,7 +100,7 @@ TimeoutStartSec=2700
 Pair it with the timer from [setup-systemd.md](setup-systemd.md), changing
 `Unit=` to point here.
 
-If you are already writing a systemd timer, consider skipping Docker entirely —
+If you are already writing a systemd timer, consider skipping Docker entirely
 [setup-systemd.md](setup-systemd.md) is fewer moving parts.
 
 ## Adding the JobIndex source
@@ -139,7 +139,7 @@ docker run --rm -it --entrypoint bash job-scout
 ## Common problems
 
 **"config.yaml not found."** `/config` is empty. Run
-`docker run --rm -v "$PWD/myconfig:/config" job-scout init /config` — note the
+`docker run --rm -v "$PWD/myconfig:/config" job-scout init /config`, note the
 missing `:ro`, since this one has to write.
 
 **The same jobs arrive every day.** `/data` is not persisted. Check that
@@ -150,7 +150,7 @@ using it.
 so on Linux it cannot write into a directory your own user owns. Either
 `sudo chown -R 10001:10001 ./myconfig ./data`, or use a named volume for `/data`,
 which does not have the problem. Docker Desktop on Mac and Windows remaps
-ownership for you, so this only bites on Linux — which is also where you are
+ownership for you, so this only bites on Linux, which is also where you are
 most likely to be running it unattended.
 
 An alternative, if you would rather not change ownership: run the container as

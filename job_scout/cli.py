@@ -1,5 +1,5 @@
 """
-cli.py — the `job-scout` command.
+cli.py, the `job-scout` command.
 
     job-scout run                    do a run
     job-scout run --dry-run          score and print, record nothing, send nothing
@@ -121,8 +121,8 @@ def _cmd_init(args) -> int:
 
     print(
         "\nNext:\n"
-        f"  1. Edit {target / PROFILE_FILENAME} — it decides what counts as a match.\n"
-        f"  2. Edit {target / CONFIG_FILENAME} — set your search terms.\n"
+        f"  1. Edit {target / PROFILE_FILENAME}. It decides what counts as a match.\n"
+        f"  2. Edit {target / CONFIG_FILENAME}. Set your search terms.\n"
         f"  3. Copy .env.example to .env and fill in one API key.\n"
         f"  4. job-scout run --config-dir {target}\n"
         f"\nFaster: job-scout init {target} --from-cv path/to/your-cv.pdf"
@@ -180,7 +180,7 @@ def _draft_profile_from_cv(target: Path, cv_path: Path, overwrite: bool) -> int:
         return 1
 
     header = (
-        "# profile.yaml — drafted from a CV by `job-scout init --from-cv`.\n"
+        "# profile.yaml. Drafted from a CV by `job-scout init --from-cv`.\n"
         "#\n"
         "# Read it before you trust it. confirmed_gaps is empty on purpose: a CV\n"
         "# says what you have done, not what you cannot do, and that section is\n"
@@ -255,7 +255,7 @@ def _cmd_check(args) -> int:
     outcomes = settings.outcomes_path
     print(
         f"Outcomes file:    {outcomes} "
-        f"({'found' if outcomes.exists() else 'absent — scoring works without it'})"
+        f"({'found' if outcomes.exists() else 'absent. Scoring works without it'})"
     )
 
     # Scoring backend.
@@ -329,7 +329,7 @@ def _print_dry_run(result, settings: Settings) -> None:
     from .notifiers.base import full_digest_text
 
     print("\n" + "=" * 72)
-    print("DRY RUN — nothing was recorded and nothing was sent")
+    print("DRY RUN, nothing was recorded and nothing was sent")
     print("=" * 72)
     print(full_digest_text(result.matched, result.stats))
     print("=" * 72)

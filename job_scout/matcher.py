@@ -1,5 +1,5 @@
 """
-matcher.py — Score every posting from 0 to 100 against the profile.
+matcher.py. Score every posting from 0 to 100 against the profile.
 
 Three tiers, cheapest first.
 
@@ -114,7 +114,7 @@ def passes_location_filter(job: dict, exclude_location_patterns: list) -> bool:
     """False when the location matches an excluded region or city."""
     location = (job.get("location") or "").lower()
     if not location:
-        return True  # No location given — let the model judge it.
+        return True  # No location given. Let the model judge it.
     return not any(pattern in location for pattern in exclude_location_patterns)
 
 
@@ -152,11 +152,10 @@ def build_prompt_template(profile: dict, outcomes_path: Path | None = None) -> s
     gap_rule = ""
     if gaps:
         gap_rule = (
-            "If a posting's core day-to-day responsibilities — not its "
-            "nice-to-haves — require one or more of these confirmed gaps, treat "
-            "that as a hard cap: score no higher than 40, even if other keywords "
-            "overlap heavily. A posting that mentions a gap item only as a bonus "
-            "is not affected.\n\n"
+            "If a posting's core day-to-day work needs one or more of these "
+            "confirmed gaps, treat that as a hard cap: score no higher than 40, "
+            "even if other keywords overlap heavily. A posting that mentions a "
+            "gap item only as a nice-to-have or a bonus is not affected.\n\n"
         )
 
     return (
@@ -177,9 +176,9 @@ def build_prompt_template(profile: dict, outcomes_path: Path | None = None) -> s
         f"CONFIRMED GAPS (the candidate does NOT have these, no exceptions):\n"
         f"{_bullets(gaps)}\n"
         f"{gap_rule}"
-        "REAL APPLICATION OUTCOMES (ground truth — use as a directional signal, "
-        "and work out the pattern yourself: which titles and domains actually "
-        "convert for this candidate and which do not):\n"
+        "REAL APPLICATION OUTCOMES. This is ground truth. Use it as a directional "
+        "signal and work out the pattern yourself: which titles and domains "
+        "actually convert for this candidate, and which do not.\n"
         f"{outcomes}\n\n"
         "JOB POSTING:\n"
         "Title: {title}\n"
@@ -244,8 +243,8 @@ def _repair_truncated(text: str) -> dict | None:
     Rescue an object that was cut off part-way through.
 
     Walks the text tracking string and bracket state, finds the last comma at
-    the top level of the object — the last point where every field before it was
-    complete — and closes the object there.
+    the top level of the object. That is the last point where every field before
+    it was complete, so the object can be closed there.
     """
     start = text.find("{")
     if start < 0:

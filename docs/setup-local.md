@@ -1,6 +1,6 @@
 # Running it on your own machine
 
-The starting point. Do this before any of the other three paths — a scheduled
+The starting point. Do this before any of the other three paths, a scheduled
 run of a badly-tuned profile is just spam you have automated.
 
 ## 1. Install
@@ -71,7 +71,7 @@ Two runs of the shipped config, measured back to back on a home connection:
 Three things there are worth understanding, because all of them surprise people.
 
 **Day one returns a pile.** The database starts empty, so the first run scores
-every posting currently listed — weeks of them at once. Twenty-plus matches is
+every posting currently listed. Weeks of them at once. Twenty-plus matches is
 the backlog, not a broken threshold. **Judge the threshold on day three, not day
 one.**
 
@@ -83,12 +83,12 @@ search terms is the only thing that makes a run meaningfully faster.
 
 **Zero matches on a run is normal and is not an error.** Run 2 found 28 postings
 the first run had not seen and none of them cleared 65. On a real daily
-schedule you would expect nothing at all on plenty of days — that is a small
+schedule you would expect nothing at all on plenty of days, that is a small
 market being a small market. Chase it only if you get nothing for a week.
 
 If scoring errors out partway through the first run, you have hit the free
 tier's per-minute limit. Add `scoring_delay_seconds: 2` to `config.yaml` and run
-it again — everything already scored is recorded and will not be paid for twice.
+it again. Everything already scored is recorded and will not be paid for twice.
 
 ## 4. Make it yours
 
@@ -112,18 +112,18 @@ list below for those.
 
 Edit `profile.yaml`. In rough order of how much difference each change makes:
 
-1. **`confirmed_gaps`** — what you genuinely cannot do. This is the section that
+1. **`confirmed_gaps`**. What you genuinely cannot do. This is the section that
    stops the scorer sending you jobs that merely share vocabulary with yours.
-2. **`candidate`** — seniority, location, work authorisation, languages. The
+2. **`candidate`**. Seniority, location, work authorisation, languages. The
    hard rejections come from here.
-3. **`core_skills`** — what you would be interviewed on tomorrow.
-4. **`hard_exclude_location_patterns`** — the places you will not commute to.
-5. **`hard_exclude_title_patterns`** — whole categories to kill.
+3. **`core_skills`**. What you would be interviewed on tomorrow.
+4. **`hard_exclude_location_patterns`**, the places you will not commute to.
+5. **`hard_exclude_title_patterns`**. Whole categories to kill.
 
 Then edit `config.yaml`:
 
-1. **`searches`** — your terms and your location. Four to eight is normal.
-2. **`notify_threshold`** — 65 with two sources, 70 with four.
+1. **`searches`**. Your terms and your location. Four to eight is normal.
+2. **`notify_threshold`**. 65 with two sources, 70 with four.
 
 Then look at what it does, without recording or sending anything:
 
@@ -159,7 +159,7 @@ five minutes:
      - type: telegram
    ```
 
-6. `job-scout check` — you want two `READY` lines.
+6. `job-scout check`. You want two `READY` lines.
 
 Email and Slack or Discord webhooks are in
 [configuration.md](configuration.md#notifiers).
@@ -186,12 +186,12 @@ job-scout run
 
 The scout does not schedule itself. Pick one:
 
-- A **systemd timer** on a machine that is always on —
+- A **systemd timer** on a machine that is always on
   [setup-systemd.md](setup-systemd.md). This is the one that works long-term.
-- **GitHub Actions**, if you have no machine —
+- **GitHub Actions**, if you have no machine
   [setup-github-actions.md](setup-github-actions.md). Fewer results; read the
   warning there first.
-- **Docker** — [setup-docker.md](setup-docker.md).
+- **Docker**. [setup-docker.md](setup-docker.md).
 - A **cron line**, if you want the shortest possible answer:
 
   ```cron

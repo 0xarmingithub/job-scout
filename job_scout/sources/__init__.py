@@ -1,5 +1,5 @@
 """
-sources — where postings come from.
+sources. Where postings come from.
 
 Every source is optional. A source that is not installed, not configured, or
 simply broken today logs one line and returns nothing. It never takes the run
@@ -14,7 +14,7 @@ this shape, and adding one line to SOURCES below:
         "company":     str,
         "location":    str,
         "description": str,
-        "url":         str,   # must be unique and stable — it is the job's id
+        "url":         str,   # must be unique and stable, it is the job's id
         "site":        str,   # the source name, used for dedup priority
         "date_posted": str,   # ISO date, or "" if the board does not say
         "salary":      str,   # free text, or ""
@@ -116,7 +116,7 @@ def fetch_jobs(searches: list[dict], config: dict | None = None) -> tuple[list[d
             logger.error("%s failed (skipping): %s", name, exc, exc_info=True)
             report.errors[name] = str(exc)
 
-    logger.info("Fetched %d unique jobs — %s", len(all_jobs), report.summary())
+    logger.info("Fetched %d unique jobs. %s", len(all_jobs), report.summary())
     return all_jobs, report
 
 

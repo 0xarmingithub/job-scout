@@ -1,5 +1,5 @@
 """
-dedup.py — Remember every job you have already seen, so you see it once.
+dedup.py. Remember every job you have already seen, so you see it once.
 
 Two different jobs are done here.
 
@@ -200,7 +200,7 @@ def dedup_by_content(
     boards. Keeps one copy per (normalised title, normalised company) pair:
 
       1. Highest site priority.
-      2. If tied, the longer description — the scorer reads it.
+      2. If tied, the longer description, because that is what the scorer reads.
       3. If still tied, whichever came first.
 
     Never modifies the input; returns a new list.
@@ -214,7 +214,7 @@ def dedup_by_content(
     for job in jobs:
         key = content_key(job)
         if not key:
-            # No title or no company means no reliable key — always keep it.
+            # No title or no company means no reliable key. Always keep it.
             continue
         if key not in best or _is_better(job, best[key], priority):
             best[key] = job

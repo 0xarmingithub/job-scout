@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-backend.py — One entry point for every model call.
+One entry point for every model call.
 
 You pick a backend in config.yaml with `scoring_model: "backend:model"`. All five
 backends are optional. You install what the one you picked needs, and nothing
 else. Choosing a backend you have not set up produces a sentence telling you what
-to install or which variable to set — never a stack trace.
+to install or which variable to set. Never a stack trace.
 
     gemini:gemini-2.5-flash              Google API. Needs the google-genai
                                          package and GOOGLE_API_KEY. Free tier.
@@ -110,7 +110,7 @@ def uses_cli(spec: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Preflight — say what is missing before spending a run finding out
+# Preflight. Say what is missing before spending a run finding out
 # ---------------------------------------------------------------------------
 
 def _module_installed(name: str) -> bool:
@@ -204,7 +204,7 @@ def _flatten(system: str, user: str) -> str:
     """
     The CLIs take a single prompt, not a system/user pair. Fold the system
     prompt in as a leading instruction block and tell the agent to answer from
-    the text alone — otherwise it will try to open files and run commands.
+    the text alone. Otherwise it will try to open files and run commands.
     """
     return (
         f"{system.strip()}\n\n"
