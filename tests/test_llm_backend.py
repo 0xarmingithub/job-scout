@@ -128,11 +128,47 @@ def test_check_all_covers_every_backend(no_clis):
 
 # ─── Errors raised at call time carry the same wording ────────────────────────
 
-def test_run_gemini_without_key_raises_model_error(monkeypatch):
+def test_run_gemini_names_whatever_is_missing(monkeypatch):
+    """
+    Runs in any environment. Which of the two things is missing depends on
+    whether the gemini extra is installed — CI installs only [dev], a developer
+    who runs the scout has the package — and the message has to be useful either
+    way.
+    """
+    monkeypatch.setattr(backend, "_module_installed", lambda name: True)
+    with pytest.raises(backend.ModelError) as excinfo:
+        backend._run_gemini("gemini-3.7-flash", "sys", "user")
+    message = str(excinfo.value)
+    assert "GOOGLE_API_KEY" in message or "google-genai" in message
+
+
+def test_run_gemini_without_key_names_the_variable(monkeypatch):
+    """The key-missing branch, which only exists once the package imports."""
+    pytest.importorskip("google.genai", reason="the gemini extra is not installed")
     monkeypatch.setattr(backend, "_module_installed", lambda name: True)
     with pytest.raises(backend.ModelError) as excinfo:
         backend._run_gemini("gemini-3.7-flash", "sys", "user")
     assert "GOOGLE_API_KEY" in str(excinfo.value)
+    assert "aistudio.google.com" in str(excinfo.value)
+
+
+def test_run_gemini_without_the_package_names_the_package(monkeypatch):
+    """The package-missing branch, forced regardless of what is installed."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_genai(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "google" and fromlist and "genai" in fromlist:
+            raise ImportError("no google-genai here")
+        if name.startswith("google.genai"):
+            raise ImportError("no google-genai here")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", no_genai)
+    with pytest.raises(backend.ModelError) as excinfo:
+        backend._run_gemini("gemini-3.7-flash", "sys", "user")
+    assert "pip install google-genai" in str(excinfo.value)
 
 
 def test_run_openrouter_without_key_raises_model_error():
