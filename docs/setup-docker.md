@@ -15,6 +15,11 @@ cd job-scout
 
 mkdir myconfig
 docker build -t job-scout .
+
+# On Linux only: the image runs as uid 10001, so it cannot write into a
+# directory your user owns. Skip this line on Docker Desktop for Mac or Windows.
+sudo chown 10001:10001 myconfig
+
 docker run --rm -v "$PWD/myconfig:/config" job-scout init /config
 
 # edit myconfig/profile.yaml and myconfig/config.yaml
@@ -141,9 +146,16 @@ missing `:ro`, since this one has to write.
 `docker volume ls` shows `job-scout-data` and that the container is actually
 using it.
 
-**Permission denied writing to /data.** The image runs as uid 10001. On a bind
-mount, `chown -R 10001:10001 ./data` on the host, or use a named volume, which
-does not have this problem.
+**Permission denied writing to /data or /config.** The image runs as uid 10001,
+so on Linux it cannot write into a directory your own user owns. Either
+`sudo chown -R 10001:10001 ./myconfig ./data`, or use a named volume for `/data`,
+which does not have the problem. Docker Desktop on Mac and Windows remaps
+ownership for you, so this only bites on Linux — which is also where you are
+most likely to be running it unattended.
+
+An alternative, if you would rather not change ownership: run the container as
+yourself with `--user "$(id -u):$(id -g)"`. Everything works, because nothing in
+the image needs uid 10001 specifically.
 
 **The container exits immediately with nothing in the log.** That is a run with
 no matches. Check `/data/scout.log`.
