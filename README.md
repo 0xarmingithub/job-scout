@@ -54,13 +54,27 @@ Nothing, in the normal case.
 
 | | |
 |---|---|
-| Scoring | Google's free tier covers a daily run. At the time of writing it allows 1,500 model calls a day; a run makes 30 to 60. |
+| Scoring | Google's free tier covers it. At the time of writing it allows 1,500 model calls a day. A steady-state run makes 30 to 60. |
 | Hosting | The author's runs on an Oracle Cloud always-free VM. A laptop and `cron` works too. |
 | Job boards | LinkedIn, Indeed and JobIndex are free. Careerjet's partner API is free. Apify is paid and optional. |
 
-If you outgrow the free tier, Gemini Flash costs about **$0.12 a day** at 60
-postings — roughly 2,000 input tokens each, priced at $0.75 per million as of
-August 2026. That is an estimate; check
+**Day one costs several times more than day two.** The database starts empty, so
+every posting is new and every one gets scored. Two runs of the shipped config,
+measured back to back:
+
+| | Run 1 | Run 2 |
+|---|---|---|
+| Model calls | 178 | 27 |
+| Matches | 23 | 0 |
+| Wall clock | 882 s | 351 s |
+
+The model bill collapses; the clock does not. Most of a run is spent asking the
+job boards for results, not scoring them, so run time tracks how many search
+terms you have rather than how much is new.
+
+If you outgrow the free tier, Gemini Flash costs roughly **$0.12 a day** at 60
+postings — about 2,000 input tokens each at $0.75 per million as of August 2026.
+An estimate; check
 [Google's pricing](https://ai.google.dev/gemini-api/docs/pricing) for the real
 number.
 

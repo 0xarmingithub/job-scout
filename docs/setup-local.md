@@ -56,8 +56,39 @@ whether the scoring makes sense before writing anything about yourself.
 
 Results are in `data/matches.md`.
 
-Expect the first run to take a few minutes. Most of it is the boards, not the
-model.
+### What to expect, so you do not think it is broken
+
+Two runs of the shipped config, measured back to back on a home connection:
+
+| | Run 1 | Run 2, straight after |
+|---|---|---|
+| Postings fetched | 202 | 198 |
+| Already seen, skipped | 0 | 156 |
+| Sent to the model | 189 | 28 |
+| Matches | **23** | **0** |
+| Wall clock | 882 s | 351 s |
+
+Three things there are worth understanding, because all of them surprise people.
+
+**Day one returns a pile.** The database starts empty, so the first run scores
+every posting currently listed — weeks of them at once. Twenty-plus matches is
+the backlog, not a broken threshold. **Judge the threshold on day three, not day
+one.**
+
+**The model bill collapses after day one, and the clock does not.** Run 2 made 27
+model calls instead of 178, but still took six minutes, because most of the time
+is spent asking LinkedIn and Indeed for results, not scoring them. Four search
+terms across two boards is roughly six minutes whatever happens next. Fewer
+search terms is the only thing that makes a run meaningfully faster.
+
+**Zero matches on a run is normal and is not an error.** Run 2 found 28 postings
+the first run had not seen and none of them cleared 65. On a real daily
+schedule you would expect nothing at all on plenty of days — that is a small
+market being a small market. Chase it only if you get nothing for a week.
+
+If scoring errors out partway through the first run, you have hit the free
+tier's per-minute limit. Add `scoring_delay_seconds: 2` to `config.yaml` and run
+it again — everything already scored is recorded and will not be paid for twice.
 
 ## 4. Make it yours
 
