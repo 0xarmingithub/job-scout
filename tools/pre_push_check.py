@@ -154,23 +154,24 @@ def scan(names: list[str], denylist: list[str]) -> list[Finding]:
         path = REPO / name
         if not path.is_file() or path.suffix.lower() in BINARY_SUFFIXES:
             continue
-        if name.replace("\\", "/") in ALLOWED_FILES:
-            continue
+        # An allowed file may contain credential shapes, because detecting them
+        # is what it is for. It is never allowed to contain real personal
+        # details, so the word-list check below still runs on it.
+        shapes_exempt = name.replace("\\", "/") in ALLOWED_FILES
         try:
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
 
         for number, line in enumerate(text.splitlines(), 1):
-            if ALLOW_MARKER in line:
-                continue
-            for label, pattern in SECRET_PATTERNS:
-                match = pattern.search(line)
-                if match:
-                    shown = match.group(0)
-                    findings.append(
-                        Finding(name, number, label, shown[:12] + "..." + shown[-4:])
-                    )
+            if not shapes_exempt and ALLOW_MARKER not in line:
+                for label, pattern in SECRET_PATTERNS:
+                    match = pattern.search(line)
+                    if match:
+                        shown = match.group(0)
+                        findings.append(
+                            Finding(name, number, label, shown[:12] + "..." + shown[-4:])
+                        )
             lowered = line.lower()
             for term in denylist:
                 if term in lowered:

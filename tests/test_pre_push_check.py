@@ -99,7 +99,7 @@ def test_the_redaction_module_is_allowed_to_describe_token_shapes(tmp_path, monk
         "data/jobs.db",
         "VM.md",
         "job-scout/VM.md",
-        "deploy/oracleVM.key",
+        "deploy/server-private.key",
         "secrets/id_ed25519",
     ],
 )
@@ -183,3 +183,20 @@ def test_the_checker_exits_non_zero_when_it_finds_something(tmp_path, monkeypatc
     monkeypatch.delenv("JOB_SCOUT_DENYLIST", raising=False)
     assert guard.main([]) == 1
     assert "DO NOT PUSH" in capsys.readouterr().err
+
+
+def test_an_allowed_file_is_still_checked_for_personal_terms(tmp_path, monkeypatch):
+    """
+    The allowlist exists so a file whose job is detecting secrets can contain
+    secret-shaped strings. It must not become a hole where somebody's real name
+    or server address passes unnoticed.
+    """
+    findings = _scan(
+        tmp_path, "tests/test_redact.py",
+        f'SECRET = "ghp_{"A" * 36}"  # deployed from /opt/somewhere-real\n',
+        denylist=["/opt/somewhere-real"],
+        monkeypatch=monkeypatch,
+    )
+    labels = [f.label for f in findings]
+    assert "private term" in labels, "the word list must apply everywhere"
+    assert "GitHub token" not in labels, "shapes are still exempt in an allowed file"

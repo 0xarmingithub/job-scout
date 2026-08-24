@@ -49,3 +49,6 @@ htmlcov/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Crash dumps from MSYS/Cygwin tools on Windows.
+*.stackdump
