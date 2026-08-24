@@ -24,13 +24,13 @@ tuning.
 Then look at what the database says about the last few days:
 
 ```bash
-sqlite3 data/jobs.db \
-  "SELECT status, COUNT(*) FROM seen_jobs GROUP BY status ORDER BY 2 DESC;"
-
-sqlite3 data/jobs.db \
-  "SELECT score, title, company FROM seen_jobs
-   WHERE status='new' ORDER BY score DESC LIMIT 30;"
+job-scout stats
 ```
+
+That gives the status breakdown, the score distribution and the best scores
+on record in one go. The distribution decides everything below: it tells you
+whether the near misses sit in the 50s and 60s, where lowering the threshold
+helps, or in the 30s and 40s, where it will not.
 
 That second query is the important one. It tells you what the near misses
 actually scored, which decides everything below.

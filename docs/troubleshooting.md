@@ -48,9 +48,13 @@ Symptom: lots fetched, almost nothing scored. The log shows a large number of
 `rejected_prefilter`.
 
 ```bash
-sqlite3 data/jobs.db \
-  "SELECT status, COUNT(*) FROM seen_jobs GROUP BY status ORDER BY 2 DESC;"
+job-scout stats
 ```
+
+That reports where postings are being lost, the score distribution, and
+whether anything has ever cleared your threshold. It needs nothing extra
+installed. The `sqlite3` command it replaced is a separate package and is
+often missing on a server.
 
 **Your keyword list is too narrow.** It is built from the words in your search
 terms plus `extra_pre_filter_keywords`. Add synonyms and adjacent technology.
@@ -110,8 +114,11 @@ any posting that mentions ML anywhere. Write the specific version instead. See
 Check it is being written:
 
 ```bash
-sqlite3 data/jobs.db "SELECT COUNT(*), MAX(first_seen) FROM seen_jobs;"
+job-scout stats
 ```
+
+The first line says how many postings are recorded. If that is 0 after a
+successful run, the run is not writing where you think it is.
 
 If the count is 0 after a successful run, the run is not writing there. `--dry-run`
 also writes nothing, on purpose.

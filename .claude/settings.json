@@ -20,7 +20,7 @@
       "Bash(git log:*)",
       "Bash(git branch:*)",
       "Bash(git add:*)",
-      "Bash(sqlite3 data/jobs.db:*)",
+      "Bash(job-scout stats:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(head:*)",

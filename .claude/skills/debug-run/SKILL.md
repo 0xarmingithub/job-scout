@@ -62,8 +62,7 @@ Not a quiet market, a source problem, nine times in ten.
 ### "Lots fetched, almost nothing scored"
 
 ```bash
-sqlite3 data/jobs.db \
-  "SELECT status, COUNT(*) FROM seen_jobs GROUP BY status ORDER BY 2 DESC;"
+job-scout stats
 ```
 
 A large `rejected_prefilter` count means the keyword list is too narrow, or a
@@ -89,7 +88,7 @@ message, that message usually names the cause.
 `jobs.db` is not surviving between runs.
 
 ```bash
-sqlite3 data/jobs.db "SELECT COUNT(*), MAX(first_seen) FROM seen_jobs;"
+job-scout stats
 ```
 
 Zero after a successful run means it is not being written there. Common causes:

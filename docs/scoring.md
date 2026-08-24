@@ -226,6 +226,10 @@ All of them are written to `jobs.db`, so nothing is ever scored twice. To see
 what happened yesterday:
 
 ```bash
-sqlite3 data/jobs.db \
-  "SELECT status, COUNT(*) FROM seen_jobs GROUP BY status ORDER BY 2 DESC;"
+job-scout stats
 ```
+
+That reports where postings are being lost, the score distribution, and
+whether anything has ever cleared your threshold. It needs nothing extra
+installed. The `sqlite3` command it replaced is a separate package and is
+often missing on a server.

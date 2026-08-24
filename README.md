@@ -396,7 +396,7 @@ not point this at a company you are trying to annoy.
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |
 | [Adding a job source](docs/adding-a-job-source.md) | About 40 lines of work |
 | [Adding a notifier](docs/adding-a-notifier.md) | About 30 |
-| [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing |
+| [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing. `job-scout stats` is the first command to run |
 | [Examples](examples/) | A complete Denmark setup |
 | [AGENTS.md](AGENTS.md) | Instructions for AI coding tools. Not Claude-specific. |
 | [Contributing](CONTRIBUTING.md) | |

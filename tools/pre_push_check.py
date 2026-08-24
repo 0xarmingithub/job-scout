@@ -12,13 +12,17 @@ it. One careless `git add -A` in the wrong directory is all it takes.
 
 Exit code 0 means clean. Anything else means do not push.
 
-Three kinds of check:
+Four kinds of check:
 
 1. Credential shapes. GitHub tokens, Google keys, Apify tokens, OpenAI-style
    keys, Telegram bot tokens, private key blocks, passwords inside URLs.
-2. Files that should never be here at all. A real config.yaml, profile.yaml,
+2. Commit author and committer identity. A push publishes who wrote each
+   commit, not only what the files say. That is baked into the commit hash, so
+   correcting it later means rewriting history and force-pushing. This
+   repository has already had to do that once.
+3. Files that should never be here at all. A real config.yaml, profile.yaml,
    .env, outcomes.csv, jobs.db, or anything named like infrastructure notes.
-3. Your own words. Names, employers, addresses, IP addresses, hostnames. These
+4. Your own words. Names, employers, addresses, IP addresses, hostnames. These
    cannot be listed in this file, because writing them here would publish the
    very thing they are meant to keep out. They live in a private word list.
 
@@ -33,7 +37,9 @@ Terms match case-insensitively anywhere in a line. Keep real names, employer
 names, your town, your VM's IP, your SSH key filenames and your personal domains
 in it.
 
-Without a word list the first two checks still run.
+Without a word list, checks 1 and 3 still run. Checks 2 and 4 need one, which
+is why the hook passes --require-denylist: a fresh clone has no word list and
+would otherwise look clean while checking almost nothing.
 
 ## Installing it as a hook
 
@@ -128,6 +134,51 @@ def load_denylist() -> list[str]:
     return []
 
 
+def commit_identities(rev_range: str | None) -> list[tuple[str, str]]:
+    """
+    Every (commit, "Name <email>") a push would publish.
+
+    File contents are only half of what goes public. Author and committer
+    identity are published too, they are baked into the commit hash, and
+    correcting them afterwards means rewriting history and force-pushing. This
+    repository has already had to do that once.
+    """
+    separator = chr(31)  # unit separator, safe inside a name or an email
+    argv = [
+        "git", "log",
+        f"--format=%h{separator}%an <%ae>{separator}%cn <%ce>",
+        rev_range or "HEAD",
+    ]
+    result = subprocess.run(argv, cwd=REPO, capture_output=True, text=True)
+    if result.returncode != 0:
+        return []
+
+    identities: list[tuple[str, str]] = []
+    for line in result.stdout.splitlines():
+        parts = line.split(separator)
+        if len(parts) != 3:
+            continue
+        commit, author, committer = parts
+        identities.append((commit, author))
+        if committer != author:
+            identities.append((commit, committer))
+    return identities
+
+
+def scan_identities(rev_range: str | None, denylist: list[str]) -> list[Finding]:
+    """Findings for any commit whose author or committer matches the word list."""
+    findings: list[Finding] = []
+    for commit, identity in commit_identities(rev_range):
+        lowered = identity.lower()
+        for term in denylist:
+            if term in lowered:
+                findings.append(
+                    Finding(f"commit {commit}", 0, "private term in commit author", identity)
+                )
+                break
+    return findings
+
+
 def files_to_check(mode: str, rev_range: str | None) -> list[str]:
     if mode == "staged":
         argv = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR"]
@@ -184,12 +235,27 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--staged", action="store_true", help="check staged changes only")
     parser.add_argument("--range", dest="rev_range", help="e.g. origin/main..HEAD")
+    parser.add_argument(
+        "--require-denylist", action="store_true",
+        help="fail if no private word list is present, rather than warning. Use "
+             "this in the hook: a fresh clone does not carry one.",
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
     denylist = load_denylist()
+    if args.require_denylist and not denylist:
+        print(
+            "No private word list found, and --require-denylist was given.\n"
+            "A fresh clone does not carry one, because it lives inside .git.\n"
+            "Restore it, then run this again.",
+            file=sys.stderr,
+        )
+        return 2
+
     names = files_to_check("staged" if args.staged else "tree", args.rev_range)
     findings = scan(names, denylist)
+    findings += scan_identities(args.rev_range, denylist)
 
     if not args.quiet:
         source = "staged changes" if args.staged else (args.rev_range or "the whole tree")

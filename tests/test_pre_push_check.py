@@ -200,3 +200,54 @@ def test_an_allowed_file_is_still_checked_for_personal_terms(tmp_path, monkeypat
     labels = [f.label for f in findings]
     assert "private term" in labels, "the word list must apply everywhere"
     assert "GitHub token" not in labels, "shapes are still exempt in an allowed file"
+
+
+# ─── Commit metadata, which a push publishes just as surely as the files ──────
+
+def test_a_private_term_in_a_commit_author_is_caught(monkeypatch):
+    """
+    The leak that actually happened. Every commit carried a real email, the
+    files were spotless, and no file-content check would ever have seen it.
+    """
+    monkeypatch.setattr(
+        guard, "commit_identities",
+        lambda rev: [("abc1234", "Real Name <real.person@gmail.com>")],
+    )
+    findings = guard.scan_identities(None, ["real.person"])
+    assert len(findings) == 1
+    assert findings[0].label == "private term in commit author"
+
+
+def test_a_clean_commit_author_passes(monkeypatch):
+    monkeypatch.setattr(
+        guard, "commit_identities",
+        lambda rev: [("abc1234", "somehandle <somehandle@users.noreply.github.com>")],
+    )
+    assert guard.scan_identities(None, ["real.person"]) == []
+
+
+def test_a_committer_differing_from_the_author_is_also_checked(monkeypatch):
+    monkeypatch.setattr(
+        guard, "commit_identities",
+        lambda rev: [
+            ("abc1234", "handle <handle@users.noreply.github.com>"),
+            ("abc1234", "Real Name <real.person@gmail.com>"),
+        ],
+    )
+    assert len(guard.scan_identities(None, ["real.person"])) == 1
+
+
+def test_this_repository_has_no_private_identity_in_its_history():
+    """The rule: no real name or email in a public repo, commit metadata included."""
+    denylist = guard.load_denylist()
+    if not denylist:
+        pytest.skip("no private word list on this machine")
+    findings = guard.scan_identities(None, denylist)
+    assert findings == [], "\n".join(str(f) for f in findings)
+
+
+def test_require_denylist_refuses_when_there_is_none(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(guard, "REPO", tmp_path)
+    monkeypatch.delenv("JOB_SCOUT_DENYLIST", raising=False)
+    assert guard.main(["--require-denylist"]) == 2
+    assert "Restore it" in capsys.readouterr().err

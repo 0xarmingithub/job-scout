@@ -5,6 +5,7 @@ cli.py, the `job-scout` command.
     job-scout run --dry-run          score and print, record nothing, send nothing
     job-scout run --limit 5          stop after 5 postings reach the scorer
     job-scout check                  tell me what is and is not set up
+    job-scout stats                  what the seen-jobs database says
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
     job-scout version
 
@@ -81,6 +82,14 @@ def build_parser() -> argparse.ArgumentParser:
              "of copying the example. Needs a working model backend.",
     )
 
+    stats_parser = subparsers.add_parser(
+        "stats", help="what the seen-jobs database says: where postings go, what they score"
+    )
+    _common(stats_parser)
+    stats_parser.add_argument(
+        "--days", type=int, default=14, help="how many days of history to show"
+    )
+
     subparsers.add_parser("version", help="print the version")
     return parser
 
@@ -97,6 +106,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_init(args)
     if command == "check":
         return _cmd_check(args)
+    if command == "stats":
+        return _cmd_stats(args)
     return _cmd_run(args)
 
 
@@ -217,6 +228,18 @@ def _is_shipped_example(profile_path: Path) -> bool:
         )
     except OSError:
         return False
+
+
+def _cmd_stats(args) -> int:
+    from .stats import render
+
+    try:
+        settings = load_settings(args.config_dir, args.data_dir)
+    except ConfigError as exc:
+        print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
+        return 2
+    print(render(settings.data_dir / "jobs.db", settings.notify_threshold, args.days))
+    return 0
 
 
 def _cmd_check(args) -> int:

@@ -43,9 +43,9 @@ fi
 
 echo "pre-push: checking for private content ..."
 if [ -n "$range" ]; then
-    "$python" "$repo/tools/pre_push_check.py" --range "$range"
+    "$python" "$repo/tools/pre_push_check.py" --require-denylist --range "$range"
 else
-    "$python" "$repo/tools/pre_push_check.py"
+    "$python" "$repo/tools/pre_push_check.py" --require-denylist
 fi
 HOOK_BODY
 

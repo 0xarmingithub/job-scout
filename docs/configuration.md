@@ -399,10 +399,26 @@ job-scout run                    do a run
 job-scout run --dry-run          score and print, record nothing, send nothing
 job-scout run --limit 5          stop after 5 postings reach the scorer
 job-scout check                  what is set up and what is missing
+job-scout stats                  where postings go and what they score
 job-scout init DIR               put a config.yaml and profile.yaml somewhere
 job-scout init DIR --from-cv CV  draft profile.yaml from your CV instead
 job-scout version
 ```
+
+### `stats`
+
+The first thing to run when a run sends you nothing. It reads `jobs.db` and
+shows where postings were dropped, the score distribution, the best scores on
+record, and whether anything has ever cleared your threshold.
+
+```bash
+job-scout stats
+job-scout stats --days 30
+```
+
+If the distribution has never produced anything above your threshold, the
+problem is the profile or the search terms. Moving the threshold will not fix
+it, and lowering it just delivers bad matches.
 
 ### `init --from-cv`
 
