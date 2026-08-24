@@ -114,8 +114,17 @@ def run_once(settings: Settings, dry_run: bool = False, limit: int | None = None
 
 def _execute(settings: Settings, dispatcher: Dispatcher, dry_run: bool,
              limit: int | None, started: datetime) -> RunResult:
-    stats = RunStats(threshold=settings.notify_threshold)
-    store = JobStore(settings.data_dir / "jobs.db")
+    advanced = settings.advanced
+    bands = advanced["score_bands"]
+    stats = RunStats(
+        threshold=settings.notify_threshold,
+        strong_at=int(bands["strong"]),
+        possible_at=int(bands["possible"]),
+    )
+    store = JobStore(
+        settings.data_dir / "jobs.db",
+        lookback_days=int(advanced["seen_lookback_days"]),
+    )
 
     site_priority = _site_priority(settings.config)
 

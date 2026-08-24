@@ -53,9 +53,12 @@ def make_job_id(url: str) -> str:
 class JobStore:
     """The seen-jobs table. One instance per run."""
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path, lookback_days: int = _CONTENT_LOOKBACK_DAYS):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # How far back the title-and-company check looks. Set it with
+        # `advanced.seen_lookback_days` in config.yaml.
+        self.lookback_days = max(0, int(lookback_days))
 
     def _conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path))
@@ -111,7 +114,7 @@ class JobStore:
                 for row in conn.execute(
                     "SELECT title, company FROM seen_jobs "
                     "WHERE date(first_seen) >= date('now', ?)",
-                    (f"-{_CONTENT_LOOKBACK_DAYS} days",),
+                    (f"-{self.lookback_days} days",),
                 )
                 if row[0] and row[1]
             }

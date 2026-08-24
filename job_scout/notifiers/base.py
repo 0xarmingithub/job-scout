@@ -23,6 +23,10 @@ class RunStats:
     threshold: int = 65
     elapsed_seconds: float = 0.0
     source_summary: str = ""
+    # What the labels mean. Separate from threshold, which decides whether you
+    # hear about a posting at all. Set with `advanced.score_bands`.
+    strong_at: int = 80
+    possible_at: int = 65
 
     @property
     def matched(self) -> int:
@@ -58,16 +62,23 @@ class Notifier:
 
 # ─── Shared formatting ────────────────────────────────────────────────────────
 
-def score_label(score: int) -> str:
-    """The three bands. Anything below the threshold never reaches a notifier."""
-    if score >= 80:
+def score_label(score: int, stats: "RunStats | None" = None) -> str:
+    """
+    The three bands. Anything below your threshold never reaches a notifier.
+
+    The cut-offs come from the run, so `advanced.score_bands` in config.yaml
+    changes what STRONG and POSSIBLE mean.
+    """
+    strong = stats.strong_at if stats else 80
+    possible = stats.possible_at if stats else 65
+    if score >= strong:
         return "STRONG"
-    if score >= 65:
+    if score >= possible:
         return "POSSIBLE"
     return "LONG SHOT"
 
 
-def job_lines(job: dict) -> list[str]:
+def job_lines(job: dict, stats: "RunStats | None" = None) -> list[str]:
     """One job as a list of plain-text lines. Used by every notifier."""
     score = int(job.get("score", 0))
     verdict = job.get("verdict") or {}
@@ -78,7 +89,7 @@ def job_lines(job: dict) -> list[str]:
     if site:
         where = f"{location} [{site}]" if location else f"[{site}]"
 
-    lines = [f"[{score_label(score)}] {score}% {job.get('title', '?')}"]
+    lines = [f"[{score_label(score, stats)}] {score}% {job.get('title', '?')}"]
     lines.append(f"Company:  {job.get('company', '?')}")
     if where:
         lines.append(f"Location: {where}")
@@ -100,8 +111,8 @@ def job_lines(job: dict) -> list[str]:
     return lines
 
 
-def format_job(job: dict) -> str:
-    return "\n".join(job_lines(job))
+def format_job(job: dict, stats: "RunStats | None" = None) -> str:
+    return "\n".join(job_lines(job, stats))
 
 
 def digest_header(matched_jobs: list[dict], stats: RunStats) -> str:
@@ -147,7 +158,7 @@ def full_digest_text(matched_jobs: list[dict], stats: RunStats) -> str:
     if not matched_jobs:
         return f"{digest_header(matched_jobs, stats)}\n\n{no_match_body(stats)}"
     parts = [digest_header(matched_jobs, stats)]
-    parts += [format_job(job) for job in matched_jobs]
+    parts += [format_job(job, stats) for job in matched_jobs]
     return "\n\n".join(parts)
 
 

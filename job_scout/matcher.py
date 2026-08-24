@@ -38,6 +38,7 @@ import time
 from pathlib import Path
 
 from . import track_record
+from .config import merge_advanced
 from .llm import ModelError, label_for, preflight, run_model
 
 logger = logging.getLogger(__name__)
@@ -163,7 +164,11 @@ def _languages(candidate: dict) -> str:
     return " | ".join(pairs) if pairs else "(not stated)"
 
 
-def build_prompt_template(profile: dict, outcomes_path: Path | None = None) -> str:
+def build_prompt_template(
+    profile: dict,
+    outcomes_path: Path | None = None,
+    max_outcomes: int = track_record._MAX_LISTED,
+) -> str:
     """
     Build the scoring prompt from profile.yaml.
 
@@ -175,7 +180,7 @@ def build_prompt_template(profile: dict, outcomes_path: Path | None = None) -> s
 
     outcomes = ""
     if outcomes_path is not None:
-        outcomes = track_record.build_context(outcomes_path)
+        outcomes = track_record.build_context(outcomes_path, max_outcomes)
     outcomes = outcomes or "(no application outcome data recorded yet)"
 
     gap_rule = ""
@@ -357,7 +362,13 @@ def score_jobs(
 
     logger.info("Scoring backend: %s", label_for(model_spec))
 
-    prompt_template = build_prompt_template(profile, outcomes_path)
+    advanced = merge_advanced(config)
+    description_chars = int(advanced["description_chars"])
+    reply_tokens = int(advanced["reply_tokens"])
+
+    prompt_template = build_prompt_template(
+        profile, outcomes_path, int(advanced["outcomes_listed"])
+    )
     use_prefilter = bool(config.get("pre_filter", True))
     keywords = build_prefilter_keywords(config, profile) if use_prefilter else frozenset()
     exclude_titles = _lower_list(profile, "hard_exclude_title_patterns")
@@ -370,7 +381,7 @@ def score_jobs(
     model_calls = 0
 
     for job in jobs:
-        description = (job.get("description") or "")[:DESCRIPTION_CHARS]
+        description = (job.get("description") or "")[:description_chars]
 
         if not passes_location_filter(job, exclude_locations):
             job.update(score=0, status="rejected_location")
@@ -400,7 +411,7 @@ def score_jobs(
         for attempt in range(retries + 1):
             try:
                 text = run_model(
-                    model_spec, SCORING_SYSTEM_PROMPT, prompt, max_tokens=MAX_REPLY_TOKENS
+                    model_spec, SCORING_SYSTEM_PROMPT, prompt, max_tokens=reply_tokens
                 )
                 model_calls += 1
                 parsed = parse_response(text)

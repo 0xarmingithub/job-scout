@@ -66,6 +66,12 @@ def fetch_jobindex_jobs(searches: list[dict], config: dict | None = None) -> lis
         )
         return []
 
+    from ..config import merge_advanced
+
+    # JobIndex is scraped rather than queried, so it gets at least a
+    # second between pages whatever the global setting says.
+    page_delay = max(1.0, float(merge_advanced(config or {})["source_delay_seconds"]))
+
     jobs: list[dict] = []
     seen_urls: set[str] = set()
 
@@ -138,7 +144,7 @@ def fetch_jobindex_jobs(searches: list[dict], config: dict | None = None) -> lis
                 if not has_next:
                     break
                 page_num += 1
-                time.sleep(PAGE_DELAY)
+                time.sleep(page_delay)
 
             logger.info("JobIndex: '%s' -> %d jobs", term, collected)
 

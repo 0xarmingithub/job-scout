@@ -128,7 +128,7 @@ class TelegramNotifier(Notifier):
 
         ok = self._send(digest_header(matched_jobs, stats))
         for job in matched_jobs:
-            ok = self._send(format_job(job)) and ok
+            ok = self._send(format_job(job, stats)) and ok
             time.sleep(_MESSAGE_DELAY)
         logger.info("Telegram: sent header plus %d job messages", len(matched_jobs))
         return ok

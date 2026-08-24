@@ -139,7 +139,7 @@ class FileNotifier(Notifier):
 
     def _as_text(self, jobs: list[dict], stats: RunStats) -> str:
         parts = [digest_header(jobs, stats)]
-        parts += [format_job(job) for job in jobs] or [no_match_body(stats)]
+        parts += [format_job(job, stats) for job in jobs] or [no_match_body(stats)]
         return "\n\n".join(parts) + "\n\n"
 
     def _as_csv(self, jobs: list[dict]) -> str:

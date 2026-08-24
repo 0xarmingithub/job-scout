@@ -8,6 +8,8 @@ Three files, and only one of them holds anything secret.
 | `profile.yaml` | Who you are and what counts as a match | Your call, it is personal |
 | `.env` | Every API key and token | **Never** |
 
+How to get each of those keys, what it costs and whether it needs an account is on one page: [external-services.md](external-services.md).
+
 The shipped copies live in `job_scout/templates/` and are copied to the repo
 root the first time you run anything. Your edits to the copies are gitignored,
 so a `git pull` cannot overwrite them and you cannot accidentally push them.
@@ -87,6 +89,45 @@ source_priority: [linkedin, indeed, careerjet, apify, jobindex]
 ```
 
 Anything not listed sorts last. The default is the order above.
+
+## `advanced`
+
+Optional, and nothing here needs changing to get started. Every value shown is
+the default, so deleting a line puts it back.
+
+| Key | Default | What it does |
+|---|---|---|
+| `description_chars` | `3500` | How much of a posting the model reads. The biggest lever on cost. |
+| `reply_tokens` | `1024` | Room for the model's reply. Too small and a wordy answer gets cut off, which shows up as scoring errors. |
+| `outcomes_listed` | `25` | How many outcomes from `outcomes.csv` reach the prompt. |
+| `seen_lookback_days` | `7` | How far back the title-and-company duplicate check looks. |
+| `source_delay_seconds` | `0.5` | Seconds between paged requests to a board. |
+| `score_bands.strong` | `80` | The score at which a match is labelled STRONG. |
+| `score_bands.possible` | `65` | The score at which it is labelled POSSIBLE. |
+
+```yaml
+advanced:
+  description_chars: 2000
+  score_bands:
+    strong: 85
+    possible: 70
+```
+
+Two of these are worth thinking about.
+
+**`description_chars` is the cost dial.** Halve it and you roughly halve the
+token bill. The price is that the model sometimes misses a requirement buried
+near the end of a long advert.
+
+**`score_bands` is not `notify_threshold`.** The threshold decides whether you
+hear about a posting at all. The bands decide what the label says once it
+arrives. Setting the threshold below `score_bands.possible` means everything
+turns up labelled LONG SHOT, which is honest but tiring.
+
+Deliberately not configurable, because they are facts about somebody else's
+service rather than preferences: API endpoints, Telegram's 4096-character
+message limit, Discord's 2000-character one. The JobIndex scraper also refuses
+to go below one second between pages whatever `source_delay_seconds` says.
 
 ## `searches`
 

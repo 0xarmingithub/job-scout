@@ -43,6 +43,51 @@ ENV_FILENAME = ".env"
 ENV_EXAMPLE_FILENAME = ".env.example"
 
 
+# Defaults for the optional `advanced:` block in config.yaml. Every one of these
+# is a number somebody might reasonably want to change, and none of them needs
+# changing to get started.
+#
+# Deliberately NOT here, because they are facts about someone else's service
+# rather than preferences: API endpoints, Telegram's 4096-character message
+# limit, Discord's 2000-character one.
+ADVANCED_DEFAULTS: dict[str, Any] = {
+    # How much of a posting the model reads. The single biggest lever on cost.
+    "description_chars": 3500,
+    # Room for the model's reply. Too small and a verbose answer is cut off.
+    "reply_tokens": 1024,
+    # How many past outcomes go into the prompt before it stops adding
+    # information.
+    "outcomes_listed": 25,
+    # How far back the title-and-company duplicate check looks. Longer catches
+    # more reposts under fresh URLs; shorter lets a genuinely re-opened role
+    # through sooner.
+    "seen_lookback_days": 7,
+    # Seconds between paged requests to a job board. Raise it to be gentler.
+    "source_delay_seconds": 0.5,
+    # What the labels in a notification mean. Separate from notify_threshold,
+    # which decides whether you are told at all.
+    "score_bands": {"strong": 80, "possible": 65},
+}
+
+
+def merge_advanced(config: dict) -> dict:
+    """
+    The `advanced:` block with every default filled in.
+
+    Takes a raw config dict rather than Settings, so a module that is handed
+    only the parsed YAML can reach the same values.
+    """
+    configured = config.get("advanced") or {}
+    if not isinstance(configured, dict):
+        raise ConfigError("config.yaml: 'advanced' must be a mapping.")
+    merged = dict(ADVANCED_DEFAULTS)
+    merged.update(configured)
+    bands = dict(ADVANCED_DEFAULTS["score_bands"])
+    bands.update(configured.get("score_bands") or {})
+    merged["score_bands"] = bands
+    return merged
+
+
 class ConfigError(RuntimeError):
     """Raised when configuration is missing or unusable. The message is shown
     to the user as-is, so it must say what to do next."""
@@ -175,6 +220,17 @@ class Settings:
             path = Path(configured).expanduser()
             return path if path.is_absolute() else (self.config_dir / path)
         return self.config_dir / OUTCOMES_FILENAME
+
+    @property
+    def advanced(self) -> dict[str, Any]:
+        """
+        Tuning knobs, all optional, all defaulted.
+
+        They live under `advanced:` rather than at the top level because nobody
+        needs them to get started, and a config file whose first twenty lines
+        are numbers you do not understand is a worse config file.
+        """
+        return merge_advanced(self.config)
 
     @property
     def notifier_specs(self) -> list[dict]:

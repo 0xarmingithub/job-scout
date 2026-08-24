@@ -114,6 +114,11 @@ Everything that prompt does can be done by hand. The rest of this file, and
 
 ## See it work in three minutes
 
+**No Python, or not a developer?** Start at
+[docs/getting-started.md](docs/getting-started.md) instead. It covers
+opening a terminal, installing Python on each operating system, and
+getting the free key, then comes back here.
+
 This runs against a fictional candidate, a senior platform engineer in Berlin,
 so you can watch it score real postings before writing a word about yourself.
 
@@ -384,6 +389,8 @@ not point this at a company you are trying to annoy.
 
 | | |
 |---|---|
+| [Getting started from nothing](docs/getting-started.md) | No Python, no terminal experience. Start here. |
+| [Outside services](docs/external-services.md) | Every account and key, what it costs, how to get it |
 | [Configuration reference](docs/configuration.md) | Every field in `config.yaml` and `profile.yaml` |
 | [How scoring works](docs/scoring.md) | The three tiers, the prompt, tuning the threshold |
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |

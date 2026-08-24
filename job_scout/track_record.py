@@ -112,10 +112,14 @@ def read_outcomes(path: Path) -> list[dict]:
     return rows
 
 
-def build_context(path: Path) -> str:
+def build_context(path: Path, max_listed: int = _MAX_LISTED) -> str:
     """
     Return a short block of real outcomes for the scoring prompt, or "" when
     there is no data, the caller then tells the model there is none.
+
+    max_listed caps how many outcomes are named. Past that the prompt grows
+    without telling the model anything new. Set it with
+    `advanced.outcomes_listed` in config.yaml.
     """
     rows = read_outcomes(path)
     if not rows:
@@ -152,7 +156,7 @@ def build_context(path: Path) -> str:
             continue
         lines.append(f"{group_name}:")
         for row in group:
-            if listed >= _MAX_LISTED:
+            if listed >= max_listed:
                 lines.append(f"  - (+{total_listable - listed} more)")
                 return "\n".join(lines)
             lines.append(_describe(row))

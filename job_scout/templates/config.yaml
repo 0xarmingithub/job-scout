@@ -170,3 +170,36 @@ searches:
 #   pip install playwright beautifulsoup4 lxml
 #   playwright install chromium --with-deps
 # Then add `jobindex` to a search's sites. See examples/denmark/.
+
+# ─── Advanced (optional) ──────────────────────────────────────────────────────
+# Nothing here needs changing to get started. The values shown are the defaults,
+# so deleting a line puts it back.
+#
+# advanced:
+#   # How much of a posting the model reads. The single biggest lever on cost:
+#   # halve it and you roughly halve the token bill, at the price of the model
+#   # sometimes missing a requirement buried near the end.
+#   description_chars: 3500
+#
+#   # Room for the model's reply. Too small and a wordy answer gets cut off
+#   # mid-sentence, which shows up as scoring errors.
+#   reply_tokens: 1024
+#
+#   # How many past outcomes from outcomes.csv go into the prompt. Past this it
+#   # grows without telling the model anything new.
+#   outcomes_listed: 25
+#
+#   # How far back the title-and-company duplicate check looks. Longer catches
+#   # more reposts under fresh URLs. Shorter lets a genuinely re-opened role
+#   # through sooner. The URL check is exact and always runs regardless.
+#   seen_lookback_days: 7
+#
+#   # Seconds between paged requests to a board. Raise it to be gentler. The
+#   # JobIndex scraper never goes below 1 second whatever you put here.
+#   source_delay_seconds: 0.5
+#
+#   # What the labels in a notification mean. Separate from notify_threshold,
+#   # which decides whether you hear about a posting at all.
+#   score_bands:
+#     strong: 80
+#     possible: 65

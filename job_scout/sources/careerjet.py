@@ -79,7 +79,10 @@ def fetch_careerjet_jobs(searches: list[dict], config: dict | None = None) -> li
             "installed. Install it with: pip install requests"
         ) from exc
 
+    from ..config import merge_advanced
+
     settings = (config or {}).get("careerjet") or {}
+    page_delay = float(merge_advanced(config or {})["source_delay_seconds"])
 
     api_key = os.environ.get("CAREERJET_API_KEY", "").strip()
     referer = os.environ.get("CAREERJET_REFERER", "").strip() or str(
@@ -187,7 +190,7 @@ def fetch_careerjet_jobs(searches: list[dict], config: dict | None = None) -> li
             if page >= total_pages or page >= 10:  # the API caps out at page 10
                 break
             page += 1
-            time.sleep(PAGE_DELAY)
+            time.sleep(page_delay)
 
         logger.info("Careerjet: '%s' -> %d jobs", term, collected)
 
