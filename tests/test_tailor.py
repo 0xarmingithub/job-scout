@@ -272,3 +272,27 @@ def test_the_job_payload_carries_what_a_command_needs():
     assert payload["company"] == "Northwind Energy"
     assert payload["verdict"]["reasoning"] == "close fit"
     assert json.dumps(payload)
+
+
+# ─── What `job-scout check` says about a prompt ───────────────────────────────
+
+def test_a_finished_prompt_reports_nothing_left_to_fill():
+    """
+    A finished prompt may legitimately contain [NEEDS ME] or [REDACTED].
+    Counting brackets called those unfilled, and a check that cries wolf is one
+    you learn to ignore.
+    """
+    from job_scout.cli import _unfilled_placeholders
+
+    finished = "Read my CV at /home/me/cv.md. Mark gaps as [NEEDS ME: what number?]."
+    assert _unfilled_placeholders(finished) == []
+
+
+def test_the_shipped_template_reports_its_own_placeholders():
+    from job_scout.cli import _unfilled_placeholders
+    from job_scout.config import TAILOR_PROMPT_TEMPLATE, TEMPLATE_DIR
+
+    template = (TEMPLATE_DIR / TAILOR_PROMPT_TEMPLATE).read_text(encoding="utf-8")
+    left = _unfilled_placeholders(template)
+    assert len(left) >= 5
+    assert any("MASTER CV" in item for item in left)
