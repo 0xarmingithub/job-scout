@@ -106,10 +106,53 @@ def run_once(settings: Settings, dry_run: bool = False, limit: int | None = None
             f"Full traceback: {settings.data_dir / 'scout.log'}"
         )
 
+    if result.ok and not dry_run:
+        _followup(settings, dispatcher, result.matched)
+
     elapsed = (datetime.now() - started).total_seconds()
     result.stats.elapsed_seconds = elapsed
     logger.info("=== Run finished in %.1fs ===", elapsed)
     return result
+
+
+def _followup(settings: Settings, dispatcher: Dispatcher, matched: list[dict]) -> None:
+    """
+    Whatever happens after the digest has gone out.
+
+    All of it is optional, all of it is wrapped, and it runs last on purpose.
+    The run has already found today's matches and told you about them, and
+    nothing that comes afterwards may take that away.
+    """
+    if not matched:
+        return
+
+    from . import tailor
+
+    if not tailor.is_configured(settings.config):
+        return
+
+    try:
+        config = tailor.load(settings.config, settings.config_dir, settings.data_dir)
+        jobs = tailor.pick(matched, config)
+        if not jobs:
+            logger.info(
+                "Nothing today reached tailor.min_score (%d).", config.min_score
+            )
+            return
+
+        from . import ask
+
+        if ask.is_configured(settings.config):
+            # Ask first, act later. The answers arrive through `job-scout ask`.
+            ask_config = ask.load(settings.config)
+            for job in jobs:
+                ask.open_ask(settings.config, settings.data_dir, ask_config, job)
+            return
+
+        for job in jobs:
+            tailor.tailor_job(settings, job, answers="", dispatcher=dispatcher)
+    except Exception as exc:
+        logger.error("The follow-up step failed: %s", redact(str(exc)), exc_info=True)
 
 
 def _execute(settings: Settings, dispatcher: Dispatcher, dry_run: bool,

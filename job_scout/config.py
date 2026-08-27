@@ -41,6 +41,8 @@ PROFILE_FILENAME = "profile.yaml"
 OUTCOMES_FILENAME = "outcomes.csv"
 ENV_FILENAME = ".env"
 ENV_EXAMPLE_FILENAME = ".env.example"
+TAILOR_PROMPT_TEMPLATE = "tailor-prompt.md"
+TAILORING_SNIPPET = "tailoring.yaml"
 
 
 # Defaults for the optional `advanced:` block in config.yaml. Every one of these
@@ -143,6 +145,43 @@ def seed_config_dir(target: Path, overwrite: bool = False) -> list[Path]:
             continue
         shutil.copyfile(source, destination)
         written.append(destination)
+    return written
+
+
+def seed_tailoring(target: Path, overwrite: bool = False) -> list[Path]:
+    """
+    Add the tailoring prompt and the config blocks that drive it.
+
+    The blocks are appended to config.yaml rather than merged into it. They are
+    top-level keys and they are only ever added when absent, so an existing
+    config.yaml keeps every comment and every value already in it. Merging
+    through a YAML round trip would lose the comments, and the comments are
+    most of what that file is for.
+
+    Returns the files it changed.
+    """
+    target = Path(target).expanduser()
+    written: list[Path] = []
+
+    source = TEMPLATE_DIR / TAILOR_PROMPT_TEMPLATE
+    destination = target / "tailor" / "prompt.md"
+    if source.exists() and (overwrite or not destination.exists()):
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+        written.append(destination)
+
+    snippet = TEMPLATE_DIR / TAILORING_SNIPPET
+    config_path = target / CONFIG_FILENAME
+    if snippet.exists() and config_path.exists():
+        existing = config_path.read_text(encoding="utf-8")
+        already = any(
+            line.startswith("tailor:") for line in existing.splitlines()
+        )
+        if not already:
+            with open(config_path, "a", encoding="utf-8") as handle:
+                handle.write(chr(10) + snippet.read_text(encoding="utf-8"))
+            written.append(config_path)
+
     return written
 
 

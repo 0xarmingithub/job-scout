@@ -1,0 +1,23 @@
+[Unit]
+Description=Job Scout. Check for answers every few minutes
+Documentation=https://github.com/0xarmingithub/job-scout
+
+[Timer]
+# Every five minutes. This is the whole reason there is no daemon: a timer
+# cannot leak, cannot hold a stale connection, and comes back on its own after
+# a reboot. Five minutes of latency costs nothing when you answer in hours.
+OnCalendar=*:0/5
+
+# Do not fire a backlog of missed checks after the machine has been off. There
+# is nothing to catch up on: the next run reads whatever is waiting.
+Persistent=false
+
+# Spread the load off the exact minute boundary.
+RandomizedDelaySec=20
+
+# Only runs while something is actually outstanding. A pass with no pending
+# question reads no state, contacts nobody and exits.
+Unit=job-scout-ask@%i.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,66 @@
+
+# ─── Tailoring ────────────────────────────────────────────────────────────────
+# Added by `job-scout init --with-tailoring`. Delete both blocks to turn it off.
+#
+# What happens: the daily run finds today's matches and sends them as usual.
+# Then, if the best one scores at least min_score, it asks you the questions
+# below, waits, and runs `command` with your answers. Whatever that writes is
+# delivered through the same notifiers.
+#
+# Full detail in docs/tailoring.md.
+
+tailor:
+  # The command to run. Pick the form your tool wants:
+  #
+  #   "claude -p {prompt} --model sonnet"        prompt as an argument
+  #   "codex exec --skip-git-repo-check"         prompt on standard input
+  #   "python my_tailor.py {job_file} {output_file}"   your own script
+  #
+  # {prompt} {prompt_file} {job_file} {answers_file} {output_file} are all
+  # available. Nothing goes through a shell.
+  command: ""
+
+  # The prompt template. Edit tailor/prompt.md before your first real run: it
+  # ships full of [PLACEHOLDERS] and knows nothing about you until you do.
+  prompt_file: tailor/prompt.md
+
+  # A second, higher bar than notify_threshold. Being told about a posting and
+  # spending a model call on it are different decisions.
+  min_score: 80
+
+  # How many of the day's matches to work on. One is almost always right.
+  top_n: 1
+
+  # Where the documents go, relative to your data directory.
+  output_dir: tailored
+
+  # A hard cap. A model writing a full CV can take minutes; it should not take
+  # a quarter of an hour.
+  timeout_seconds: 900
+
+  # Send the result through your notifiers. Turn it off to leave it on disk.
+  deliver: true
+
+ask:
+  # What to ask before the work is done. Keep it to the things only you know.
+  # Five is the maximum, and three is usually better: you have to answer these
+  # on a phone.
+  #
+  # Delete this block entirely and the tailoring runs immediately with no
+  # questions asked.
+  questions:
+    - "Which of your projects is closest to this role?"
+    - "Anything to leave off the CV for this one?"
+    - "Anything they ask for that you would rather not claim?"
+
+  # Instead of a fixed list, a command can produce the questions, one per line.
+  # It is given the posting as JSON on standard input. Leave empty to use the
+  # list above.
+  questions_command: ""
+
+  # How long to wait before going ahead without you.
+  timeout_hours: 24
+
+  # It also stops this long after your last message, because you will forget to
+  # send /done.
+  quiet_minutes: 30

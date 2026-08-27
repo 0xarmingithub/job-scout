@@ -116,6 +116,17 @@ sed "s|^OnCalendar=.*|OnCalendar=Fri *-*-* 17:00:00 $TIMEZONE|; \
      s|^Unit=.*|Unit=job-scout-roundup.service|" \
     "$INSTALL_DIR/deploy/job-scout-roundup.timer" > /etc/systemd/system/job-scout-roundup.timer
 
+# The answer collector, also installed and left off. It only matters when
+# config.yaml has an `ask` block, and turning it on without one would run a
+# no-op every five minutes forever.
+sed "s|^User=%i$|User=$SERVICE_USER|; s|^WorkingDirectory=.*|WorkingDirectory=$INSTALL_DIR|; \
+     s|^ExecStart=.*|ExecStart=$INSTALL_DIR/.venv/bin/job-scout ask|; \
+     s|^ReadWritePaths=.*|ReadWritePaths=$INSTALL_DIR/data|" \
+    "$INSTALL_DIR/deploy/job-scout-ask.service" > /etc/systemd/system/job-scout-ask.service
+
+sed "s|^Unit=.*|Unit=job-scout-ask.service|" \
+    "$INSTALL_DIR/deploy/job-scout-ask.timer" > /etc/systemd/system/job-scout-ask.timer
+
 systemctl daemon-reload
 systemctl enable --now job-scout.timer
 
@@ -135,4 +146,6 @@ Next:
   4. When it fires next:    systemctl list-timers job-scout.timer
   5. Weekly roundup, optional. The best of the last 5 days, every Friday:
                              sudo systemctl enable --now job-scout-roundup.timer
+  6. Tailoring, optional. Only with an `ask` block in config.yaml:
+                             sudo systemctl enable --now job-scout-ask.timer
 EOF

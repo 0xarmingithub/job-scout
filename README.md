@@ -158,6 +158,21 @@ It re-reads the seen-jobs database and re-scores nothing, so it costs no API
 calls and can be run as often as you like. To have it arrive on its own, there
 is a Friday timer in `deploy/`. Detail in [docs/roundup.md](docs/roundup.md).
 
+### Doing something with the best one
+
+Optional, off unless you ask for it. The scout can run a command on the
+match it rates highest, usually a model that writes a tailored CV, and send
+you what it produces:
+
+```bash
+job-scout init ~/job-search --with-tailoring
+```
+
+It asks you two or three questions on Telegram first, because a model
+writing from your profile alone produces something plausible and slightly
+wrong. With no `tailor:` block in config.yaml none of this exists and a run
+behaves exactly as it did before. Detail in [docs/tailoring.md](docs/tailoring.md).
+
 ### Then point it at yourself, from your CV
 
 Most of what belongs in `profile.yaml` is already written down in your CV, so
@@ -409,6 +424,7 @@ not point this at a company you are trying to annoy.
 | [How scoring works](docs/scoring.md) | The three tiers, the prompt, tuning the threshold |
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |
 | [Weekly roundup](docs/roundup.md) | One message for the week, and the Friday timer that sends it |
+| [Tailoring](docs/tailoring.md) | Running a command on the day's best match, and asking you first |
 | [Adding a job source](docs/adding-a-job-source.md) | About 40 lines of work |
 | [Adding a notifier](docs/adding-a-notifier.md) | About 30 |
 | [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing. `job-scout stats` is the first command to run |

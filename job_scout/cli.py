@@ -7,6 +7,7 @@ cli.py, the `job-scout` command.
     job-scout check                  tell me what is and is not set up
     job-scout stats                  what the seen-jobs database says
     job-scout roundup                the best of the last 7 days, in one message
+    job-scout ask                    collect answers to an outstanding question
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
     job-scout version
 
@@ -28,6 +29,7 @@ from .config import (
     load_settings,
     resolve_config_dir,
     seed_config_dir,
+    seed_tailoring,
 )
 
 
@@ -78,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--force", action="store_true", help="overwrite files that are already there"
     )
     init_parser.add_argument(
+        "--with-tailoring", action="store_true",
+        help="also write tailor/prompt.md and add the tailor and ask blocks to "
+             "config.yaml, so the best match of the day gets worked on",
+    )
+    init_parser.add_argument(
         "--from-cv", metavar="PATH",
         help="draft profile.yaml from your CV (.txt, .md, .pdf or .docx) instead "
              "of copying the example. Needs a working model backend.",
@@ -107,6 +114,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run", action="store_true", help="print it, send nothing",
     )
 
+    ask_parser = subparsers.add_parser(
+        "ask",
+        help="collect your answers to an outstanding question, then do the work",
+    )
+    _common(ask_parser)
+    ask_parser.add_argument(
+        "--status", action="store_true", help="say what is outstanding and do nothing",
+    )
+    ask_parser.add_argument(
+        "--cancel", action="store_true", help="drop the outstanding question",
+    )
+
     subparsers.add_parser("version", help="print the version")
     return parser
 
@@ -127,6 +146,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_stats(args)
     if command == "roundup":
         return _cmd_roundup(args)
+    if command == "ask":
+        return _cmd_ask(args)
     return _cmd_run(args)
 
 
@@ -136,7 +157,7 @@ def _cmd_init(args) -> int:
     target = Path(args.directory).expanduser()
     written = seed_config_dir(target, overwrite=args.force)
 
-    if not written and not args.from_cv:
+    if not written and not args.from_cv and not args.with_tailoring:
         print(f"{target} already has a {CONFIG_FILENAME} and a {PROFILE_FILENAME}. "
               f"Pass --force to overwrite them.")
         return 0
@@ -146,8 +167,28 @@ def _cmd_init(args) -> int:
         for path in written:
             print(f"  {path.name}")
 
+    if args.with_tailoring:
+        added = seed_tailoring(target, overwrite=args.force)
+        if added:
+            print("Added tailoring:")
+            for path in added:
+                print(f"  {path}")
+            print(
+                "\nBefore the first real run:\n"
+                "  1. Edit " + str(target / "tailor" / "prompt.md") + ". It is "
+                "full of [PLACEHOLDERS] and\n"
+                "     knows nothing about you until you replace them.\n"
+                "  2. Set tailor.command in " + str(target / CONFIG_FILENAME) + "\n"
+                "  3. Check it: job-scout check --config-dir " + str(target)
+            )
+        else:
+            print(f"{target} already has tailoring set up. Pass --force to replace it.")
+
     if args.from_cv:
         return _draft_profile_from_cv(target, Path(args.from_cv), overwrite=args.force)
+
+    if args.with_tailoring:
+        return 0
 
     print(
         "\nNext:\n"
@@ -307,6 +348,87 @@ def _cmd_roundup(args) -> int:
     return 0
 
 
+def _cmd_ask(args) -> int:
+    from . import ask, tailor
+    from .notifiers import Dispatcher, build
+    from .run import setup_logging
+
+    try:
+        settings = load_settings(args.config_dir, args.data_dir)
+    except ConfigError as exc:
+        print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
+        return 2
+
+    setup_logging(settings.data_dir, verbose=args.verbose)
+
+    if args.cancel:
+        if not ask.is_pending(settings.data_dir):
+            print("Nothing is outstanding.")
+            return 0
+        ask.clear_state(settings.data_dir)
+        print("Dropped the outstanding question. Nothing will be tailored for it.")
+        return 0
+
+    if args.status:
+        return _print_ask_status(ask.read_state(settings.data_dir))
+
+    if not ask.is_configured(settings.config):
+        print(
+            "config.yaml has no `ask` block, so there is nothing to collect.",
+            file=sys.stderr,
+        )
+        return 2
+
+    outcome, state = ask.collect(
+        settings.config, settings.data_dir, ask.load(settings.config)
+    )
+    if outcome == "none":
+        # A timer runs this every few minutes. Reporting "nothing to do" 288
+        # times a day makes the journal useless, so only a person gets told.
+        if sys.stdout.isatty():
+            print("Nothing is outstanding.")
+        return 0
+    if outcome == "locked":
+        print("Another collection pass is running.")
+        return 0
+    if outcome == "waiting":
+        print(f"Waiting. {len(state.get('answers') or [])} message(s) so far.")
+        return 0
+
+    # Finished. Clear the state before doing the work, so a command that fails
+    # is not retried every few minutes for the rest of the day.
+    job = state.get("job") or {}
+    answers = ask.answers_text(state)
+    ask.clear_state(settings.data_dir)
+
+    dispatcher = Dispatcher(build(settings.notifier_specs, settings.data_dir))
+    produced = tailor.tailor_job(settings, job, answers=answers, dispatcher=dispatcher)
+    if produced is None:
+        print(
+            "The tailoring command produced nothing. See scout.log for why.",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Wrote {produced}")
+    return 0
+
+
+def _print_ask_status(state) -> int:
+    if state is None:
+        print("Nothing is outstanding.")
+        return 0
+    job = state.get("job") or {}
+    answers = state.get("answers") or []
+    print(f"Asked about: {job.get('title', '?')} at {job.get('company', '?')}")
+    print(f"Asked at:    {state.get('opened', '?')}")
+    print(f"Deadline:    {state.get('deadline', '?')}")
+    print(f"Questions:   {len(state.get('questions') or [])}")
+    print(f"Your replies: {len(answers)}")
+    if state.get("done"):
+        print("You have sent /done. The next `job-scout ask` will do the work.")
+    return 0
+
+
 def _cmd_check(args) -> int:
     from .llm import check_all, label_for, preflight
     from .notifiers import Dispatcher, build
@@ -377,10 +499,77 @@ def _cmd_check(args) -> int:
             "credentials is:\n\n    notifiers:\n      - type: file\n"
         )
 
+    tailoring_problem = _print_tailoring(settings)
+
     print()
-    problems = bool(problem) or ready_count == 0
+    problems = bool(problem) or ready_count == 0 or tailoring_problem
     print("Not ready to run." if problems else "Ready to run: job-scout run")
     return 1 if problems else 0
+
+
+def _print_tailoring(settings: Settings) -> bool:
+    """
+    What the optional follow-up step is set to do. Returns True if it is broken.
+
+    Silent when it is not configured, because most people do not want it and a
+    check that lists things you have not asked for is a worse check.
+    """
+    import shlex
+    import shutil
+
+    from . import ask, tailor
+
+    if not tailor.is_configured(settings.config):
+        return False
+
+    print("\nTAILORING")
+    try:
+        config = tailor.load(settings.config, settings.config_dir, settings.data_dir)
+    except tailor.TailorError as exc:
+        print(f"  PROBLEM    {exc}")
+        return True
+
+    broken = False
+    print(f"  Command:   {config.command}")
+    try:
+        binary = shlex.split(config.command)[0]
+    except (ValueError, IndexError):
+        binary = ""
+    located = shutil.which(binary) if binary else None
+    if located:
+        print(f"  READY      {binary} at {located}")
+    else:
+        print(f"  NOT READY  {binary or '(no command)'} is not on this machine's PATH")
+        broken = True
+
+    if config.prompt_file is None:
+        print("  Prompt:    none. The command gets the posting and nothing else")
+    elif config.prompt_file.exists():
+        text = config.prompt_file.read_text(encoding="utf-8", errors="replace")
+        left = text.count("[")
+        note = f", {left} [PLACEHOLDER] still in it" if left else ""
+        print(f"  Prompt:    {config.prompt_file}{note}")
+        if left:
+            print("             Edit it before the first real run.")
+    else:
+        print(f"  NOT READY  no prompt at {config.prompt_file}")
+        broken = True
+
+    print(f"  Works on:  the day's best match at {config.min_score} or above")
+    print(f"  Writes to: {config.output_dir}")
+
+    if ask.is_configured(settings.config):
+        questions = ask.load(settings.config)
+        count = len(questions.questions) or "from a command"
+        print(f"  Asks:      {count} question(s), then waits {questions.timeout_hours}h")
+        state = ask.read_state(settings.data_dir)
+        if state:
+            job = state.get("job") or {}
+            print(
+                f"  Waiting on: {job.get('title', '?')} at {job.get('company', '?')}, "
+                f"{len(state.get('answers') or [])} repl(ies) so far"
+            )
+    return broken
 
 
 def _print_backends(check_all, preflight) -> None:

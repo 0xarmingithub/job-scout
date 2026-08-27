@@ -1,0 +1,37 @@
+[Unit]
+Description=Job Scout. Collect answers to an outstanding question
+Documentation=https://github.com/0xarmingithub/job-scout
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# NOTE: %i and the paths below are placeholders. deploy/install-systemd.sh
+# rewrites them for your machine.
+User=%i
+WorkingDirectory=/opt/job-scout
+ExecStart=/opt/job-scout/.venv/bin/job-scout ask
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=job-scout-ask
+
+# Most runs read one empty response from Telegram and exit in under a second.
+# The long one is the pass that finds the answers complete and runs the
+# tailoring command, which is why this is not 60 seconds. Keep it above
+# tailor.timeout_seconds in your config.yaml, or systemd will kill the command
+# the scout is waiting for.
+TimeoutStartSec=1200
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/job-scout/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
