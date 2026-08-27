@@ -56,6 +56,10 @@ class Notifier:
 
     name = "base"
 
+    # Whether this channel can carry a file. A webhook has nowhere to put
+    # one, so the dispatcher skips it rather than counting a failure.
+    can_send_documents = False
+
     def check(self) -> str | None:
         """None when this notifier can run, else one sentence saying what is missing."""
         return None
@@ -65,6 +69,15 @@ class Notifier:
 
     def send_alert(self, body: str) -> bool:
         """Report a run-level failure. Defaults to a digest-shaped message."""
+        raise NotImplementedError
+
+    def send_document(self, path: "Path", caption: str = "") -> bool:
+        """
+        Put a file in front of the reader.
+
+        Only implemented where it means something. Check can_send_documents
+        before calling, or use Dispatcher.send_document, which does.
+        """
         raise NotImplementedError
 
 

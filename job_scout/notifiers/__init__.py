@@ -106,6 +106,33 @@ class Dispatcher:
                 logger.error("Notifier '%s' failed: %s", notifier.name, exc, exc_info=True)
         return sent
 
+    def send_document(self, path: Path, caption: str = "") -> int:
+        """
+        Put a file in front of the reader. Returns how many channels took it.
+
+        Channels that cannot carry a file are skipped rather than counted as
+        failures. A webhook has nowhere to put one, and saying so once is
+        more useful than four failures in the log.
+        """
+        able = [n for n in self.notifiers if n.can_send_documents]
+        if not able:
+            logger.error(
+                "No configured notifier can carry a file, so %s was produced and "
+                "not delivered. A file, telegram or email notifier can.",
+                path,
+            )
+            return 0
+        sent = 0
+        for notifier in able:
+            try:
+                if notifier.send_document(Path(path), caption):
+                    sent += 1
+            except Exception as exc:
+                logger.error(
+                    "Notifier %s could not send %s: %s", notifier.name, path, exc
+                )
+        return sent
+
     def send_alert(self, body: str) -> int:
         """
         Report a run-level failure everywhere. A run that dies quietly in a log

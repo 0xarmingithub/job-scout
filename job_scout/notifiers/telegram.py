@@ -28,6 +28,7 @@ so each one is its own notification and its own link.
 import logging
 import os
 import time
+from pathlib import Path
 
 from .base import (
     Notifier,
@@ -41,6 +42,7 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 SEND_URL = "https://api.telegram.org/bot{token}/sendMessage"
+DOCUMENT_URL = "https://api.telegram.org/bot{token}/sendDocument"
 
 # Telegram allows 30 messages a second. This is far under it.
 _MESSAGE_DELAY = 0.3
@@ -48,9 +50,14 @@ _MESSAGE_DELAY = 0.3
 # Telegram rejects messages over 4096 characters.
 _MAX_MESSAGE = 4000
 
+# A bot may upload 50 MB, and a caption may run to 1024 characters.
+_MAX_DOCUMENT_BYTES = 50 * 1024 * 1024
+_MAX_CAPTION = 1024
+
 
 class TelegramNotifier(Notifier):
     name = "telegram"
+    can_send_documents = True
 
     @property
     def token(self) -> str:
@@ -137,6 +144,57 @@ class TelegramNotifier(Notifier):
         if self.check():
             return False
         return self._send(alert_text(body))
+
+    def send_document(self, path: Path, caption: str = "") -> bool:
+        """
+        Upload a file to the chat.
+
+        This is how a document reaches you from a machine that cannot push
+        to a repository, which is the normal case: a deploy key that can
+        write is a deploy key worth stealing.
+        """
+        import requests
+
+        problem = self.check()
+        if problem:
+            logger.error("%s", problem)
+            return False
+
+        path = Path(path)
+        if not path.is_file():
+            logger.error("Cannot send %s: there is no such file", path)
+            return False
+        size = path.stat().st_size
+        if size > _MAX_DOCUMENT_BYTES:
+            logger.error(
+                "Cannot send %s: %d bytes, and Telegram accepts %d from a bot",
+                path, size, _MAX_DOCUMENT_BYTES,
+            )
+            return False
+
+        try:
+            with open(path, "rb") as handle:
+                response = requests.post(
+                    DOCUMENT_URL.format(token=self.token),
+                    data={"chat_id": self.chat_id, "caption": caption[:_MAX_CAPTION]},
+                    files={"document": (path.name, handle)},
+                    timeout=60,
+                )
+        except requests.RequestException as exc:
+            logger.error("Telegram file upload failed: %s", exc)
+            return False
+        except OSError as exc:
+            logger.error("Could not read %s: %s", path, exc)
+            return False
+
+        if not response.ok:
+            logger.error(
+                "Telegram returned %d for %s: %s",
+                response.status_code, path.name, response.text[:200],
+            )
+            return False
+        logger.info("Telegram: sent %s (%d bytes)", path.name, size)
+        return True
 
 
 def _split(text: str) -> list[str]:

@@ -25,10 +25,12 @@ SMTP_SECURITY unset, the port decides.
 """
 
 import logging
+import mimetypes
 import os
 import smtplib
 from datetime import date
 from email.message import EmailMessage
+from pathlib import Path
 
 from .base import Notifier, RunStats, alert_text, full_digest_text
 
@@ -37,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class EmailNotifier(Notifier):
     name = "email"
+    can_send_documents = True
 
     @property
     def host(self) -> str:
@@ -105,7 +108,7 @@ class EmailNotifier(Notifier):
 
     # ── Sending ──────────────────────────────────────────────────────────────
 
-    def _send(self, subject: str, body: str) -> bool:
+    def _send(self, subject: str, body: str, attachment: "Path | None" = None) -> bool:
         problem = self.check()
         if problem:
             logger.error("%s", problem)
@@ -116,6 +119,21 @@ class EmailNotifier(Notifier):
         message["From"] = self.sender
         message["To"] = ", ".join(self.recipients)
         message.set_content(body)
+
+        if attachment is not None:
+            try:
+                payload = attachment.read_bytes()
+            except OSError as exc:
+                logger.error("Could not read %s: %s", attachment, exc)
+                return False
+            guessed, _ = mimetypes.guess_type(attachment.name)
+            maintype, _, subtype = (guessed or "application/octet-stream").partition("/")
+            message.add_attachment(
+                payload,
+                maintype=maintype,
+                subtype=subtype or "octet-stream",
+                filename=attachment.name,
+            )
 
         try:
             if self.security == "ssl":
@@ -146,3 +164,16 @@ class EmailNotifier(Notifier):
         prefix = str(self.spec.get("subject") or "Job Scout")
         return self._send(f"{prefix} ALERT, {date.today().strftime('%d %b %Y')}",
                           alert_text(body))
+
+    def send_document(self, path: Path, caption: str = "") -> bool:
+        """Send the file as an attachment, with the caption as the body."""
+        path = Path(path)
+        if not path.is_file():
+            logger.error("Cannot send %s: there is no such file", path)
+            return False
+        prefix = str(self.spec.get("subject") or "Job Scout")
+        return self._send(
+            f"{prefix}: {path.name}",
+            caption or f"Attached: {path.name}",
+            attachment=path,
+        )

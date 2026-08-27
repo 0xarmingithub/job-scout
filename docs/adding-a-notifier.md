@@ -193,6 +193,32 @@ REGISTRY = {
 
 The name in `REGISTRY` is what people write as `type:` in `config.yaml`.
 
+## Sending a file
+
+Some channels can carry a document and some cannot. A webhook posts JSON to
+a URL and has nowhere to put one; Telegram, email and the file writer do.
+
+This is opt-in rather than abstract, so a notifier that only sends messages
+needs no extra code:
+
+```python
+class MyNotifier(Notifier):
+    name = "mine"
+    can_send_documents = True
+
+    def send_document(self, path: Path, caption: str = "") -> bool:
+        ...
+```
+
+`Dispatcher.send_document(path, caption)` skips every notifier that has not
+set the flag and returns how many of the rest took the file. Skipping is not
+counted as a failure: one line saying nothing can carry a file is more use
+than four failures in the log.
+
+The same rules apply as everywhere else here. Do not raise. Check the file
+exists before you open it, check its size before you upload it, and say what
+went wrong in the log rather than to the caller.
+
 ## Message limits
 
 Most services cap a message. The file writer does not care; the others chunk on

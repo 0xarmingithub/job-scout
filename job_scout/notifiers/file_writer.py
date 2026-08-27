@@ -19,6 +19,7 @@ import csv
 import io
 import json
 import logging
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +37,7 @@ _CSV_COLUMNS = (
 
 class FileNotifier(Notifier):
     name = "file"
+    can_send_documents = True
 
     @property
     def path(self) -> Path:
@@ -89,6 +91,31 @@ class FileNotifier(Notifier):
         except OSError as exc:
             logger.error("File notifier could not write %s: %s", self.path, exc)
             return False
+
+    def send_document(self, path: Path, caption: str = "") -> bool:
+        """
+        Copy the file next to the digest.
+
+        Here so a setup with no credentials at all still ends up with the
+        document on disk. It is a copy, not a move: whoever produced the
+        file owns it.
+        """
+        source = Path(path)
+        if not source.is_file():
+            logger.error("Cannot copy %s: there is no such file", source)
+            return False
+        destination = self.path.parent / source.name
+        if destination.resolve() == source.resolve():
+            logger.info("%s is already where the file notifier writes", source.name)
+            return True
+        try:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
+        except OSError as exc:
+            logger.error("Could not copy %s to %s: %s", source, destination, exc)
+            return False
+        logger.info("Copied %s to %s", source.name, destination)
+        return True
 
     def send_alert(self, body: str) -> bool:
         try:
