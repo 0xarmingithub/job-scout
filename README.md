@@ -144,6 +144,20 @@ and what to do about it.
 Want to see the scoring without recording anything?
 `job-scout run --dry-run --limit 5`.
 
+### The week in one message
+
+A daily digest answers "is there anything today". It is bad at "what did I
+actually see this week": by Friday the strong Monday posting is four
+notifications up the chat and effectively gone.
+
+```bash
+job-scout roundup --days 5      # the working week, run on a Friday
+```
+
+It re-reads the seen-jobs database and re-scores nothing, so it costs no API
+calls and can be run as often as you like. To have it arrive on its own, there
+is a Friday timer in `deploy/`. Detail in [docs/roundup.md](docs/roundup.md).
+
 ### Then point it at yourself, from your CV
 
 Most of what belongs in `profile.yaml` is already written down in your CV, so
@@ -394,6 +408,7 @@ not point this at a company you are trying to annoy.
 | [Configuration reference](docs/configuration.md) | Every field in `config.yaml` and `profile.yaml` |
 | [How scoring works](docs/scoring.md) | The three tiers, the prompt, tuning the threshold |
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |
+| [Weekly roundup](docs/roundup.md) | One message for the week, and the Friday timer that sends it |
 | [Adding a job source](docs/adding-a-job-source.md) | About 40 lines of work |
 | [Adding a notifier](docs/adding-a-notifier.md) | About 30 |
 | [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing. `job-scout stats` is the first command to run |

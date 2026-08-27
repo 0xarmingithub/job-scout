@@ -1,0 +1,39 @@
+[Unit]
+Description=Job Scout roundup. The best postings of the last few days, in one message
+Documentation=https://github.com/0xarmingithub/job-scout
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# NOTE: %i and the paths below are placeholders. deploy/install-systemd.sh
+# rewrites them for your machine. Systemd rejects %i in a unit that is not a
+# template, so copying this file unedited will not work.
+User=%i
+WorkingDirectory=/opt/job-scout
+ExecStart=/opt/job-scout/.venv/bin/job-scout roundup --days 5
+
+# --days 5 with a Friday timer is the working week. Change both together: the
+# window and the day it fires only make sense as a pair.
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=job-scout-roundup
+
+# This reads jobs.db and sends a message. It scrapes nothing and scores nothing,
+# so five minutes is generous. A daily run gets 2700 seconds for good reasons;
+# none of them apply here.
+TimeoutStartSec=300
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/job-scout/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

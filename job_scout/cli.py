@@ -6,6 +6,7 @@ cli.py, the `job-scout` command.
     job-scout run --limit 5          stop after 5 postings reach the scorer
     job-scout check                  tell me what is and is not set up
     job-scout stats                  what the seen-jobs database says
+    job-scout roundup                the best of the last 7 days, in one message
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
     job-scout version
 
@@ -90,6 +91,22 @@ def build_parser() -> argparse.ArgumentParser:
         "--days", type=int, default=14, help="how many days of history to show"
     )
 
+    roundup_parser = subparsers.add_parser(
+        "roundup",
+        help="one message summarising the best postings of the last few days",
+    )
+    _common(roundup_parser)
+    roundup_parser.add_argument(
+        "--days", type=int, default=7,
+        help="how many days to cover, counting today (default: 7). Use 5 on a Friday for the working week",
+    )
+    roundup_parser.add_argument(
+        "--top", type=int, default=10, help="how many postings to include (default: 10)",
+    )
+    roundup_parser.add_argument(
+        "--dry-run", action="store_true", help="print it, send nothing",
+    )
+
     subparsers.add_parser("version", help="print the version")
     return parser
 
@@ -108,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_check(args)
     if command == "stats":
         return _cmd_stats(args)
+    if command == "roundup":
+        return _cmd_roundup(args)
     return _cmd_run(args)
 
 
@@ -239,6 +258,52 @@ def _cmd_stats(args) -> int:
         print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
         return 2
     print(render(settings.data_dir / "jobs.db", settings.notify_threshold, args.days))
+    return 0
+
+
+def _cmd_roundup(args) -> int:
+    from .notifiers import Dispatcher, build
+    from .notifiers.base import full_digest_text
+    from .roundup import collect, stats_for
+
+    try:
+        settings = load_settings(args.config_dir, args.data_dir)
+    except ConfigError as exc:
+        print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
+        return 2
+
+    bands = settings.advanced["score_bands"]
+    jobs, total = collect(
+        settings.data_dir / "jobs.db",
+        threshold=settings.notify_threshold,
+        days=args.days,
+        top=args.top,
+    )
+    stats = stats_for(
+        jobs, total,
+        threshold=settings.notify_threshold,
+        days=args.days,
+        strong_at=int(bands["strong"]),
+        possible_at=int(bands["possible"]),
+    )
+
+    if args.dry_run:
+        print(full_digest_text(jobs, stats))
+        return 0
+
+    # A roundup that reaches nobody is worth saying out loud, because the
+    # command still exits 0 and looks like it worked.
+    sent = Dispatcher(build(settings.notifier_specs, settings.data_dir)).send_digest(
+        jobs, stats
+    )
+    if not sent:
+        print(
+            "The roundup reached no notifier. Run `job-scout check` to see "
+            "what each one needs.",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Roundup sent to {sent} notifier(s): {len(jobs)} of {total} matches.")
     return 0
 
 

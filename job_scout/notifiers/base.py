@@ -27,6 +27,14 @@ class RunStats:
     # hear about a posting at all. Set with `advanced.score_bands`.
     strong_at: int = 80
     possible_at: int = 65
+    # Set by anything that is not a daily run, so the digest says what it is.
+    # `job-scout roundup` sets them. Empty means a normal run, and the header
+    # reads exactly as it always has.
+    title: str = ""
+    subtitle: str = ""
+    # What to say when nothing matched. The default text talks about sources
+    # and fetching, which is right for a run and wrong for a summary of one.
+    empty_message: str = ""
 
     @property
     def matched(self) -> int:
@@ -117,13 +125,14 @@ def format_job(job: dict, stats: "RunStats | None" = None) -> str:
 
 def digest_header(matched_jobs: list[dict], stats: RunStats) -> str:
     count = len(matched_jobs)
-    return (
-        f"Job Scout, {date.today().strftime('%d %b %Y')}\n"
+    title = stats.title or f"Job Scout, {date.today().strftime('%d %b %Y')}"
+    subtitle = stats.subtitle or (
         f"{count} match{'' if count == 1 else 'es'} "
         f"| {stats.total_new} new "
         f"| {stats.total_rejected} below {stats.threshold} "
         f"| {stats.total_fetched} fetched"
     )
+    return f"{title}\n{subtitle}"
 
 
 def no_match_body(stats: RunStats) -> str:
@@ -131,6 +140,8 @@ def no_match_body(stats: RunStats) -> str:
     What to say when nothing matched. The three cases mean different things and
     the difference matters: zero fetched usually means something is broken.
     """
+    if stats.empty_message:
+        return stats.empty_message
     if stats.total_fetched == 0:
         return (
             "Every source returned 0 jobs.\n"

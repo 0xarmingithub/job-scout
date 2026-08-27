@@ -18,6 +18,7 @@ The store is a single file, jobs.db, in your data directory.
 import hashlib
 import logging
 import re
+import json
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -50,6 +51,21 @@ def make_job_id(url: str) -> str:
     return hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
 
 
+def _verdict_json(job: dict) -> str:
+    """
+    The scorer's reasoning, stored so a later command can explain a score
+    without re-scoring the posting. Empty string when there is nothing to keep,
+    which is every rejected job: they never reach the model.
+    """
+    verdict = job.get("verdict") or {}
+    if not verdict:
+        return ""
+    try:
+        return json.dumps(verdict, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return ""
+
+
 class JobStore:
     """The seen-jobs table. One instance per run."""
 
@@ -76,16 +92,32 @@ class JobStore:
                 status      TEXT DEFAULT 'new',
                 first_seen  TEXT,
                 date_posted TEXT,
-                search_term TEXT
+                search_term TEXT,
+                verdict_json TEXT
             )
             """
         )
+        # verdict_json arrived after 1.0.0. A database created before it exists
+        # and holds real history, so add the column in place. Nobody should have
+        # to delete a year of seen jobs to take an upgrade.
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(seen_jobs)")}
+        if "verdict_json" not in columns:
+            conn.execute("ALTER TABLE seen_jobs ADD COLUMN verdict_json TEXT")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_seen_jobs_first_seen "
             "ON seen_jobs (first_seen)"
         )
         conn.commit()
         return conn
+
+    def connect(self) -> sqlite3.Connection:
+        """
+        An open connection with the schema up to date.
+
+        Public because `job-scout roundup` reads this same table and should
+        not have to know how to migrate it first.
+        """
+        return self._conn()
 
     def filter_new(self, jobs: list[dict]) -> list[dict]:
         """
@@ -158,8 +190,9 @@ class JobStore:
                 """
                 INSERT OR IGNORE INTO seen_jobs
                     (job_id, url, title, company, location, site,
-                     score, status, first_seen, date_posted, search_term)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     score, status, first_seen, date_posted, search_term,
+                     verdict_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -174,6 +207,7 @@ class JobStore:
                         today,
                         job.get("date_posted", ""),
                         job.get("search_term", ""),
+                        _verdict_json(job),
                     )
                     for job in jobs
                 ],

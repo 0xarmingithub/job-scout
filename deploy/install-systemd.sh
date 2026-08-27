@@ -104,6 +104,18 @@ sed "s|^OnCalendar=.*|OnCalendar=*-*-* $RUN_AT $TIMEZONE|; \
      s|^Unit=.*|Unit=job-scout.service|" \
     "$INSTALL_DIR/deploy/job-scout.timer" > /etc/systemd/system/job-scout.timer
 
+# The roundup is optional and stays off. Installing the units without
+# enabling the timer makes `systemctl enable --now job-scout-roundup.timer`
+# the whole decision, and means nobody gets a message they did not ask for.
+sed "s|^User=%i$|User=$SERVICE_USER|; s|^WorkingDirectory=.*|WorkingDirectory=$INSTALL_DIR|; \
+     s|^ExecStart=.*|ExecStart=$INSTALL_DIR/.venv/bin/job-scout roundup --days 5|; \
+     s|^ReadWritePaths=.*|ReadWritePaths=$INSTALL_DIR/data|" \
+    "$INSTALL_DIR/deploy/job-scout-roundup.service" > /etc/systemd/system/job-scout-roundup.service
+
+sed "s|^OnCalendar=.*|OnCalendar=Fri *-*-* 17:00:00 $TIMEZONE|; \
+     s|^Unit=.*|Unit=job-scout-roundup.service|" \
+    "$INSTALL_DIR/deploy/job-scout-roundup.timer" > /etc/systemd/system/job-scout-roundup.timer
+
 systemctl daemon-reload
 systemctl enable --now job-scout.timer
 
@@ -121,4 +133,6 @@ Next:
   3. Run it once by hand:   sudo systemctl start job-scout.service
      Watch it:              sudo journalctl -u job-scout -f
   4. When it fires next:    systemctl list-timers job-scout.timer
+  5. Weekly roundup, optional. The best of the last 5 days, every Friday:
+                             sudo systemctl enable --now job-scout-roundup.timer
 EOF

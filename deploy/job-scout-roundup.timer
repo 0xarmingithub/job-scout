@@ -1,0 +1,22 @@
+[Unit]
+Description=Job Scout weekly roundup timer
+Documentation=https://github.com/0xarmingithub/job-scout
+
+[Timer]
+# Friday evening, after the last daily run has been and gone. Change the
+# timezone to yours.
+#
+# If you move this to another day, change --days in the service to match. The
+# roundup counts back from the day it runs, so a Wednesday timer with --days 5
+# covers the previous Saturday to Wednesday, which is nobody's working week.
+OnCalendar=Fri *-*-* 17:00:00 Europe/Copenhagen
+
+# If the machine was off on Friday, send it late rather than not at all.
+Persistent=true
+
+RandomizedDelaySec=60
+
+Unit=job-scout-roundup@%i.service
+
+[Install]
+WantedBy=timers.target
