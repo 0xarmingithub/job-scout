@@ -507,6 +507,28 @@ def _cmd_check(args) -> int:
     return 1 if problems else 0
 
 
+def _unfilled_placeholders(text: str) -> list[str]:
+    """
+    Which of the shipped template's placeholders are still in a prompt.
+
+    Compared against the template rather than counting brackets. A finished
+    prompt has every right to contain [NEEDS ME] or [REDACTED], and a check that
+    calls those a problem is a check you learn to ignore.
+    """
+    from .config import TAILOR_PROMPT_TEMPLATE, TEMPLATE_DIR
+
+    source = TEMPLATE_DIR / TAILOR_PROMPT_TEMPLATE
+    if not source.exists():
+        return []
+    import re
+
+    shipped = set(re.findall(r"\[[A-Z][^\]]{4,}\]", source.read_text(encoding="utf-8")))
+    # [NEEDS ...] is not a placeholder. The template tells the model to write it
+    # where a fact is missing, and a finished prompt should still say so.
+    shipped = {item for item in shipped if not item.startswith("[NEEDS")}
+    return sorted(item for item in shipped if item in text)
+
+
 def _print_tailoring(settings: Settings) -> bool:
     """
     What the optional follow-up step is set to do. Returns True if it is broken.
@@ -546,9 +568,11 @@ def _print_tailoring(settings: Settings) -> bool:
         print("  Prompt:    none. The command gets the posting and nothing else")
     elif config.prompt_file.exists():
         text = config.prompt_file.read_text(encoding="utf-8", errors="replace")
-        left = text.count("[")
-        note = f", {left} [PLACEHOLDER] still in it" if left else ""
+        left = _unfilled_placeholders(text)
+        note = f", {len(left)} still to fill in" if left else ""
         print(f"  Prompt:    {config.prompt_file}{note}")
+        for placeholder in left[:3]:
+            print(f"             {placeholder}")
         if left:
             print("             Edit it before the first real run.")
     else:
