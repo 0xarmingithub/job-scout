@@ -1,0 +1,97 @@
+name: release
+
+# Bumping the version in pyproject.toml is the release. This turns that bump
+# into a tag and a GitHub release with generated notes.
+#
+# It exists because v1.1.1 did not. The version was bumped, committed and
+# pushed on 2026-08-27, and the releases page still showed v1.0.0 three days
+# later, because cutting the tag was a manual step. Manual steps get skipped.
+#
+# Nothing here needs a decision at release time. If the version on main has no
+# release, it gets one. If it already has one, this does nothing.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Creating a tag and a release needs write access. Every other workflow in this
+# repository is read-only, and this one is scoped to the release job alone.
+permissions:
+  contents: read
+
+concurrency:
+  # Two pushes in quick succession must not race to cut the same tag.
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    # Never tag a red tree. This is one Python version, not the 3.10 to 3.13
+    # matrix in tests.yml, which has already run. It is here so a direct push
+    # to main, which skips pull request checks entirely, still cannot cut a
+    # release out of failing code.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run the tests
+        run: pytest -q
+
+      - name: Lint
+        run: |
+          pip install ruff
+          ruff check job_scout tests tools
+
+      - name: Nothing private is about to be published
+        run: python tools/pre_push_check.py
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # All history and tags, so --generate-notes can find the previous
+          # release and list the commits since it.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read the version
+        id: version
+        # This fails if pyproject.toml and job_scout/__init__.py disagree, which
+        # would otherwise tag a number the installed package never reports.
+        run: |
+          version="$(python tools/version_check.py --print)"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          echo "Both files say $version"
+
+      - name: Cut the release, unless this version already has one
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "v$VERSION is already released. Nothing to do."
+            exit 0
+          fi
+          gh release create "v$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --generate-notes
+          echo "Released v$VERSION"

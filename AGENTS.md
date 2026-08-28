@@ -108,6 +108,29 @@ shipped defaults. They are copied to the repo root on first run and the copies
 are gitignored, so a user's edits survive `git pull` and never get pushed. Change
 the templates, not the copies.
 
+### 11. If you change `job_scout/`, bump the version
+
+Two files, and they have to match:
+
+```
+pyproject.toml          version = "1.2.0"
+job_scout/__init__.py   __version__ = "1.2.0"
+```
+
+Nobody installs this from PyPI. Every install points at a git URL, and pip
+decides whether to reinstall by comparing version strings. Leave the version
+alone and `pip install --upgrade` finds nothing to do: it fetches, compares
+1.1.0 to 1.1.0, prints a success line and keeps running the old code. The fix in
+1573703 shipped to nobody for exactly this reason.
+
+That bump is the entire release process. Pushing a new version to `main` cuts
+the tag and writes the GitHub release by itself
+(`.github/workflows/release.yml`). Never create a tag or a release by hand.
+
+Enforced by `tools/version_check.py`, which runs in the pre-push hook and in the
+`version-bump` job of `tests.yml`. Editing docs, tests or CI does not need a
+bump.
+
 ---
 
 ## Layout
@@ -175,6 +198,7 @@ JSON the model returns, handle it in `score_jobs()`, document it in
 pytest -q                          # all green, no network
 ruff check job_scout tests tools
 python tools/pre_push_check.py     # nothing private is about to be published
+python tools/version_check.py --against origin/main   # a change to job_scout/ moved the version
 job-scout check                    # every backend and notifier reports honestly
 job-scout run --dry-run            # a real run that records and sends nothing
 ```
