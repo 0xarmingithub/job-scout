@@ -1,0 +1,6 @@
+pyyaml
+jinja2
+
+# only needed for import_cv.py reading .pdf / .docx CVs -- .txt and .md need nothing:
+# pypdf
+# python-docx
