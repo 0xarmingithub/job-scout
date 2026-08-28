@@ -178,6 +178,57 @@ information.
 If the file is missing, malformed, or has the wrong column names, the run logs
 one line and scores without it.
 
+## Checking whether the score was right
+
+Outcomes go into the scorer. They also come back out, as a test of it:
+
+```bash
+job-scout calibrate
+```
+
+The claim a score makes is that postings scoring higher convert better than
+postings scoring lower. `calibrate` sorts your recorded outcomes into score
+bands and prints the interview rate in each, so the claim can be checked rather
+than assumed.
+
+```
+23 recorded outcome(s); 19 matched to a score the scout gave at the time.
+12 were sent and have an answer. Rates below are over those.
+
+Verdict: separating. The 80 to 100 band reaches interview 42 points more often
+than the under 50 band. The score is carrying real signal.
+
+  band        sent   reached interview   offer
+  80 to 100       6      50% ( 3)          17%
+  70 to 79        4      25% ( 1)           0%  <- threshold
+  under 50        2       0% ( 0)           0%
+```
+
+Four verdicts:
+
+| Verdict | What it means | What to do |
+|---|---|---|
+| `separating` | Higher scores convert better | Nothing. It is working |
+| `flat` | Top and bottom bands are within 15 points | The number is not yet telling you which applications to make. Sharpen `confirmed_gaps` and the profile before touching the threshold |
+| `inverted` | Lower scores convert better | The profile describes a job you do not get hired for. Rewrite it around what actually converted |
+| `insufficient` | Fewer than 8 sent applications carry a matched score | Keep recording outcomes |
+
+Everything the table leaves out is printed under it: applications still in
+flight, outcomes with no matching score, postings you read and skipped that
+scored above your threshold, and any join made on a weak title match. That last
+list matters. Outcomes are tied back to scores by title and company, with the
+employer required to agree, so read it and raise `--min-similarity` if a row
+looks wrong.
+
+A rejection that came after three rounds counts as reaching interview here,
+even though the scorer classifies it as rejected. The two questions are
+different: the scorer wants to know where an application ended, and calibration
+wants to know whether anyone wanted to talk.
+
+**This command only reads.** It never edits `config.yaml`, the threshold, your
+profile or `outcomes.csv`. A number tuned automatically by the thing measuring
+it stops being a measurement.
+
 ## Setting the threshold
 
 `notify_threshold` is the lowest score you get told about. Everything below it is

@@ -6,6 +6,7 @@ cli.py, the `job-scout` command.
     job-scout run --limit 5          stop after 5 postings reach the scorer
     job-scout check                  tell me what is and is not set up
     job-scout stats                  what the seen-jobs database says
+    job-scout calibrate              whether the score predicted your outcomes
     job-scout roundup                the best of the last 7 days, in one message
     job-scout ask                    collect answers to an outstanding question
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
@@ -98,6 +99,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--days", type=int, default=14, help="how many days of history to show"
     )
 
+    calibrate_parser = subparsers.add_parser(
+        "calibrate",
+        help="whether applications that scored higher actually converted better",
+    )
+    _common(calibrate_parser)
+    calibrate_parser.add_argument(
+        "--min-similarity", type=float, default=None,
+        help="how much of a title has to overlap before an outcome is matched "
+             "to a scored posting (0 to 1, default 0.5). Raise it if you see a "
+             "wrong join in the weak-match list",
+    )
+
     roundup_parser = subparsers.add_parser(
         "roundup",
         help="one message summarising the best postings of the last few days",
@@ -144,6 +157,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_check(args)
     if command == "stats":
         return _cmd_stats(args)
+    if command == "calibrate":
+        return _cmd_calibrate(args)
     if command == "roundup":
         return _cmd_roundup(args)
     if command == "ask":
@@ -299,6 +314,29 @@ def _cmd_stats(args) -> int:
         print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
         return 2
     print(render(settings.data_dir / "jobs.db", settings.notify_threshold, args.days))
+    return 0
+
+
+def _cmd_calibrate(args) -> int:
+    from .calibrate import _MIN_SIMILARITY, render
+
+    try:
+        settings = load_settings(args.config_dir, args.data_dir)
+    except ConfigError as exc:
+        print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
+        return 2
+
+    floor = args.min_similarity if args.min_similarity is not None else _MIN_SIMILARITY
+    if not 0.0 < floor <= 1.0:
+        print("--min-similarity has to be above 0 and at most 1.", file=sys.stderr)
+        return 2
+
+    print(render(
+        settings.data_dir / "jobs.db",
+        settings.outcomes_path,
+        settings.notify_threshold,
+        floor,
+    ))
     return 0
 
 

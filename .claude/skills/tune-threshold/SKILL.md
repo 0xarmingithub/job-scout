@@ -35,6 +35,18 @@ helps, or in the 30s and 40s, where it will not.
 That second query is the important one. It tells you what the near misses
 actually scored, which decides everything below.
 
+If the user keeps an `outcomes.csv`, run this as well:
+
+```bash
+job-scout calibrate
+```
+
+It says whether applications that scored higher actually converted better. A
+`flat` or `inverted` verdict means the threshold is not the lever: moving a line
+through a number that predicts nothing changes the volume and not the quality,
+so fix the profile first, which is case 2 below. `insufficient` means there is
+not enough recorded outcome data yet. Carry on with the distribution.
+
 ## Case 1: too many, and they are good
 
 More than about five a day, and the user would genuinely consider them.
