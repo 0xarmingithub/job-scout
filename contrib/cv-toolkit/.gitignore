@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+
+# rendered output -- not source
+*.pdf
+*.docx
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
+!templates/reference.docx
+
+# except the example inputs/outputs the toolkit ships intentionally
+!resume.example.yaml

@@ -1,0 +1,83 @@
+% Generic example template -- bare-bones, not styled for any one person.
+% Copy this file and rework the styling however you like; the VAR and
+% BLOCK placeholders below (see renderers/latex_renderer.py) are the
+% contract the renderer fills in.
+% Compile with: latexmk -pdf example.tex   (or pdflatex, run twice for links)
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\pagestyle{empty}
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{10pt}{6pt}
+
+\begin{document}
+
+{\LARGE \textbf{\VAR{name}}}\\[4pt]
+\VAR{contact.email}
+\BLOCK{if contact.phone}
+ \textbar\ \VAR{contact.phone}
+\BLOCK{endif}
+\BLOCK{if contact.location}
+ \textbar\ \VAR{contact.location}
+\BLOCK{endif}
+\BLOCK{for label, url in contact.links.items()}
+ \textbar\ \href{\VAR{url}}{\VAR{label}}
+\BLOCK{endfor}
+\\[10pt]
+
+\section*{Summary}
+\VAR{summary}
+
+\section*{Experience}
+\BLOCK{for job in experience}
+\textbf{\VAR{job.title}} --- \VAR{job.company}\BLOCK{if job.location}, \VAR{job.location}\BLOCK{endif} \hfill \VAR{job.dates}\\
+\BLOCK{if job.bullets}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\BLOCK{for bullet in job.bullets}
+\item \VAR{bullet}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+\vspace{4pt}
+\BLOCK{endfor}
+
+\section*{Skills}
+\BLOCK{if skill_groups}
+\BLOCK{for group, items in skill_groups.items()}
+\textbf{\VAR{group}:} \VAR{items|join(", ")}\\
+\BLOCK{endfor}
+\BLOCK{else}
+\VAR{skills|join(", ")}
+\BLOCK{endif}
+
+\section*{Education}
+\BLOCK{for entry in education}
+\textbf{\VAR{entry.degree}} --- \VAR{entry.institution} \hfill \VAR{entry.dates}\\
+\BLOCK{endfor}
+
+\BLOCK{if certifications}
+\section*{Certifications}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\BLOCK{for cert in certifications}
+\item \VAR{cert}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\BLOCK{if projects}
+\section*{Projects}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\BLOCK{for p in projects}
+\item \VAR{p}
+\BLOCK{endfor}
+\end{itemize}
+\BLOCK{endif}
+
+\BLOCK{if interests}
+\section*{Interests}
+\VAR{interests|join("; ")}
+\BLOCK{endif}
+
+\end{document}

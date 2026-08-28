@@ -173,6 +173,10 @@ writing from your profile alone produces something plausible and slightly
 wrong. With no `tailor:` block in config.yaml none of this exists and a run
 behaves exactly as it did before. Detail in [docs/tailoring.md](docs/tailoring.md).
 
+Whatever it writes is a draft, in plain Markdown, not a finished document.
+[contrib/cv-toolkit](contrib/cv-toolkit/) turns that draft into a real `.tex`,
+`.docx`, or plain-text file, using a template you already have.
+
 ### Then point it at yourself, from your CV
 
 Most of what belongs in `profile.yaml` is already written down in your CV, so
@@ -429,6 +433,7 @@ not point this at a company you are trying to annoy.
 | [Adding a notifier](docs/adding-a-notifier.md) | About 30 |
 | [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing. `job-scout stats` is the first command to run |
 | [Examples](examples/) | A complete Denmark setup |
+| [CV toolkit](contrib/cv-toolkit/) | Turn a tailored draft, or any CV you already have, into a `.tex`, `.docx`, or plain-text file using your own template |
 | [AGENTS.md](AGENTS.md) | Instructions for AI coding tools. Not Claude-specific. |
 | [Contributing](CONTRIBUTING.md) | |
 
@@ -436,15 +441,17 @@ not point this at a company you are trying to annoy.
 
 ## What is coming
 
-**Release 2, the CV toolkit.** Planned, not built. The same profile that scores
-a posting can tailor a CV against it: analyse the job description, map it onto a
-master résumé, find the real gaps, draft a cover letter, check the result parses
-in an applicant tracking system, and prepare interview answers.
+**Release 2, the CV toolkit.** Planned, not fully built. The same profile that
+scores a posting can tailor a CV against it: analyse the job description, map
+it onto a master résumé, find the real gaps, draft a cover letter, check the
+result parses in an applicant tracking system, and prepare interview answers.
 
-That work exists and runs daily, but it is written around a specific LaTeX CV
-structure and a master résumé file that has no public equivalent. Shipping it
-now would mean shipping something half-working, so it waits until the CV side
-has been made general.
+One piece of that shipped: [contrib/cv-toolkit](contrib/cv-toolkit/)
+generalizes the CV-rendering side, so a tailored draft -- or any CV you
+already have -- becomes a real document in whatever format you use, without
+assuming one specific LaTeX structure. Still missing: a master résumé file
+with no public equivalent yet, and the job-description analysis, gap-mapping,
+and cover-letter logic built around it.
 
 Not planned: a web interface, a hosted version, or anything that stores your
 profile on someone else's machine.
