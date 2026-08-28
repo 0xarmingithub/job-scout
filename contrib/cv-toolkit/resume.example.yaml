@@ -1,0 +1,36 @@
+name: Jane Doe
+contact:
+  email: jane@example.com
+  phone: "+45 12 34 56 78"
+  location: Copenhagen, Denmark
+  links:
+    LinkedIn: https://linkedin.com/in/janedoe
+    GitHub: https://github.com/janedoe
+
+summary: >
+  Senior backend engineer with 8 years building distributed systems.
+  Cut deploy time from 40 minutes to 6 minutes at Acme by rebuilding the CI pipeline.
+
+experience:
+  - title: Senior Engineer
+    company: Acme Corp
+    dates: "2022–2026"
+    bullets:
+      - "Cut deploy time from 40 min to 6 min by rebuilding the CI pipeline on GitHub Actions"
+      - "Led migration of 12 services from EC2 to Kubernetes, cutting hosting cost 30%"
+  - title: Backend Engineer
+    company: Widget Inc
+    dates: "2019–2022"
+    bullets:
+      - "Built the payments service handling 50k transactions/day"
+
+skills:
+  - Python
+  - Kubernetes
+  - PostgreSQL
+  - AWS
+
+education:
+  - degree: BSc Computer Science
+    institution: University of Copenhagen
+    dates: "2015–2019"
