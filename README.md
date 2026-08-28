@@ -421,7 +421,7 @@ not point this at a company you are trying to annoy.
 | [Getting started from nothing](docs/getting-started.md) | No Python, no terminal experience. Start here. |
 | [Outside services](docs/external-services.md) | Every account and key, what it costs, how to get it |
 | [Configuration reference](docs/configuration.md) | Every field in `config.yaml` and `profile.yaml` |
-| [How scoring works](docs/scoring.md) | The three tiers, the prompt, tuning the threshold |
+| [How scoring works](docs/scoring.md) | The three tiers, the prompt, tuning the threshold, and `job-scout calibrate` for checking whether the score predicted anything |
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |
 | [Weekly roundup](docs/roundup.md) | One message for the week, and the Friday timer that sends it |
 | [Tailoring](docs/tailoring.md) | Running a command on the day's best match, and asking you first |
