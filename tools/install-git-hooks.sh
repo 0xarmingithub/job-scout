@@ -47,6 +47,16 @@ if [ -n "$range" ]; then
 else
     "$python" "$repo/tools/pre_push_check.py" --require-denylist
 fi
+
+# A push with no version bump installs nowhere, because pip compares version
+# strings and finds them equal. CI catches this too, but catching it here means
+# fixing it in the commit rather than in a follow-up.
+echo "pre-push: checking the version moved ..."
+if [ -n "$remote_head" ]; then
+    "$python" "$repo/tools/version_check.py" --against "$remote_head"
+else
+    "$python" "$repo/tools/version_check.py"
+fi
 HOOK_BODY
 
 chmod +x "$HOOK"

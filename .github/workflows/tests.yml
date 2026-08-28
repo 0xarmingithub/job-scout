@@ -59,3 +59,34 @@ jobs:
         with:
           python-version: "3.12"
       - run: python tools/pre_push_check.py
+
+  version-bump:
+    # Releases are cut automatically (.github/workflows/release.yml), but only
+    # when the version moves. A change to job_scout/ that leaves the version
+    # alone reaches nobody: everyone installs from a git URL, and
+    # `pip install --upgrade` compares version strings, finds them equal, and
+    # keeps the old code while printing a success line. That is exactly how the
+    # fix in 1573703 failed to reach the machine it was found on.
+    #
+    # This runs on pushes too, not only pull requests, because work here mostly
+    # lands on main directly and a pull-request-only gate would never fire.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The comparison needs the commit being compared against.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The version has to move when what ships moves
+        env:
+          # On a pull request, compare against the branch being merged into. On
+          # a push, compare against what main was before the push.
+          REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: |
+          if [ -z "$REF" ] || [ "$REF" = "0000000000000000000000000000000000000000" ]; then
+            echo "No earlier commit to compare against. Skipping."
+            exit 0
+          fi
+          python tools/version_check.py --against "$REF"

@@ -7,6 +7,7 @@ actually uses.
 """
 
 import ast
+import re
 import sys
 from pathlib import Path
 
@@ -51,6 +52,32 @@ def test_pyproject_declares_the_same_floor():
 
 def test_this_interpreter_is_new_enough():
     assert sys.version_info >= MINIMUM_PYTHON
+
+
+def test_the_two_version_numbers_agree():
+    """
+    pyproject.toml and job_scout/__init__.py have to say the same thing.
+
+    The release tag is named after the first and `job-scout --version` prints
+    the second, so a mismatch means a machine reporting a version that was
+    never released. tools/version_check.py is the same check the pre-push hook
+    and CI run; this makes `pytest -q` catch it first.
+    """
+    sys.path.insert(0, str(REPO_ROOT / "tools"))
+    try:
+        import version_check
+    finally:
+        sys.path.pop(0)
+
+    try:
+        version = version_check.current_version()
+    except version_check.VersionProblem as exc:
+        pytest.fail(str(exc))
+
+    assert re.fullmatch(r"\d+\.\d+\.\d+", version), (
+        f"version {version!r} is not major.minor.patch, so the v{version} tag "
+        f"and any version comparison against it are guesswork"
+    )
 
 
 # ─── The shipped templates have to be valid, or a first run fails ─────────────
