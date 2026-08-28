@@ -24,7 +24,12 @@ from datetime import datetime
 from pathlib import Path
 
 from .base import (
-    Notifier, RunStats, alert_text, digest_header, format_job, no_match_body,
+    Notifier,
+    RunStats,
+    alert_text,
+    digest_header,
+    format_job,
+    no_match_body,
     note_text,
 )
 
