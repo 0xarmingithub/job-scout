@@ -9,5 +9,5 @@ The candidate profile is a plain YAML file. Change the file, change what the
 agent looks for. No code edits.
 """
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 __all__ = ["__version__"]
