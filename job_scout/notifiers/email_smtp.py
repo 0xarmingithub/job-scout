@@ -32,7 +32,7 @@ from datetime import date
 from email.message import EmailMessage
 from pathlib import Path
 
-from .base import Notifier, RunStats, alert_text, full_digest_text
+from .base import Notifier, RunStats, alert_text, full_digest_text, note_text
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +164,11 @@ class EmailNotifier(Notifier):
         prefix = str(self.spec.get("subject") or "Job Scout")
         return self._send(f"{prefix} ALERT, {date.today().strftime('%d %b %Y')}",
                           alert_text(body))
+
+    def send_note(self, body: str) -> bool:
+        prefix = str(self.spec.get("subject") or "Job Scout")
+        return self._send(f"{prefix}, {date.today().strftime('%d %b %Y')}",
+                          note_text(body))
 
     def send_document(self, path: Path, caption: str = "") -> bool:
         """Send the file as an attachment, with the caption as the body."""

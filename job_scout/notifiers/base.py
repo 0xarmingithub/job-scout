@@ -71,6 +71,16 @@ class Notifier:
         """Report a run-level failure. Defaults to a digest-shaped message."""
         raise NotImplementedError
 
+    def send_note(self, body: str) -> bool:
+        """
+        Send a plain message that is not a failure.
+
+        Separate from send_alert deliberately. A weekly reminder delivered
+        under the word ALERT teaches you to stop reading alerts, and the next
+        one is the run that actually died.
+        """
+        raise NotImplementedError
+
     def send_document(self, path: "Path", caption: str = "") -> bool:
         """
         Put a file in front of the reader.
@@ -191,3 +201,8 @@ def alert_text(body: str) -> str:
     return (
         f"Job Scout ALERT, {date.today().strftime('%d %b %Y')}\n\n{redact(body)}"
     )
+
+
+def note_text(body: str) -> str:
+    """A message that is not a failure. Same redaction, different word."""
+    return f"Job Scout, {date.today().strftime('%d %b %Y')}\n\n{redact(body)}"

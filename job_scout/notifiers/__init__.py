@@ -147,3 +147,21 @@ class Dispatcher:
             except Exception as exc:
                 logger.error("Notifier '%s' could not alert: %s", notifier.name, exc)
         return sent
+
+    def send_note(self, body: str) -> int:
+        """
+        Send a plain message everywhere. Returns how many channels took it.
+
+        The same fan-out as send_alert without the word ALERT. Anything sent on
+        a schedule belongs here: a weekly reminder filed under alerts teaches
+        the reader to skip alerts, and the one after that is the run that
+        actually died.
+        """
+        sent = 0
+        for notifier in self.notifiers:
+            try:
+                if notifier.send_note(body):
+                    sent += 1
+            except Exception as exc:
+                logger.error("Notifier '%s' could not send a note: %s", notifier.name, exc)
+        return sent

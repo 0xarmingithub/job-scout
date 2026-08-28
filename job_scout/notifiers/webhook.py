@@ -26,7 +26,7 @@ and anything else that accepts a plain JSON body.
 import logging
 import os
 
-from .base import Notifier, RunStats, alert_text, full_digest_text
+from .base import Notifier, RunStats, alert_text, full_digest_text, note_text
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +108,9 @@ class WebhookNotifier(Notifier):
 
     def send_alert(self, body: str) -> bool:
         return self._post(alert_text(body))
+
+    def send_note(self, body: str) -> bool:
+        return self._post(note_text(body))
 
 
 def _split(text: str, limit: int) -> list[str]:

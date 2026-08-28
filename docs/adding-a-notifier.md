@@ -28,6 +28,9 @@ class MyNotifier(Notifier):
 
     def send_alert(self, body: str) -> bool:
         """Send a run-level failure. Return True on success. Never raise."""
+
+    def send_note(self, body: str) -> bool:
+        """Send a plain message that is not a failure. Same rules, not an alert."""
 ```
 
 You get two attributes: `self.spec`, your entry from `config.yaml` as a dict, and
@@ -66,6 +69,13 @@ gets committed. Put a variable *name* in config if you want it configurable:
 
 **Implement `send_alert`.** It is how a failed run reaches you. A notifier that
 only sends good news is half a notifier.
+
+**Implement `send_note` too, and keep the alert wording out of it.** It carries
+anything scheduled: a weekly reminder, a nudge, whatever you build on top. The
+two are separate for one reason. A message arriving every Friday under the word
+ALERT teaches you to skip alerts, and the next one is the run that actually
+died. `base.note_text()` gives the right heading and applies the same
+credential redaction as `alert_text()`.
 
 **Use the shared formatters** in `job_scout/notifiers/base.py`, so every channel describes
 a job the same way:
