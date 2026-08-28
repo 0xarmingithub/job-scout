@@ -48,6 +48,16 @@ else
     "$python" "$repo/tools/pre_push_check.py" --require-denylist
 fi
 
+# The same ruff check CI runs, so a lint failure costs a minute here instead of
+# a red build and a follow-up commit. Skipped when ruff is not installed: a
+# contributor without it should still be able to push.
+if "$python" -c "import ruff" >/dev/null 2>&1 || command -v ruff >/dev/null 2>&1; then
+    echo "pre-push: linting ..."
+    (cd "$repo" && "$python" -m ruff check job_scout tests tools)
+else
+    echo "pre-push: ruff is not installed, skipping the lint. CI still runs it."
+fi
+
 # A push with no version bump installs nowhere, because pip compares version
 # strings and finds them equal. CI catches this too, but catching it here means
 # fixing it in the commit rather than in a follow-up.
