@@ -89,6 +89,28 @@ def test_a_shared_legal_suffix_is_not_a_shared_employer():
     ) is None
 
 
+def test_a_shared_legal_form_letter_is_not_a_shared_employer():
+    """
+    "A/S" splits into "a" and "s". Filtering one and not the other left every
+    Danish company sharing the token "s", which is the whole market this was
+    written for, and the employer guard passed on it.
+    """
+    assert calibrate._company_tokens("Dampskibsselskabet NORDEN A/S") == {
+        "dampskibsselskabet", "norden",
+    }
+    assert match(
+        {"title": "Senior Solution Architect", "company": "Dampskibsselskabet NORDEN A/S",
+         "status": "", "class": ""},
+        _scored(("Senior Solution Architect, Network", "Bunker Holding A/S", 0)),
+    ) is None
+
+
+def test_a_short_company_name_survives_the_filter():
+    """EY, n8n and 3M are two or three characters and are still the name."""
+    for name in ("EY", "n8n", "3M", "WSA"):
+        assert calibrate._company_tokens(name) == {name.lower()}
+
+
 def test_a_company_written_two_ways_still_matches():
     found = match(
         {"title": "Senior Software Architect", "company": "WSA", "status": "", "class": ""},

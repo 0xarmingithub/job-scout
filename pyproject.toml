@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "job-scout"
-version = "1.2.1"
+version = "1.2.2"
 description = "A job-hunting agent that searches job boards daily, scores every posting against a profile you write, and sends you the good ones."
 readme = "README.md"
 license = { text = "MIT" }

@@ -101,12 +101,20 @@ def _company_tokens(text: str) -> set[str]:
     """
     The words that actually identify an employer.
 
+    Single letters are dropped whatever they are. "A/S" splits into "a" and
+    "s", and a stop word list that happens to name one but not the other is a
+    guard with a hole in it: every Danish company ends in A/S, so they all
+    shared the token "s" and "Dampskibsselskabet NORDEN A/S" matched "Bunker
+    Holding A/S" on it. One letter cannot identify an employer.
+
     If stripping the filler leaves nothing, the filler is the name, so the
-    plain tokens are used instead of an empty set.
+    plain words are used rather than an empty set.
     """
     words = re.sub(r"[^a-z0-9]+", " ", str(text or "").lower()).split()
-    distinct = {word for word in words if word not in _COMPANY_NOISE}
-    return distinct or {word for word in words if word not in _NOISE}
+    distinct = {
+        word for word in words if len(word) > 1 and word not in _COMPANY_NOISE
+    }
+    return distinct or set(words)
 
 
 def _similarity(left: set[str], right: set[str]) -> float:
