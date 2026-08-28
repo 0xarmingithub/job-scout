@@ -16,9 +16,9 @@ The store is a single file, jobs.db, in your data directory.
 """
 
 import hashlib
+import json
 import logging
 import re
-import json
 import sqlite3
 from datetime import date
 from pathlib import Path
