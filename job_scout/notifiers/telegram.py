@@ -37,6 +37,7 @@ from .base import (
     digest_header,
     format_job,
     no_match_body,
+    note_text,
 )
 
 logger = logging.getLogger(__name__)
@@ -144,6 +145,11 @@ class TelegramNotifier(Notifier):
         if self.check():
             return False
         return self._send(alert_text(body))
+
+    def send_note(self, body: str) -> bool:
+        if self.check():
+            return False
+        return self._send(note_text(body))
 
     def send_document(self, path: Path, caption: str = "") -> bool:
         """

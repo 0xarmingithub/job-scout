@@ -220,6 +220,44 @@ def test_an_alert_never_leaks_a_token(tmp_path):
     assert "REDACTED" in text
 
 
+def test_a_note_is_not_filed_as_an_alert(tmp_path):
+    """
+    A weekly reminder under the word ALERT teaches you to skip alerts, and the
+    next one is the run that actually died.
+    """
+    notifier = build([{"type": "file"}], tmp_path)[0]
+    assert notifier.send_note("3 applications have not moved in 21 days.")
+    text = (tmp_path / "matches.md").read_text(encoding="utf-8")
+    assert "have not moved in 21 days" in text
+    assert "ALERT" not in text
+
+
+def test_a_note_is_redacted_like_an_alert(tmp_path):
+    notifier = build([{"type": "file"}], tmp_path)[0]
+    notifier.send_note(  # pre-push-check: allow
+        "checked https://user:hunter2@github.com/x"  # pre-push-check: allow
+    )
+    text = (tmp_path / "matches.md").read_text(encoding="utf-8")
+    assert "hunter2" not in text
+    assert "REDACTED" in text
+
+
+def test_the_dispatcher_counts_the_channels_that_took_a_note(tmp_path):
+    dispatcher = Dispatcher(build([{"type": "file"}, {"type": "file"}], tmp_path))
+    assert dispatcher.send_note("anything") == 2
+
+
+def test_one_broken_channel_does_not_stop_a_note(tmp_path):
+    class Broken:
+        name = "broken"
+
+        def send_note(self, body):
+            raise RuntimeError("no")
+
+    working = build([{"type": "file"}], tmp_path)[0]
+    assert Dispatcher([Broken(), working]).send_note("still delivered") == 1
+
+
 # ─── The three that need credentials ──────────────────────────────────────────
 
 def test_telegram_says_what_is_missing(tmp_path):

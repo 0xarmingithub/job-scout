@@ -23,7 +23,10 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from .base import Notifier, RunStats, alert_text, digest_header, format_job, no_match_body
+from .base import (
+    Notifier, RunStats, alert_text, digest_header, format_job, no_match_body,
+    note_text,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +126,14 @@ class FileNotifier(Notifier):
             return True
         except OSError as exc:
             logger.error("File notifier could not write alert to %s: %s", self.path, exc)
+            return False
+
+    def send_note(self, body: str) -> bool:
+        try:
+            self._write(f"{note_text(body)}\n")
+            return True
+        except OSError as exc:
+            logger.error("File notifier could not write note to %s: %s", self.path, exc)
             return False
 
     def _write(self, text: str) -> None:
