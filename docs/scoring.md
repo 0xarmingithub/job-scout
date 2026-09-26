@@ -17,6 +17,19 @@ hard_exclude_location_patterns:
 
 Status written: `rejected_location`.
 
+**Keeps win over exclusions.** A posting listed as "Berlin, Munich" names one
+place you would commute to and one you would not. List the first under
+`keep_location_patterns` and the posting passes, even though `"munich"` is
+excluded:
+
+```yaml
+keep_location_patterns:
+  - "berlin"
+```
+
+A keep pattern only rescues a posting; a location that matches neither list
+passes anyway.
+
 Two traps. A posting whose location is empty is **let through**, on the grounds
 that no information is not the same as bad information. And these are substrings,
 so `"york"` matches New York, and `"berlin"` matches Berlin, New Hampshire.
@@ -30,8 +43,12 @@ Two checks, both free.
 whole categories: junior roles, internships, sales jobs, disciplines you do not
 work in.
 
-Mind the spaces. `"hr "` catches "HR Manager" and not "shrink". `" intern"`
-catches "Intern" and "Marketing Intern" and not "Internal Tools Engineer".
+Mind the spaces. `"hr "` catches "HR Manager" and not "shrink". A bare
+`" intern"` catches "Marketing Intern", but also "Senior Internal Tools
+Engineer" and "Industrial Internet of Things Architect", because the space in
+front is all it checks. Bound it on both sides: `" intern "`, `" intern,"`,
+`"(intern"`, `"intern)"`. A title that ends in "Intern" is still caught by the
+scorer's `too_junior` flag.
 
 **Keyword hit.** At least one keyword must appear somewhere in the title or the
 description. The keyword list is built from two places:

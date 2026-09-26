@@ -101,7 +101,8 @@ def test_the_shipped_profile_exercises_every_field():
     for key in (
         "candidate", "target_roles", "core_skills", "secondary_skills",
         "confirmed_gaps", "industries_preferred", "extra_pre_filter_keywords",
-        "hard_exclude_location_patterns", "hard_exclude_title_patterns",
+        "hard_exclude_location_patterns", "keep_location_patterns",
+        "hard_exclude_title_patterns",
     ):
         assert profile.get(key), f"the example profile leaves {key} empty"
 

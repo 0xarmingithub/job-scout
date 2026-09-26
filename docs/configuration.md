@@ -357,13 +357,15 @@ confirmed_gaps:
 | `extra_pre_filter_keywords` | Extra words for the free filter. Any one hit passes. |
 | `pre_filter_stop_words` | Words to drop from the automatic keyword list. |
 | `hard_exclude_location_patterns` | Locations rejected before anything costs money. |
+| `keep_location_patterns` | Locations that pass even when they also match an exclusion, for multi-city postings. Optional. |
 | `hard_exclude_title_patterns` | Titles rejected before anything costs money. |
 
-All four are case-insensitive substring matches.
+All five are case-insensitive substring matches.
 
 Watch the spaces in title patterns: `"hr "` catches "HR Manager" and not
-"shrink"; `" intern"` catches "Marketing Intern" and not "Internal Tools
-Engineer".
+"shrink". A bare `" intern"` catches "Marketing Intern", but also "Senior
+Internal Tools Engineer" and "Industrial Internet of Things Architect". Bound it
+on both sides instead: `" intern "`, `" intern,"`, `"(intern"`, `"intern)"`.
 
 Add words that appear in every posting in your market to
 `pre_filter_stop_words`. In Denmark, "denmark" and "danish" carry no signal.

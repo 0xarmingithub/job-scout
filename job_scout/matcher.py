@@ -4,7 +4,8 @@ matcher.py. Score every posting from 0 to 100 against the profile.
 Three tiers, cheapest first.
 
   Tier 0  Location. If the posting's location matches one of your
-          hard_exclude_location_patterns, it is dropped. Costs nothing.
+          hard_exclude_location_patterns, it is dropped, unless it also
+          matches one of your keep_location_patterns. Costs nothing.
 
   Tier 1  Keyword pre-filter. The words from your search terms plus
           extra_pre_filter_keywords must appear somewhere in the title or the
@@ -111,11 +112,21 @@ def passes_prefilter(job: dict, keywords: frozenset, exclude_title_patterns: lis
     return any(keyword in combined for keyword in keywords)
 
 
-def passes_location_filter(job: dict, exclude_location_patterns: list) -> bool:
-    """False when the location matches an excluded region or city."""
+def passes_location_filter(
+    job: dict, exclude_location_patterns: list, keep_location_patterns: list = ()
+) -> bool:
+    """
+    False when the location matches an excluded region or city.
+
+    A keep pattern wins over an exclusion. A posting listed as "Berlin, Munich"
+    names a place you would commute to and one you would not, and dropping it
+    would lose a job you could take.
+    """
     location = (job.get("location") or "").lower()
     if not location:
         return True  # No location given. Let the model judge it.
+    if any(pattern in location for pattern in keep_location_patterns):
+        return True
     return not any(pattern in location for pattern in exclude_location_patterns)
 
 
@@ -373,6 +384,7 @@ def score_jobs(
     keywords = build_prefilter_keywords(config, profile) if use_prefilter else frozenset()
     exclude_titles = _lower_list(profile, "hard_exclude_title_patterns")
     exclude_locations = _lower_list(profile, "hard_exclude_location_patterns")
+    keep_locations = _lower_list(profile, "keep_location_patterns")
     reject_too_senior = bool(config.get("reject_too_senior", False))
     retries = max(0, int(config.get("scoring_retries", 1)))
     delay = float(config.get("scoring_delay_seconds", 0) or 0)
@@ -383,7 +395,7 @@ def score_jobs(
     for job in jobs:
         description = (job.get("description") or "")[:description_chars]
 
-        if not passes_location_filter(job, exclude_locations):
+        if not passes_location_filter(job, exclude_locations, keep_locations):
             job.update(score=0, status="rejected_location")
             result.append(job)
             continue

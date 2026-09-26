@@ -205,15 +205,28 @@ hard_exclude_location_patterns:
   - "nuremberg"
   - "nürnberg"
 
+# ─── Location keeps ───────────────────────────────────────────────────────────
+# A posting whose location contains any of these passes the location filter
+# even when it also matches an exclusion above. Use it for multi-city postings:
+# "Berlin, Munich" names a place you would commute to, and without a keep
+# pattern the "munich" exclusion would drop it. Case-insensitive substring.
+keep_location_patterns:
+  - "berlin"
+
 # ─── Title exclusions ─────────────────────────────────────────────────────────
 # Postings whose title contains any of these are rejected before they cost
 # anything. Case-insensitive substring match.
 #
-# Mind the spaces. "hr " catches "HR Manager" but not "shrink". " intern"
-# catches "Intern" and "Marketing Intern" but not "Internal Tools Engineer".
+# Mind the spaces. "hr " catches "HR Manager" but not "shrink". A bare
+# " intern" would also catch "Senior Internal Tools Engineer" and "Industrial
+# Internet of Things", so the intern patterns below are bounded on both sides.
+# A title that ends in "Intern" is still caught by the scorer's too_junior flag.
 hard_exclude_title_patterns:
   - "junior "
-  - " intern"
+  - " intern "
+  - " intern,"
+  - "(intern"
+  - "intern)"
   - "internship"
   - "working student"
   - "werkstudent"

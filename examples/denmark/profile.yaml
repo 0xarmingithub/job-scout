@@ -224,11 +224,21 @@ hard_exclude_location_patterns:
   - "hjørring"
   - "frederikshavn"
 
+# A posting listed as "Copenhagen, Aarhus" names a commutable office, so it is
+# kept even though "aarhus" is excluded above. Both spellings, because boards
+# write the city either way.
+keep_location_patterns:
+  - "copenhagen"
+  - "københavn"
+
 # Danish-language equivalents are included, because a Danish board writes them
 # in Danish: "studiejob" is a student job, "praktik" is an internship.
 hard_exclude_title_patterns:
   - "junior "
-  - " intern"
+  - " intern "
+  - " intern,"
+  - "(intern"
+  - "intern)"
   - "internship"
   - "praktik"
   - "studiejob"

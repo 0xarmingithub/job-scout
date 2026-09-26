@@ -88,6 +88,35 @@ def test_a_missing_location_is_let_through():
     assert matcher.passes_location_filter({"location": ""}, ["munich"])
 
 
+def test_a_keep_pattern_rescues_a_multi_city_posting():
+    job = {"location": "Berlin or Munich, Germany"}
+    assert not matcher.passes_location_filter(job, ["munich"])
+    assert matcher.passes_location_filter(job, ["munich"], ["berlin"])
+
+
+def test_a_keep_pattern_does_not_let_other_excluded_places_through():
+    assert not matcher.passes_location_filter(
+        {"location": "Munich, Germany"}, ["munich"], ["berlin"]
+    )
+
+
+def test_keep_location_patterns_is_read_from_the_profile(monkeypatch):
+    monkeypatch.setattr(matcher, "preflight", lambda spec: None)
+    monkeypatch.setattr(matcher, "run_model", lambda *a, **k: pytest.fail("no model call"))
+    result = matcher.score_jobs(
+        [{"title": "Pastry Chef", "location": "Hamburg / Berlin", "description": "cake",
+          "url": "https://x"}],
+        config={"scoring_model": "gemini:x", "searches": [{"term": "platform engineer"}]},
+        profile={
+            "candidate": {},
+            "hard_exclude_location_patterns": ["hamburg"],
+            "keep_location_patterns": ["Berlin"],
+        },
+    )
+    # Kept by location, then dropped by the keyword filter: it got past tier 0.
+    assert result[0]["status"] == "rejected_prefilter"
+
+
 # ─── Prompt building ──────────────────────────────────────────────────────────
 
 def test_prompt_carries_the_profile(profile):
