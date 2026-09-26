@@ -9,9 +9,8 @@ import argparse
 import sys
 
 import yaml
-
+from adapters.cv_import_adapter import DEFAULT_COMMAND, CvImportError, import_cv
 from schema import validate
-from adapters.cv_import_adapter import import_cv, CvImportError, DEFAULT_COMMAND
 
 
 def main() -> None:

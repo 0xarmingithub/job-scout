@@ -36,6 +36,7 @@ import json
 import logging
 import re
 import time
+from functools import lru_cache
 from pathlib import Path
 
 from . import track_record
@@ -51,7 +52,7 @@ SCORING_SYSTEM_PROMPT = (
 
 # How much of a description the model sees. Long enough to carry the
 # requirements section, short enough to keep the token bill flat.
-DESCRIPTION_CHARS = 3500
+DESCRIPTION_CHARS = 6000
 
 # Room for the verdict. 512 was not enough: a model writing full sentences in
 # key_matches runs past it and the JSON arrives with no closing brace, which
@@ -101,10 +102,41 @@ def _lower_list(profile: dict, key: str) -> list[str]:
     return [str(pattern).lower() for pattern in profile.get(key, []) if str(pattern).strip()]
 
 
-def passes_prefilter(job: dict, keywords: frozenset, exclude_title_patterns: list) -> bool:
+PATTERN_MATCH_MODES = ("substring", "word")
+
+
+def whole_word_matching(profile: dict) -> bool:
+    """True when profile.yaml sets `pattern_match: word`."""
+    return str(profile.get("pattern_match") or "substring").strip().lower() == "word"
+
+
+@lru_cache(maxsize=1024)
+def _word_regex(pattern: str) -> re.Pattern:
+    # Word edges on both sides. Surrounding spaces in the pattern were the old
+    # way of asking for this, so they are dropped rather than required.
+    return re.compile(rf"(?<!\w){re.escape(pattern.strip())}(?!\w)")
+
+
+def matches_any(text: str, patterns: list, word: bool = False) -> bool:
+    """
+    Does any pattern appear in the (already lowercased) text?
+
+    Substring mode is plain `in`: "aarhus" matches "Aarhusgade", " intern"
+    matches "Internal". Word mode only matches whole words: "aarhus" matches
+    "Aarhus, Denmark" and not "Aarhusgade 12", "intern" matches "Intern" and
+    "Software Intern," and not "Internal" or "Internet".
+    """
+    if not word:
+        return any(pattern in text for pattern in patterns)
+    return any(_word_regex(pattern).search(text) for pattern in patterns if pattern.strip())
+
+
+def passes_prefilter(
+    job: dict, keywords: frozenset, exclude_title_patterns: list, word: bool = False
+) -> bool:
     title = (job.get("title") or "").lower()
     description = (job.get("description") or "").lower()
-    if any(pattern in title for pattern in exclude_title_patterns):
+    if matches_any(title, exclude_title_patterns, word):
         return False
     if not keywords:
         return True
@@ -113,7 +145,10 @@ def passes_prefilter(job: dict, keywords: frozenset, exclude_title_patterns: lis
 
 
 def passes_location_filter(
-    job: dict, exclude_location_patterns: list, keep_location_patterns: list = ()
+    job: dict,
+    exclude_location_patterns: list,
+    keep_location_patterns: list = (),
+    word: bool = False,
 ) -> bool:
     """
     False when the location matches an excluded region or city.
@@ -125,9 +160,9 @@ def passes_location_filter(
     location = (job.get("location") or "").lower()
     if not location:
         return True  # No location given. Let the model judge it.
-    if any(pattern in location for pattern in keep_location_patterns):
+    if matches_any(location, list(keep_location_patterns), word):
         return True
-    return not any(pattern in location for pattern in exclude_location_patterns)
+    return not matches_any(location, exclude_location_patterns, word)
 
 
 # ─── Prompt ───────────────────────────────────────────────────────────────────
@@ -385,6 +420,7 @@ def score_jobs(
     exclude_titles = _lower_list(profile, "hard_exclude_title_patterns")
     exclude_locations = _lower_list(profile, "hard_exclude_location_patterns")
     keep_locations = _lower_list(profile, "keep_location_patterns")
+    word = whole_word_matching(profile)
     reject_too_senior = bool(config.get("reject_too_senior", False))
     retries = max(0, int(config.get("scoring_retries", 1)))
     delay = float(config.get("scoring_delay_seconds", 0) or 0)
@@ -395,17 +431,17 @@ def score_jobs(
     for job in jobs:
         description = (job.get("description") or "")[:description_chars]
 
-        if not passes_location_filter(job, exclude_locations, keep_locations):
+        if not passes_location_filter(job, exclude_locations, keep_locations, word):
             job.update(score=0, status="rejected_location")
             result.append(job)
             continue
 
-        if use_prefilter and not passes_prefilter(job, keywords, exclude_titles):
+        if use_prefilter and not passes_prefilter(job, keywords, exclude_titles, word):
             job.update(score=0, status="rejected_prefilter")
             result.append(job)
             continue
-        if not use_prefilter and any(
-            pattern in (job.get("title") or "").lower() for pattern in exclude_titles
+        if not use_prefilter and matches_any(
+            (job.get("title") or "").lower(), exclude_titles, word
         ):
             job.update(score=0, status="rejected_prefilter")
             result.append(job)

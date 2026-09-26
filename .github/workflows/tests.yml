@@ -66,7 +66,7 @@ jobs:
     # alone reaches nobody: everyone installs from a git URL, and
     # `pip install --upgrade` compares version strings, finds them equal, and
     # keeps the old code while printing a success line. That is exactly how the
-    # fix in 1573703 failed to reach the machine it was found on.
+    # fix in fa578b5 failed to reach the machine it was found on.
     #
     # This runs on pushes too, not only pull requests, because work here mostly
     # lands on main directly and a pull-request-only gate would never fire.

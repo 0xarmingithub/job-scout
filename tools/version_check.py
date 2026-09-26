@@ -10,7 +10,7 @@ pip decides whether to reinstall by comparing version strings. When the version
 has not changed, --upgrade does nothing at all. It fetches, compares 1.1.0 to
 1.1.0, prints a success line and leaves the old code in place.
 
-That has already cost a day. The fix in 1573703 was written, tested, committed
+That has already cost a day. The fix in fa578b5 was written, tested, committed
 and pushed without a version bump, so the machine the bug was found on
 reinstalled, reported success, and went on running the broken code.
 

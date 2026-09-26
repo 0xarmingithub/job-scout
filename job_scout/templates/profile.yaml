@@ -213,6 +213,14 @@ hard_exclude_location_patterns:
 keep_location_patterns:
   - "berlin"
 
+# ─── How the pattern lists match ──────────────────────────────────────────────
+# "substring" (the default): plain containment, so "york" also matches
+# "New York" and " intern" also matches "Internal". "word": whole words only,
+# so "intern" matches "Software Intern" and not "Internal Tools". Applies to
+# the location, keep and title lists; the keyword pre-filter is always
+# substring.
+# pattern_match: word
+
 # ─── Title exclusions ─────────────────────────────────────────────────────────
 # Postings whose title contains any of these are rejected before they cost
 # anything. Case-insensitive substring match.

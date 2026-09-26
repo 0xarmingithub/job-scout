@@ -133,3 +133,91 @@ def test_marking_the_same_job_twice_is_harmless(tmp_path, sample_jobs):
     store.mark_seen(sample_jobs)
     store.mark_seen(sample_jobs)
     assert store.count() == 3
+
+
+# ─── Postings that failed to score get more runs ──────────────────────────────
+
+def _failed(job: dict) -> dict:
+    return {**job, "status": "scoring_error", "score": 0}
+
+
+def _status(store: JobStore, job: dict) -> tuple:
+    conn = store.connect()
+    try:
+        return conn.execute(
+            "SELECT status, score, attempts FROM seen_jobs WHERE job_id = ?",
+            (make_job_id(job["url"]),),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def test_a_scoring_error_is_offered_again_next_run(tmp_path, sample_jobs):
+    store = JobStore(tmp_path / "jobs.db")
+    job = sample_jobs[0]
+    store.mark_seen([_failed(job)])
+    assert store.filter_new([job]) == [job]
+
+
+def test_a_successful_retry_replaces_the_error(tmp_path, sample_jobs):
+    store = JobStore(tmp_path / "jobs.db")
+    job = sample_jobs[0]
+    store.mark_seen([_failed(job)])
+    store.mark_seen([{**job, "status": "new", "score": 82}])
+    assert _status(store, job) == ("new", 82, 2)
+    assert store.filter_new([job]) == []
+
+
+def test_retries_run_out(tmp_path, sample_jobs):
+    store = JobStore(tmp_path / "jobs.db", error_retries=2)
+    job = sample_jobs[0]
+    for _ in range(3):                     # the first attempt plus two retries
+        assert store.filter_new([job]) == [job]
+        store.mark_seen([_failed(job)])
+    assert _status(store, job)[2] == 3
+    assert store.filter_new([job]) == []
+
+
+def test_zero_retries_gives_up_at_once(tmp_path, sample_jobs):
+    store = JobStore(tmp_path / "jobs.db", error_retries=0)
+    store.mark_seen([_failed(sample_jobs[0])])
+    assert store.filter_new([sample_jobs[0]]) == []
+
+
+def test_a_failed_posting_is_not_blocked_by_its_own_title_and_company(tmp_path, sample_jobs):
+    store = JobStore(tmp_path / "jobs.db")
+    store.mark_seen([_failed(sample_jobs[0])])
+    repost = {**sample_jobs[0], "url": "https://tracking.example/rotated-2"}
+    assert store.filter_new([repost]) == [repost]
+
+
+def test_an_ordinary_row_is_never_overwritten(tmp_path, sample_jobs):
+    store = JobStore(tmp_path / "jobs.db")
+    job = sample_jobs[0]
+    store.mark_seen([{**job, "status": "new", "score": 55}])
+    store.mark_seen([{**job, "status": "new", "score": 99}])
+    assert _status(store, job) == ("new", 55, 1)
+
+
+def test_a_database_from_before_attempts_existed_is_upgraded(tmp_path, sample_jobs):
+    import sqlite3
+
+    path = tmp_path / "jobs.db"
+    conn = sqlite3.connect(str(path))
+    conn.execute(
+        "CREATE TABLE seen_jobs (job_id TEXT PRIMARY KEY, url TEXT NOT NULL, "
+        "title TEXT, company TEXT, location TEXT, site TEXT, score REAL, "
+        "status TEXT DEFAULT 'new', first_seen TEXT, date_posted TEXT, "
+        "search_term TEXT, verdict_json TEXT)"
+    )
+    job = sample_jobs[0]
+    conn.execute(
+        "INSERT INTO seen_jobs (job_id, url, title, company, status, first_seen) "
+        "VALUES (?, ?, ?, ?, 'scoring_error', date('now'))",
+        (make_job_id(job["url"]), job["url"], job["title"], job["company"]),
+    )
+    conn.commit()
+    conn.close()
+
+    store = JobStore(path)
+    assert store.filter_new([job]) == [job]   # an old failure gets its retries

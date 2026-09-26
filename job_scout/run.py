@@ -167,6 +167,7 @@ def _execute(settings: Settings, dispatcher: Dispatcher, dry_run: bool,
     store = JobStore(
         settings.data_dir / "jobs.db",
         lookback_days=int(advanced["seen_lookback_days"]),
+        error_retries=int(advanced["scoring_error_retries"]),
     )
 
     site_priority = _site_priority(settings.config)

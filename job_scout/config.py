@@ -54,7 +54,9 @@ TAILORING_SNIPPET = "tailoring.yaml"
 # limit, Discord's 2000-character one.
 ADVANCED_DEFAULTS: dict[str, Any] = {
     # How much of a posting the model reads. The single biggest lever on cost.
-    "description_chars": 3500,
+    # 6000, up from 3500 in 1.5.0: long LinkedIn adverts put the requirements
+    # (a language, a cloud) at the end, and 3500 cut them off.
+    "description_chars": 6000,
     # Room for the model's reply. Too small and a verbose answer is cut off.
     "reply_tokens": 1024,
     # How many past outcomes go into the prompt before it stops adding
@@ -64,6 +66,10 @@ ADVANCED_DEFAULTS: dict[str, Any] = {
     # more reposts under fresh URLs; shorter lets a genuinely re-opened role
     # through sooner.
     "seen_lookback_days": 7,
+    # How many runs a posting that failed to score gets before it is given up
+    # on. A failed model call used to mark the posting seen forever, so one
+    # timeout lost it for good. 0 restores that behaviour.
+    "scoring_error_retries": 3,
     # Seconds between paged requests to a job board. Raise it to be gentler.
     "source_delay_seconds": 0.5,
     # What the labels in a notification mean. Separate from notify_threshold,
@@ -352,6 +358,13 @@ def validate(settings: Settings) -> None:
         raise ConfigError(
             f"config.yaml: notify_threshold is {settings.notify_threshold}, "
             f"must be between 0 and 100."
+        )
+
+    mode = str(settings.profile.get("pattern_match") or "substring").strip().lower()
+    if mode not in ("substring", "word"):
+        raise ConfigError(
+            f"profile.yaml: pattern_match is {mode!r}. Use 'substring' (the "
+            "default: plain text containment) or 'word' (whole words only)."
         )
 
     if not settings.profile.get("candidate"):

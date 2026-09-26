@@ -30,6 +30,11 @@ keep_location_patterns:
 A keep pattern only rescues a posting; a location that matches neither list
 passes anyway.
 
+**Whole words.** `pattern_match: word` in `profile.yaml` makes the location,
+keep and title lists match whole words only, so `"aarhus"` stops matching a
+Copenhagen address on "Aarhusgade". See
+[configuration.md](configuration.md#filters).
+
 Two traps. A posting whose location is empty is **let through**, on the grounds
 that no information is not the same as bad information. And these are substrings,
 so `"york"` matches New York, and `"berlin"` matches Berlin, New Hampshire.
@@ -106,6 +111,11 @@ If the model call fails, it is retried `scoring_retries` times (default 1). If
 it still fails, or the reply contains no JSON, the posting gets
 `scoring_error` and the run carries on. One bad posting never stops a run.
 
+A `scoring_error` posting is not written off. The next run fetches it again and
+scores it again, up to `advanced.scoring_error_retries` runs (default 3). After
+that it stays recorded and is skipped, so a posting the model can never read
+does not cost you a call every day.
+
 ## The prompt
 
 Assembled from `profile.yaml` at run time. Every section maps to a field:
@@ -118,7 +128,7 @@ Assembled from `profile.yaml` at run time. Every section maps to a field:
 | Preferred industries | `industries_preferred` |
 | Confirmed gaps, and the cap rule | `confirmed_gaps` |
 | Real application outcomes | `outcomes.csv`, if present |
-| The posting itself | title, company, location, first 3,500 characters of the description |
+| The posting itself | title, company, location, first 6,000 characters of the description (`advanced.description_chars`) |
 
 To see the exact prompt your profile produces:
 

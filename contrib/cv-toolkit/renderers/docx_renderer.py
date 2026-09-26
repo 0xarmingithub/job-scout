@@ -11,6 +11,7 @@ import shutil
 import subprocess
 
 from schema import Resume
+
 from renderers.markdown_renderer import to_markdown
 
 

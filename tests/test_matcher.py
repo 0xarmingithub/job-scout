@@ -442,3 +442,59 @@ def test_braces_in_the_outcomes_block_survive(tmp_path):
     template = build_prompt_template({"candidate": {"name": "T"}}, outcomes)
     filled = template.format(title="t", company="c", location="l", description="d")
     assert "Role {x}" in filled
+
+
+# ─── pattern_match: word ──────────────────────────────────────────────────────
+
+@pytest.mark.parametrize(
+    "title, excluded",
+    [
+        ("software intern", True),
+        ("marketing intern, summer", True),
+        ("intern (cloud)", True),
+        ("senior internal tools engineer", False),
+        ("industrial internet of things architect", False),
+    ],
+)
+def test_word_mode_matches_whole_words_only(title, excluded):
+    assert matcher.matches_any(title, ["intern"], word=True) is excluded
+
+
+def test_substring_mode_is_still_the_default():
+    assert matcher.matches_any("senior internal tools engineer", [" intern"])
+    assert not matcher.whole_word_matching({})
+    assert matcher.whole_word_matching({"pattern_match": "Word"})
+
+
+def test_word_mode_ignores_padding_spaces_in_old_patterns():
+    assert matcher.matches_any("hr manager", ["hr "], word=True)
+    assert not matcher.matches_any("shrink manager", ["hr "], word=True)
+
+
+def test_word_mode_does_not_match_a_street_named_after_a_town():
+    exclude = ["aarhus"]
+    assert not matcher.passes_location_filter({"location": "aarhus, denmark"}, exclude, word=True)
+    assert matcher.passes_location_filter({"location": "aarhusgade 12, copenhagen"}, exclude, word=True)
+    assert not matcher.passes_location_filter({"location": "aarhusgade 12, copenhagen"}, exclude)
+
+
+def test_word_mode_handles_non_ascii_letters():
+    # "ø" is a letter, so "køge" must not match inside "køgevej".
+    assert matcher.matches_any("køge, denmark", ["køge"], word=True)
+    assert not matcher.matches_any("køgevej 3", ["køge"], word=True)
+
+
+def test_score_jobs_reads_pattern_match_from_the_profile(monkeypatch):
+    monkeypatch.setattr(matcher, "preflight", lambda spec: None)
+    monkeypatch.setattr(matcher, "run_model", lambda *a, **k: '{"score": 50}')
+    jobs = [{"title": "Industrial Internet Architect", "location": "Berlin",
+             "description": "platform", "url": "https://x"}]
+    common = {"candidate": {}, "hard_exclude_title_patterns": [" intern"]}
+    config = {"scoring_model": "gemini:x", "searches": [{"term": "platform"}],
+              "scoring_retries": 0}
+    by_substring = matcher.score_jobs([dict(jobs[0])], config=config, profile=common)
+    by_word = matcher.score_jobs(
+        [dict(jobs[0])], config=config, profile={**common, "pattern_match": "word"}
+    )
+    assert by_substring[0]["status"] == "rejected_prefilter"
+    assert by_word[0]["status"] == "new"

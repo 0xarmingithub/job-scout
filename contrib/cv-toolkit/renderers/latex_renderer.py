@@ -14,7 +14,6 @@ import subprocess
 from dataclasses import asdict
 
 import jinja2
-
 from schema import Resume
 
 LATEX_SPECIAL_CHARS = {

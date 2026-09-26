@@ -11,6 +11,8 @@ Two different jobs are done here.
 2. Across-run dedup. Every job ever fetched, including the ones that scored
    badly, is written to a SQLite table so it never reaches the scorer again.
    That is what keeps the daily model bill near zero after the first week.
+   The one exception is a posting that failed to score: it is tried again on
+   the next runs, up to `error_retries` times, then given up on.
 
 The store is a single file, jobs.db, in your data directory.
 """
@@ -45,6 +47,9 @@ _UNKNOWN_SITE_PRIORITY = 99
 # genuinely re-opened role is not suppressed forever.
 _CONTENT_LOOKBACK_DAYS = 7
 
+# How many later runs a posting that failed to score is tried again on.
+_ERROR_RETRIES = 3
+
 
 def make_job_id(url: str) -> str:
     """Stable 16-character id derived from the job URL."""
@@ -69,12 +74,20 @@ def _verdict_json(job: dict) -> str:
 class JobStore:
     """The seen-jobs table. One instance per run."""
 
-    def __init__(self, db_path: Path, lookback_days: int = _CONTENT_LOOKBACK_DAYS):
+    def __init__(
+        self,
+        db_path: Path,
+        lookback_days: int = _CONTENT_LOOKBACK_DAYS,
+        error_retries: int = _ERROR_RETRIES,
+    ):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         # How far back the title-and-company check looks. Set it with
         # `advanced.seen_lookback_days` in config.yaml.
         self.lookback_days = max(0, int(lookback_days))
+        # How many more runs a `scoring_error` posting gets. Set it with
+        # `advanced.scoring_error_retries` in config.yaml.
+        self.error_retries = max(0, int(error_retries))
 
     def _conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path))
@@ -93,7 +106,8 @@ class JobStore:
                 first_seen  TEXT,
                 date_posted TEXT,
                 search_term TEXT,
-                verdict_json TEXT
+                verdict_json TEXT,
+                attempts    INTEGER DEFAULT 1
             )
             """
         )
@@ -103,6 +117,10 @@ class JobStore:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(seen_jobs)")}
         if "verdict_json" not in columns:
             conn.execute("ALTER TABLE seen_jobs ADD COLUMN verdict_json TEXT")
+        # attempts arrived in 1.5.0. Existing rows count as one attempt, so a
+        # posting that failed before the upgrade gets its retries too.
+        if "attempts" not in columns:
+            conn.execute("ALTER TABLE seen_jobs ADD COLUMN attempts INTEGER DEFAULT 1")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_seen_jobs_first_seen "
             "ON seen_jobs (first_seen)"
@@ -126,6 +144,9 @@ class JobStore:
         Two checks. The URL check is exact and always runs. The title+company
         check catches the same advert re-posted under a new URL, and only looks
         at the last 7 days.
+
+        A posting recorded as `scoring_error` counts as unseen until it has used
+        up its retries, so a timeout does not lose it for good.
         """
         if not jobs:
             return []
@@ -134,19 +155,23 @@ class JobStore:
         conn = self._conn()
         try:
             placeholders = ",".join("?" * len(ids))
+            settled = (
+                "NOT (status = 'scoring_error' AND COALESCE(attempts, 1) <= ?)"
+            )
             already_seen_ids = {
                 row[0]
                 for row in conn.execute(
-                    f"SELECT job_id FROM seen_jobs WHERE job_id IN ({placeholders})",
-                    ids,
+                    f"SELECT job_id FROM seen_jobs WHERE job_id IN ({placeholders}) "
+                    f"AND {settled}",
+                    [*ids, self.error_retries],
                 )
             }
             already_seen_content = {
                 (row[0].lower().strip(), row[1].lower().strip())
                 for row in conn.execute(
                     "SELECT title, company FROM seen_jobs "
-                    "WHERE date(first_seen) >= date('now', ?)",
-                    (f"-{self.lookback_days} days",),
+                    f"WHERE date(first_seen) >= date('now', ?) AND {settled}",
+                    (f"-{self.lookback_days} days", self.error_retries),
                 )
                 if row[0] and row[1]
             }
@@ -179,6 +204,10 @@ class JobStore:
         """
         Record every processed job, the rejected ones included, so tomorrow's
         run neither re-fetches nor re-scores them.
+
+        A job already recorded as `scoring_error` is updated in place: its new
+        score and status replace the error, and its attempt count goes up. Any
+        other existing row is left alone.
         """
         if not jobs:
             return
@@ -188,11 +217,17 @@ class JobStore:
         try:
             conn.executemany(
                 """
-                INSERT OR IGNORE INTO seen_jobs
+                INSERT INTO seen_jobs
                     (job_id, url, title, company, location, site,
                      score, status, first_seen, date_posted, search_term,
                      verdict_json)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(job_id) DO UPDATE SET
+                    score = excluded.score,
+                    status = excluded.status,
+                    verdict_json = excluded.verdict_json,
+                    attempts = COALESCE(seen_jobs.attempts, 1) + 1
+                WHERE seen_jobs.status = 'scoring_error'
                 """,
                 [
                     (

@@ -3,9 +3,8 @@ import argparse
 import sys
 
 import yaml
-
-from schema import validate
 from adapters import ats_markdown_adapter
+from schema import validate
 
 
 def main() -> None:

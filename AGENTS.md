@@ -121,7 +121,7 @@ Nobody installs this from PyPI. Every install points at a git URL, and pip
 decides whether to reinstall by comparing version strings. Leave the version
 alone and `pip install --upgrade` finds nothing to do: it fetches, compares
 1.1.0 to 1.1.0, prints a success line and keeps running the old code. The fix in
-1573703 shipped to nobody for exactly this reason.
+fa578b5 shipped to nobody for exactly this reason.
 
 That bump is the entire release process. Pushing a new version to `main` cuts
 the tag and writes the GitHub release by itself

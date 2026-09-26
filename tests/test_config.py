@@ -191,3 +191,21 @@ def test_a_missing_file_points_at_init(tmp_path):
         cfg.load_settings(str(tmp_path))
     assert "profile.yaml" in str(excinfo.value)
     assert "job-scout init" in str(excinfo.value)
+
+
+def test_an_unknown_pattern_match_mode_is_rejected(tmp_path):
+    with pytest.raises(cfg.ConfigError, match="pattern_match"):
+        cfg.validate(_settings(
+            tmp_path,
+            {"searches": [{"term": "x"}], "notifiers": [{"type": "file"}]},
+            {"candidate": {"name": "X"}, "pattern_match": "words"},
+        ))
+
+
+def test_both_pattern_match_modes_are_accepted(tmp_path):
+    for mode in ("substring", "word", "Word"):
+        cfg.validate(_settings(
+            tmp_path,
+            {"searches": [{"term": "x"}], "notifiers": [{"type": "file"}]},
+            {"candidate": {"name": "X"}, "pattern_match": mode},
+        ))

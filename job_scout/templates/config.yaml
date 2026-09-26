@@ -179,7 +179,7 @@ searches:
 #   # How much of a posting the model reads. The single biggest lever on cost:
 #   # halve it and you roughly halve the token bill, at the price of the model
 #   # sometimes missing a requirement buried near the end.
-#   description_chars: 3500
+#   description_chars: 6000
 #
 #   # Room for the model's reply. Too small and a wordy answer gets cut off
 #   # mid-sentence, which shows up as scoring errors.
@@ -193,6 +193,10 @@ searches:
 #   # more reposts under fresh URLs. Shorter lets a genuinely re-opened role
 #   # through sooner. The URL check is exact and always runs regardless.
 #   seen_lookback_days: 7
+#
+#   # How many runs a posting that failed to score (a timeout, a reply with no
+#   # JSON) is tried again on before it is given up on. 0 gives up at once.
+#   scoring_error_retries: 3
 #
 #   # Seconds between paged requests to a board. Raise it to be gentler. The
 #   # JobIndex scraper never goes below 1 second whatever you put here.

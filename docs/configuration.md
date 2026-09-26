@@ -97,10 +97,11 @@ the default, so deleting a line puts it back.
 
 | Key | Default | What it does |
 |---|---|---|
-| `description_chars` | `3500` | How much of a posting the model reads. The biggest lever on cost. |
+| `description_chars` | `6000` | How much of a posting the model reads. The biggest lever on cost. |
 | `reply_tokens` | `1024` | Room for the model's reply. Too small and a wordy answer gets cut off, which shows up as scoring errors. |
 | `outcomes_listed` | `25` | How many outcomes from `outcomes.csv` reach the prompt. |
 | `seen_lookback_days` | `7` | How far back the title-and-company duplicate check looks. |
+| `scoring_error_retries` | `3` | How many runs a posting that failed to score is tried again on. `0` gives up at once. |
 | `source_delay_seconds` | `0.5` | Seconds between paged requests to a board. |
 | `score_bands.strong` | `80` | The score at which a match is labelled STRONG. |
 | `score_bands.possible` | `65` | The score at which it is labelled POSSIBLE. |
@@ -358,9 +359,16 @@ confirmed_gaps:
 | `pre_filter_stop_words` | Words to drop from the automatic keyword list. |
 | `hard_exclude_location_patterns` | Locations rejected before anything costs money. |
 | `keep_location_patterns` | Locations that pass even when they also match an exclusion, for multi-city postings. Optional. |
+| `pattern_match` | `substring` (default) or `word`. How the three pattern lists above match. |
 | `hard_exclude_title_patterns` | Titles rejected before anything costs money. |
 
-All five are case-insensitive substring matches.
+All of them are case-insensitive. By default they are substring matches, the
+same as Python's `in`. Set `pattern_match: word` and the title, location and
+keep lists match whole words only: `"aarhus"` then matches "Aarhus, Denmark" but
+not the street "Aarhusgade 12", and `"intern"` matches "Software Intern" but not
+"Internal Tools". The keyword pre-filter stays a substring match either way, so
+`kubernetes` still hits "Kubernetes-based". In word mode, write the whole word
+you mean: `"graphic design"` no longer catches "Graphic Designer".
 
 Watch the spaces in title patterns: `"hr "` catches "HR Manager" and not
 "shrink". A bare `" intern"` catches "Marketing Intern", but also "Senior

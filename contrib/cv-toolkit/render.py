@@ -3,9 +3,8 @@ import argparse
 import sys
 
 import yaml
-
+from renderers import docx_renderer, latex_renderer, markdown_renderer
 from schema import validate
-from renderers import markdown_renderer, latex_renderer, docx_renderer
 
 RENDERERS = {
     "markdown": markdown_renderer.render,
