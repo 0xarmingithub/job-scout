@@ -78,6 +78,32 @@ current one. For Gemini, at
 
 `job-scout check` reports all five at once.
 
+### `cv_validator_models`
+
+A list of `backend:model` specs for `job-scout validate`. Empty by default. Set
+it, or run `job-scout validate` in a terminal and choose them then. Up to four.
+
+```yaml
+cv_validator_models:
+  - "claude:sonnet"
+  - "codex:gpt-5"
+```
+
+## `job-scout validate`
+
+A second opinion on a finished CV, from one or more models. It is opt-in: the
+daily run never does this, and it costs one model call per model you chose.
+
+```bash
+job-scout validate --jd jd.md --cv cv.md --output report.md --config-dir ~/job-search
+```
+
+It sends the same analysis prompt to each model, in parallel, and writes one
+report: a match score and an analysis per model, and the average. A model that
+fails is listed as failed and left out of the average. The others still count.
+
+Read the analyses before acting on a number. Models often disagree by a lot.
+
 ### Two model choices
 
 This project uses a model in two separate places, and you choose each one.

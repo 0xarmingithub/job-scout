@@ -418,6 +418,14 @@ not point this at a company you are trying to annoy.
 
 ---
 
+## Checking a CV with more than one model
+
+`job-scout validate --jd jd.md --cv cv.md --output report.md` asks up to four
+models for their own analysis of a CV against a job description, and writes
+one report. It is opt-in and never runs during the daily run. Set
+`cv_validator_models` in `config.yaml`, or choose the models when prompted. See
+[configuration.md](docs/configuration.md).
+
 ## Documentation
 
 | | |

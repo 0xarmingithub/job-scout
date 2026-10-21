@@ -145,6 +145,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--cancel", action="store_true", help="drop the outstanding question",
     )
 
+    validate_parser = subparsers.add_parser(
+        "validate",
+        help="ask one or more models for a second opinion on a CV for a job "
+             "(opt-in: the daily run never does this)",
+    )
+    validate_parser.add_argument("--jd", required=True, help="the job description, as text or markdown")
+    validate_parser.add_argument("--cv", required=True, help="the CV, as text or markdown")
+    validate_parser.add_argument("--output", required=True, help="where to write the report")
+    validate_parser.add_argument(
+        "--config-dir", help="directory holding config.yaml (for cv_validator_models)",
+    )
+
     subparsers.add_parser("version", help="print the version")
     return parser
 
@@ -169,6 +181,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_roundup(args)
     if command == "ask":
         return _cmd_ask(args)
+    if command == "validate":
+        return _cmd_validate(args)
     return _cmd_run(args)
 
 
@@ -445,6 +459,51 @@ def _cmd_roundup(args) -> int:
         )
         return 1
     print(f"Roundup sent to {sent} notifier(s): {len(jobs)} of {total} matches.")
+    return 0
+
+
+def _cmd_validate(args) -> int:
+    """Second opinion on a CV from the models named in cv_validator_models, or chosen now."""
+    from .setup_prompt import SetupCancelled, choose_validator_models
+    from .validate_cv import build_report, validate, write_report
+
+    jd_path, cv_path = Path(args.jd), Path(args.cv)
+    for path in (jd_path, cv_path):
+        if not path.is_file():
+            print(f"Cannot read {path}. Check the path.", file=sys.stderr)
+            return 1
+
+    # Only config.yaml is needed here. Loading the full settings would also demand a profile.
+    specs: list[str] = []
+    if args.config_dir:
+        import yaml
+
+        config_file = Path(args.config_dir).expanduser() / CONFIG_FILENAME
+        if config_file.exists():
+            loaded = yaml.safe_load(config_file.read_text(encoding="utf-8")) or {}
+            specs = [str(spec) for spec in (loaded.get("cv_validator_models") or []) if str(spec).strip()]
+    if not specs:
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+            print(
+                "No models for the CV check. Name them in config.yaml as\n"
+                "  cv_validator_models: [\"claude:sonnet\", \"codex:gpt-5\"]\n"
+                "or run this in a terminal to choose them now.",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            specs = choose_validator_models()
+        except SetupCancelled:
+            print("No models chosen. Nothing was checked.")
+            return 0
+
+    results = validate(jd_path.read_text(encoding="utf-8"), cv_path.read_text(encoding="utf-8"), specs)
+    report = write_report(Path(args.output), build_report(results, str(jd_path), str(cv_path)))
+    failed = [r["model"] for r in results if r["error"]]
+    print(f"Report written to {report}")
+    if failed:
+        print("These models did not answer: " + ", ".join(failed), file=sys.stderr)
+        return 1 if len(failed) == len(results) else 0
     return 0
 
 

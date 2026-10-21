@@ -103,3 +103,32 @@ def set_scoring_model(config_path: Path, spec: str) -> bool:
         return False
     config_path.write_text(pattern.sub(f'scoring_model: "{spec}"', text, count=1), encoding="utf-8")
     return True
+
+
+def choose_validator_models(
+    input_fn: Callable[[str], str] = input,
+    output_fn: Callable[[str], None] = print,
+) -> list[str]:
+    """
+    Pick the models for the CV check, one at a time, up to four. Each is chosen the
+    same way as the scoring model. Returns the list of "backend:model" specs.
+    """
+    output_fn(
+        "\nWhich models should check a CV? Choose one or more, up to four. Each one\n"
+        "gives its own opinion, so you can compare them. This is opt-in: the daily run\n"
+        "never checks a CV."
+    )
+    specs: list[str] = []
+    while len(specs) < 4:
+        spec = choose_scoring_model(input_fn, output_fn)
+        if spec not in specs:
+            specs.append(spec)
+        if len(specs) == 4:
+            break
+        try:
+            more = input_fn("Add another model? Type y to add one, or press Enter to finish: ").strip().lower()
+        except (EOFError, KeyboardInterrupt) as exc:
+            raise SetupCancelled from exc
+        if more != "y":
+            break
+    return specs
