@@ -27,6 +27,11 @@ matches.jsonl
 # Your own application outcomes.
 outcomes.csv
 
+# Your own application folders, and your private word list. Never published.
+/applications/
+privacy.txt
+denylist.txt
+
 # Python
 __pycache__/
 *.py[cod]

@@ -158,6 +158,18 @@ It re-reads the seen-jobs database and re-scores nothing, so it costs no API
 calls and can be run as often as you like. To have it arrive on its own, there
 is a Friday timer in `deploy/`. Detail in [docs/roundup.md](docs/roundup.md).
 
+### Knowing what happened to your applications
+
+Keep one folder per application with a `**Status:**` line in its `notes.md`, set
+`applications_dir` in `config.yaml`, and the scorer is told what actually
+converted for you. `job-scout outcomes` builds the file from your folders, and
+`job-scout run` rebuilds it before it scores. Detail in
+[docs/applications.md](docs/applications.md).
+
+If you work in a repository that might become public, `job-scout privacy init`
+builds a private word list of your own names and employers, kept on your machine
+and never printed. Detail in [docs/privacy.md](docs/privacy.md).
+
 ### Doing something with the best one
 
 Optional, off unless you ask for it. The scout can run a command on the
@@ -275,7 +287,7 @@ them is independently skippable.
 | **JobIndex source** | jobindex.dk, for Danish postings that reach no other board | Playwright and a headless Chromium. Denmark only. |
 | **Careerjet source** | A licensed aggregator API across many countries | A free partner key, plus registering your IP |
 | **Apify source** | Scraping run on someone else's infrastructure, with proxies | A paid API token |
-| **`outcomes.csv`** | The scorer learns what actually converted for you | Keeping a three-column CSV up to date |
+| **`outcomes.csv`** | The scorer learns what actually converted for you | Keeping a three-column CSV up to date, or one folder per application (`applications_dir`) |
 | **Scheduling** | It runs without you | A systemd timer, a cron line, or GitHub Actions |
 | **Telegram / email / webhook** | Results on your phone instead of in a file | Five minutes each |
 | **Claude Code skills** | Guided setup and tuning inside an AI coding tool | Nothing. Every workflow also has manual steps |
@@ -437,6 +449,8 @@ one report. It is opt-in and never runs during the daily run. Set
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |
 | [Weekly roundup](docs/roundup.md) | One message for the week, and the Friday timer that sends it |
 | [Tailoring](docs/tailoring.md) | Running a command on the day's best match, and asking you first |
+| [Tracking applications](docs/applications.md) | One folder per application, the Status words, `outcomes` and `sync` |
+| [Your private word list](docs/privacy.md) | `job-scout privacy`: names and employers that must never reach a public repository |
 | [Adding a job source](docs/adding-a-job-source.md) | About 40 lines of work |
 | [Adding a notifier](docs/adding-a-notifier.md) | About 30 |
 | [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing. `job-scout stats` is the first command to run |

@@ -251,3 +251,153 @@ def test_require_denylist_refuses_when_there_is_none(tmp_path, monkeypatch, caps
     monkeypatch.delenv("JOB_SCOUT_DENYLIST", raising=False)
     assert guard.main(["--require-denylist"]) == 2
     assert "Restore it" in capsys.readouterr().err
+
+
+def test_a_finding_names_the_entry_not_the_term(tmp_path, monkeypatch):
+    findings = _scan(
+        tmp_path, "docs/setup.md", "Deployed for Contoso today.\n",
+        denylist=["litware", "contoso"], monkeypatch=monkeypatch,
+    )
+    assert len(findings) == 1
+    shown = str(findings[0])
+    assert "entry #2" in shown
+    assert "contoso" not in shown.lower()
+
+
+def test_the_word_list_is_combined_from_every_place_it_can_live(tmp_path, monkeypatch):
+    git_dir = tmp_path / "gitdir"
+    git_dir.mkdir()
+    (git_dir / "denylist.txt").write_text("alpha-term\nshared-term\n", encoding="utf-8")
+    (tmp_path / "privacy.txt").write_text("# comment\nbeta-term\nshared-term\n", encoding="utf-8")
+    config = tmp_path / "config"
+    config.mkdir()
+    (config / "privacy.txt").write_text("gamma-term\n", encoding="utf-8")
+    env_file = tmp_path / "env.txt"
+    env_file.write_text("delta-term\n", encoding="utf-8")
+
+    monkeypatch.setattr(guard, "REPO", tmp_path)
+    monkeypatch.setattr(guard, "git_common_dir", lambda: git_dir)
+    monkeypatch.setenv("JOB_SCOUT_DENYLIST", str(env_file))
+    monkeypatch.setenv("JOB_SCOUT_CONFIG_DIR", str(config))
+
+    assert guard.load_denylist() == [
+        "delta-term", "alpha-term", "shared-term", "beta-term", "gamma-term",
+    ]
+
+
+def test_declined_notes_in_the_privacy_file_are_comments_to_the_checker(tmp_path, monkeypatch):
+    (tmp_path / "privacy.txt").write_text(
+        "contoso\n# declined: fabrikam\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(guard, "REPO", tmp_path)
+    monkeypatch.setattr(guard, "git_common_dir", lambda: tmp_path / "nogit")
+    monkeypatch.delenv("JOB_SCOUT_DENYLIST", raising=False)
+    assert guard.load_denylist() == ["contoso"]
+
+
+def test_the_git_directory_is_a_real_directory_even_in_a_worktree():
+    """
+    In a worktree `.git` is a file. Run against whichever checkout the tests are
+    in: the answer must be a directory that holds HEAD either way.
+    """
+    common = guard.git_common_dir()
+    if not (common / "HEAD").exists():
+        pytest.skip("not a git checkout")
+    assert common.is_dir()
+
+
+def test_when_git_cannot_say_the_dot_git_folder_is_the_fallback(tmp_path, monkeypatch):
+    monkeypatch.setattr(guard, "REPO", tmp_path)
+
+    def broken(*args, **kwargs):
+        raise OSError("no git")
+
+    monkeypatch.setattr(guard.subprocess, "run", broken)
+    assert guard.git_common_dir() == tmp_path / ".git"
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["privacy.txt", "config/privacy.txt", "denylist.txt", ".git/denylist.txt", "applications/contoso-sre-20260601/notes.md"],
+)
+def test_a_private_word_list_or_application_folder_must_never_be_committed(
+    tmp_path, monkeypatch, name
+):
+    findings = _scan(tmp_path, name, "nothing secret in here\n", monkeypatch=monkeypatch)
+    assert any("must not be committed" in f.label for f in findings), name
+
+
+def test_the_documentation_about_applications_is_not_an_application_folder(tmp_path, monkeypatch):
+    findings = _scan(tmp_path, "docs/applications.md", "how it works\n", monkeypatch=monkeypatch)
+    assert not any("must not be committed" in f.label for f in findings)
+
+
+def test_a_commit_finding_names_the_field_and_the_entry_never_the_identity(monkeypatch):
+    """
+    The identity is the private text. A hit used to print the whole
+    "Name <email>", which lands in terminals and CI logs.
+    """
+    monkeypatch.setattr(
+        guard, "commit_identities",
+        lambda rev: [
+            ("abc1234", "handle <handle@users.noreply.github.com>", "author"),
+            ("abc1234", "Jordan Fakename <jordan.fakename@example.test>", "committer"),
+        ],
+    )
+    findings = guard.scan_identities(None, ["litware", "jordan.fakename"])
+
+    assert len(findings) == 1
+    shown = str(findings[0])
+    assert findings[0].label == "private term in commit committer"
+    assert "commit abc1234" in shown
+    assert "entry #2" in shown
+    for secret in ("jordan", "fakename", "example.test", "@"):
+        assert secret not in shown.lower(), secret
+
+
+def test_the_commit_identities_say_which_field_each_came_from(monkeypatch):
+    import subprocess
+
+    sep = chr(31)
+    out = f"abc1234{sep}Ann Author <a@example.test>{sep}Cy Committer <c@example.test>\n"
+    monkeypatch.setattr(
+        guard.subprocess, "run",
+        lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout=out, stderr=""),
+    )
+    assert guard.commit_identities(None) == [
+        ("abc1234", "Ann Author <a@example.test>", "author"),
+        ("abc1234", "Cy Committer <c@example.test>", "committer"),
+    ]
+
+
+def _two_lists(tmp_path, monkeypatch, git_text, root_text):
+    git_dir = tmp_path / "gitdir"
+    git_dir.mkdir()
+    (git_dir / "denylist.txt").write_text(git_text, encoding="utf-8")
+    (tmp_path / "privacy.txt").write_text(root_text, encoding="utf-8")
+    monkeypatch.setattr(guard, "REPO", tmp_path)
+    monkeypatch.setattr(guard, "git_common_dir", lambda: git_dir)
+    monkeypatch.delenv("JOB_SCOUT_DENYLIST", raising=False)
+    monkeypatch.delenv("JOB_SCOUT_CONFIG_DIR", raising=False)
+
+
+def test_a_finding_names_the_file_and_the_position_within_that_file(tmp_path, monkeypatch):
+    _two_lists(tmp_path, monkeypatch, "alpha-term\n", "# note\n\nbeta-term\ngamma-term\n")
+    (tmp_path / "doc.md").write_text("one gamma-term here\n", encoding="utf-8")
+
+    findings = guard.scan(["doc.md"], guard.load_denylist())
+
+    assert len(findings) == 1
+    shown = str(findings[0])
+    assert "entry #2 of privacy.txt" in shown, "position within its own file, comments not counted"
+    assert "gamma" not in shown
+
+
+def test_a_term_found_in_two_lists_is_reported_once_from_the_first(tmp_path, monkeypatch):
+    _two_lists(tmp_path, monkeypatch, "shared-term\n", "other-term\nshared-term\n")
+    (tmp_path / "doc.md").write_text("a shared-term line\n", encoding="utf-8")
+
+    findings = guard.scan(["doc.md"], guard.load_denylist())
+
+    assert len(findings) == 1
+    assert "entry #1 of denylist.txt" in str(findings[0])

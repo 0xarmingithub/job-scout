@@ -57,7 +57,8 @@ def classify(status_text: str) -> str:
         return "withdrawn"
     if any(hint in text for hint in _NO_RESPONSE_HINTS):
         return "no_response"
-    if "applied" in text or "submitted" in text:
+    # "acknowledged" means the employer confirmed receipt, so it was sent.
+    if "applied" in text or "submitted" in text or "acknowledg" in text:
         return "applied"
     return "other"
 

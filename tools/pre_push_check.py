@@ -28,10 +28,23 @@ Four kinds of check:
 
 ## The private word list
 
-Put one term per line, blank lines and # comments ignored, in either:
+One term per line, blank lines and # comments ignored. Every file below that
+exists is read, and their terms are combined:
 
     the file named by $JOB_SCOUT_DENYLIST
-    .git/denylist.txt          (inside .git, so git can never commit it)
+    <git dir>/denylist.txt     (inside .git, so git can never commit it. In a
+                                worktree this is the shared git directory, found
+                                with `git rev-parse --git-common-dir`)
+    privacy.txt                (in this checkout's root, when it is also your
+                                config directory; gitignored)
+    $JOB_SCOUT_CONFIG_DIR/privacy.txt
+
+`job-scout privacy init` builds this list for you, interactively, and
+`job-scout privacy check` scans against it. Neither prints your terms, and
+neither does this script. A finding names the entry by file name and position
+within that file ("entry #3 of privacy.txt"), and for a commit author or
+committer it names the commit and the field. It never prints the term, and never
+the name and email it matched.
 
 Terms match case-insensitively anywhere in a line. Keep real names, employer
 names, your town, your VM's IP, your SSH key filenames and your personal domains
@@ -79,6 +92,8 @@ FORBIDDEN_PATHS = [
     (re.compile(r"^profile\.yaml$"), "your own profile, gitignored on purpose"),
     (re.compile(r"(^|/)outcomes\.csv$"), "your application history"),
     (re.compile(r"(^|/)jobs\.db$"), "your seen-jobs database"),
+    (re.compile(r"(^|/)(privacy|denylist)\.txt$"), "your private word list"),
+    (re.compile(r"^applications/"), "your own application folders"),
     (re.compile(r"(^|/)data/"), "run output"),
     (re.compile(r"(?i)(^|/)vm\.md$"), "infrastructure notes"),
     (re.compile(r"(?i)\.(pem|key|ppk|p12|pfx)$"), "a private key"),
@@ -114,29 +129,99 @@ class Finding:
         return f"  {where}\n      {self.label}: {self.evidence}"
 
 
-def load_denylist() -> list[str]:
-    """Personal terms, from outside the repository's tracked files."""
-    candidates = []
+def git_common_dir() -> Path:
+    """
+    The real git directory.
+
+    In a worktree `.git` is a file that points elsewhere, and `.git/denylist.txt`
+    would be a path through a file. `git rev-parse --git-common-dir` names the
+    shared directory in both cases. Falls back to `.git` when git cannot say.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=REPO, capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return REPO / ".git"
+    value = result.stdout.strip()
+    if result.returncode != 0 or not value:
+        return REPO / ".git"
+    path = Path(value)
+    return path if path.is_absolute() else (REPO / path).resolve()
+
+
+def denylist_files() -> list[Path]:
+    """Every place the word list can be, whether or not a file is there."""
+    paths = []
     from_env = os.environ.get("JOB_SCOUT_DENYLIST", "").strip()
     if from_env:
-        candidates.append(Path(from_env).expanduser())
-    candidates.append(REPO / ".git" / "denylist.txt")
+        paths.append(Path(from_env).expanduser())
+    paths.append(git_common_dir() / "denylist.txt")
+    paths.append(REPO / "privacy.txt")
+    config_dir = os.environ.get("JOB_SCOUT_CONFIG_DIR", "").strip()
+    if config_dir:
+        paths.append(Path(config_dir).expanduser() / "privacy.txt")
+    return paths
 
-    for path in candidates:
+
+class Term(str):
+    """
+    A word-list term that remembers where it came from, so a finding can say
+    "entry #3 of privacy.txt" without ever saying what the term is. It compares
+    and hashes as the plain string.
+    """
+
+    source: str
+    position: int
+
+    def __new__(cls, value: str, source: str = "", position: int = 0):
+        term = super().__new__(cls, value)
+        term.source = source
+        term.position = position
+        return term
+
+
+def entry_label(term: str, fallback_index: int) -> str:
+    """
+    Which entry this is, by file name and position within that file. Never the term.
+
+    Lists are merged, so a bare position in the merged list would mean nothing to
+    the person who has to open a file to look.
+    """
+    source = getattr(term, "source", "")
+    if source:
+        return f"entry #{term.position} of {source}"
+    return f"entry #{fallback_index} of your word list"
+
+
+def load_denylist() -> list[str]:
+    """
+    Personal terms, from outside the repository's tracked files.
+
+    Every file that exists is read and the terms combined; a term that appears in
+    more than one file is kept once, from the first. Each term is a Term, which
+    knows its file name and its position within that file (counting every term
+    line, comments and blanks excluded).
+    """
+    terms: list[Term] = []
+    for path in denylist_files():
         if not path.is_file():
             continue
-        terms = []
+        position = 0
         for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            line = line.strip()
-            if line and not line.startswith("#"):
-                terms.append(line.lower())
-        return terms
-    return []
+            line = line.strip().lower()
+            if not line or line.startswith("#"):
+                continue
+            position += 1
+            if line not in terms:
+                terms.append(Term(line, path.name, position))
+    return terms
 
 
-def commit_identities(rev_range: str | None) -> list[tuple[str, str]]:
+def commit_identities(rev_range: str | None) -> list[tuple[str, str, str]]:
     """
-    Every (commit, "Name <email>") a push would publish.
+    Every (commit, "Name <email>", "author" or "committer") a push would publish.
 
     File contents are only half of what goes public. Author and committer
     identity are published too, they are baked into the commit hash, and
@@ -153,27 +238,37 @@ def commit_identities(rev_range: str | None) -> list[tuple[str, str]]:
     if result.returncode != 0:
         return []
 
-    identities: list[tuple[str, str]] = []
+    identities: list[tuple[str, str, str]] = []
     for line in result.stdout.splitlines():
         parts = line.split(separator)
         if len(parts) != 3:
             continue
         commit, author, committer = parts
-        identities.append((commit, author))
+        identities.append((commit, author, "author"))
         if committer != author:
-            identities.append((commit, committer))
+            identities.append((commit, committer, "committer"))
     return identities
 
 
 def scan_identities(rev_range: str | None, denylist: list[str]) -> list[Finding]:
-    """Findings for any commit whose author or committer matches the word list."""
+    """
+    Findings for any commit whose author or committer matches the word list.
+
+    A finding names the commit, the field and the entry. It never prints the
+    identity: the name and email are exactly the private text being guarded, and
+    this output lands in terminals and CI logs.
+    """
     findings: list[Finding] = []
-    for commit, identity in commit_identities(rev_range):
+    for commit, identity, *rest in commit_identities(rev_range):
+        field = rest[0] if rest else "author"
         lowered = identity.lower()
-        for term in denylist:
+        for index, term in enumerate(denylist, start=1):
             if term in lowered:
                 findings.append(
-                    Finding(f"commit {commit}", 0, "private term in commit author", identity)
+                    Finding(
+                        f"commit {commit}", 0, f"private term in commit {field}",
+                        entry_label(term, index),
+                    )
                 )
                 break
     return findings
@@ -224,9 +319,12 @@ def scan(names: list[str], denylist: list[str]) -> list[Finding]:
                             Finding(name, number, label, shown[:12] + "..." + shown[-4:])
                         )
             lowered = line.lower()
-            for term in denylist:
+            for index, term in enumerate(denylist, start=1):
                 if term in lowered:
-                    findings.append(Finding(name, number, "private term", term))
+                    # The position, not the term. The word list is never printed.
+                    findings.append(
+                        Finding(name, number, "private term", entry_label(term, index))
+                    )
 
     return findings
 
@@ -266,7 +364,8 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 "No private word list found. Credential and filename checks still "
                 "ran.\n"
-                "  Add one at .git/denylist.txt, or set $JOB_SCOUT_DENYLIST."
+                "  Build one with: job-scout privacy init\n"
+                "  (or put terms in .git/denylist.txt, or set $JOB_SCOUT_DENYLIST)."
             )
 
     if findings:

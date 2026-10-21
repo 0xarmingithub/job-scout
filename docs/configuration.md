@@ -51,6 +51,8 @@ job-scout run --config-dir ~/job-search --data-dir /var/lib/job-scout
 | `pre_filter` | bool | `true` | The free keyword filter. Turn it off only to see what it was dropping. |
 | `reject_too_senior` | bool | `false` | Also reject postings judged above your level. |
 | `outcomes_file` | path | `outcomes.csv` | Relative to the config directory, or absolute. |
+| `applications_dir` | path | none | A folder of one folder per application. When set, the outcomes file is built from it. Relative to the config directory, or absolute. See [applications.md](applications.md). |
+| `sync` | mapping | off | Pull the config directory (a git repository) before each run. See below. |
 | `source_priority` | list | see below | Which board wins when the same advert appears on several. |
 | `notifiers` | list | | **Required.** At least one. |
 | `searches` | list | | **Required.** At least one. |
@@ -129,6 +131,57 @@ job-scout init myconfig --scoring-model claude:sonnet
 On an existing config the flag changes only the `scoring_model` line. It leaves
 your profile and every other setting alone. Until a model is chosen, `job-scout
 run` stops and says so, and `job-scout check` shows `NOT SET`.
+
+### Application outcomes
+
+The scorer can be told what happened to the jobs you applied for. Two ways to
+give it that, and you use one of them.
+
+By hand, a CSV at `outcomes_file`. Only these columns are required, and extra
+columns are ignored:
+
+```
+title,company,status
+Platform Engineer,Northwind Energy,rejected
+```
+
+Or from folders, with `applications_dir`: one folder per application, each with
+a `notes.md` that has a `**Status:**` line. `job-scout outcomes` and every
+`job-scout run` turn them into the file. Then the generated file is
+`outcomes.csv` in your data directory, with the header
+`title,company,status,folder`, and `outcomes_file` should be left unset. The
+folder layout and the status words are in [applications.md](applications.md).
+
+`status_ignore_phrases` (optional, a list of text) is removed from every Status
+line before it is read. Use it when a phrase of your own contains a status word
+but means something else, for example a step of your process that includes the
+word "interview", which would otherwise be read as an employer interview.
+
+`applications_dir` must be a path. A path that is not a directory does not stop a
+run (the run scores without outcomes and alerts you); `job-scout check` shows
+`NOT FOUND`.
+
+### `sync`
+
+```yaml
+sync:
+  git_pull: true            # default false
+  retries: 2                # default 2, extra attempts after the first
+  retry_wait_seconds: 10    # default 10
+```
+
+Before each real run, `git pull --ff-only` in the config directory, so a profile
+pushed from another machine is live without anyone logging in. A `--dry-run`
+never pulls. If every attempt fails you are alerted only when the directory is
+behind its upstream; a failed pull while you are up to date is only logged.
+
+"Behind" is measured against the remote as git last saw it, not against the
+remote itself. When the pull fails because the network is down, git cannot see
+newer commits either, so the directory can look up to date and no alert is sent.
+The alert is reliable for failures git can explain from what it already knows,
+such as a diverged branch or local changes in the way. It is not a substitute for
+noticing that a profile you pushed never arrived.
+Unknown keys, or a value of the wrong type, stop the run with a message.
 
 ### `source_priority`
 

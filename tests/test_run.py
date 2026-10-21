@@ -101,6 +101,9 @@ def test_a_run_finishes_with_none_of_the_optional_pieces(config_dir, fake_model,
         search["sites"] = ["jobindex", "careerjet", "apify"]
 
     assert not settings.outcomes_path.exists()
+    # No applications folder, no git sync, no privacy list: none of it is needed.
+    assert settings.applications_dir is None
+    assert settings.sync["git_pull"] is False
 
     import builtins
     real_import = builtins.__import__
@@ -116,6 +119,8 @@ def test_a_run_finishes_with_none_of_the_optional_pieces(config_dir, fake_model,
     assert result.ok, result.error
     assert result.matched == []
     assert (settings.data_dir / "matches.md").exists()
+    assert not (settings.data_dir / "outcomes.csv").exists(), "nothing to build it from"
+    assert not (settings.config_dir / "privacy.txt").exists()
 
 
 def test_dry_run_records_nothing_and_sends_nothing(config_dir, fake_boards, fake_model):

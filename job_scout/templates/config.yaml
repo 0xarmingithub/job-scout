@@ -88,6 +88,34 @@ notifiers:
 #
 # outcomes_file: outcomes.csv
 
+# Rather than keep that CSV by hand, keep one folder per application and let the
+# scout build the file. Each folder has a notes.md with a "**Status:**" line;
+# `job-scout outcomes` turns them into outcomes.csv, and `job-scout run` does it
+# again before it scores. The folder layout and the status words are in
+# docs/applications.md. Relative to this directory, or absolute.
+#
+# With this set, the generated file is written to your data directory (a run
+# never writes into the config directory), and outcomes_file above is for a file
+# you keep by hand, so leave it unset.
+# applications_dir: applications
+
+# Text to remove from a Status line before it is read. Use it when a phrase of
+# your own contains a status word but means something else, such as a step of
+# your process that includes the word "interview". Case is ignored.
+# status_ignore_phrases:
+#   - "interview prep"
+
+# Pull this directory before each run, when it is a git repository. A profile
+# you push from your laptop is then live the next morning. The pull is retried
+# after a wait. You are alerted only if it still fails and git already knows the
+# remote has commits you lack. "Already knows" matters: that is the remote as git
+# last saw it, and if the network is down the check cannot see newer commits, so
+# a failed pull on a dead network may not alert. A --dry-run never pulls.
+# sync:
+#   git_pull: true
+#   retries: 2
+#   retry_wait_seconds: 10
+
 # ─── Which board wins a tie ───────────────────────────────────────────────────
 # When the same advert turns up on several boards, the copy from the board
 # earliest in this list is kept. Anything not listed sorts last.

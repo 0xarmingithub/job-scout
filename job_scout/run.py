@@ -89,6 +89,13 @@ def run_once(settings: Settings, dry_run: bool = False, limit: int | None = None
             "scout.log. Run `job-scout check` to see what each one needs."
         )
 
+    # Rebuild the outcomes file from the application folders first, so this
+    # run's scores see the current state of them. Does nothing without
+    # applications_dir, and never raises.
+    from . import outcomes
+
+    outcomes.refresh(settings, dispatcher, dry_run=dry_run)
+
     result = RunResult()
     try:
         result = _execute(settings, dispatcher, dry_run, limit, started)

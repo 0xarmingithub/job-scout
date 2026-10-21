@@ -12,14 +12,20 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HOOK="$REPO/.git/hooks/pre-push"
 
-if [ ! -d "$REPO/.git" ]; then
+# In a git worktree `.git` is a file, not a directory. Ask git where the shared
+# git directory really is, so the hook and the word list land in the right place.
+if ! GIT_DIR_REAL="$(git -C "$REPO" rev-parse --git-common-dir 2>/dev/null)"; then
     echo "$REPO is not a git checkout." >&2
     exit 1
 fi
+case "$GIT_DIR_REAL" in
+    /*|[A-Za-z]:*) ;;
+    *) GIT_DIR_REAL="$REPO/$GIT_DIR_REAL" ;;
+esac
+HOOK="$GIT_DIR_REAL/hooks/pre-push"
 
-mkdir -p "$REPO/.git/hooks"
+mkdir -p "$GIT_DIR_REAL/hooks"
 
 cat > "$HOOK" <<'HOOK_BODY'
 #!/usr/bin/env bash
@@ -73,10 +79,13 @@ chmod +x "$HOOK"
 
 echo "Installed $HOOK"
 echo
-echo "Next, if you have a private workspace: put your own names, employers,"
-echo "town, server addresses and key filenames in"
-echo "  $REPO/.git/denylist.txt"
-echo "one per line. That file lives inside .git, so git cannot commit it."
+echo "Next, if you have a private workspace: build your private word list with"
+echo "  job-scout privacy init"
+echo "It asks for your names, employers, town, server addresses and key filenames,"
+echo "and saves them to"
+echo "  $GIT_DIR_REAL/denylist.txt"
+echo "That file lives inside .git, so git cannot commit it. You can also write the"
+echo "terms there by hand, one per line."
 echo
 echo "Test it now with:"
 echo "  python tools/pre_push_check.py"

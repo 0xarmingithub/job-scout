@@ -9,6 +9,8 @@ cli.py, the `job-scout` command.
     job-scout calibrate              whether the score predicted your outcomes
     job-scout roundup                the best of the last 7 days, in one message
     job-scout ask                    collect answers to an outstanding question
+    job-scout outcomes               turn application folders into outcomes.csv
+    job-scout privacy init           build your private word list
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
     job-scout version
 
@@ -157,8 +159,78 @@ def build_parser() -> argparse.ArgumentParser:
         "--config-dir", help="directory holding config.yaml (for cv_validator_models)",
     )
 
+    _add_tracking_parsers(subparsers, _common)
+
     subparsers.add_parser("version", help="print the version")
     return parser
+
+
+def _add_tracking_parsers(subparsers, _common) -> None:
+    outcomes_parser = subparsers.add_parser(
+        "outcomes",
+        help="turn your application folders into the outcomes file the scorer reads",
+    )
+    _common(outcomes_parser)
+    outcomes_parser.add_argument(
+        "--print", action="store_true", dest="show",
+        help="show the rows instead of writing the file",
+    )
+    outcomes_parser.add_argument(
+        "--applications-dir", metavar="PATH",
+        help="read this folder instead of applications_dir from config.yaml",
+    )
+    outcomes_parser.add_argument(
+        "--output", metavar="PATH",
+        help="write here instead of the outcomes file named in config.yaml",
+    )
+    outcomes_parser.add_argument(
+        "--no-prompt", action="store_true",
+        help="never ask whether to add a new employer to the privacy list",
+    )
+
+    privacy_parser = subparsers.add_parser(
+        "privacy",
+        help="your own private word list: terms that must never reach a public place",
+    )
+    privacy_sub = privacy_parser.add_subparsers(dest="privacy_command")
+
+    def _privacy_common(sub: argparse.ArgumentParser) -> None:
+        sub.add_argument(
+            "--config-dir", help="keep the list in <config dir>/privacy.txt",
+        )
+        sub.add_argument(
+            "--file", metavar="PATH",
+            help="use this file. Overrides everything else, including $JOB_SCOUT_DENYLIST",
+        )
+
+    privacy_init = privacy_sub.add_parser(
+        "init", help="answer questions about yourself and build the list",
+    )
+    _privacy_common(privacy_init)
+    privacy_add = privacy_sub.add_parser(
+        "add", help="add one term, with its accent-folded spellings",
+    )
+    _privacy_common(privacy_add)
+    privacy_add.add_argument("term", help="the term, or - to read one per line from standard input")
+    privacy_add.add_argument(
+        "--exact", action="store_true", help="add the term as typed, with no variants",
+    )
+    privacy_list = privacy_sub.add_parser(
+        "list", help="how many entries there are. It never shows them",
+    )
+    _privacy_common(privacy_list)
+    privacy_list.add_argument("--count", action="store_true", help="print only the number")
+    privacy_check = privacy_sub.add_parser(
+        "check", help="scan a folder, or the lines a git range adds, for any listed term",
+    )
+    _privacy_common(privacy_check)
+    privacy_check.add_argument(
+        "path", nargs="?", help="folder to scan (default: the current directory)",
+    )
+    privacy_check.add_argument(
+        "--range", dest="rev_range", metavar="A..B",
+        help="scan the lines this git range adds, and its commit authors",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -183,6 +255,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_ask(args)
     if command == "validate":
         return _cmd_validate(args)
+    if command in ("outcomes", "privacy"):
+        return _cmd_tracking(command, args)
     return _cmd_run(args)
 
 
@@ -379,6 +453,25 @@ def _is_shipped_example(profile_path: Path) -> bool:
         )
     except OSError:
         return False
+
+
+def _cmd_tracking(command: str, args) -> int:
+    """outcomes and privacy. The work is in their own modules."""
+    if command == "privacy":
+        from . import privacy
+
+        return privacy.command(args)
+
+    try:
+        settings = load_settings(args.config_dir, args.data_dir)
+    except ConfigError as exc:
+        print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
+        return 2
+
+    from . import outcomes
+
+    interactive = sys.stdin.isatty() and sys.stdout.isatty()
+    return outcomes.command(args, settings, interactive=interactive)
 
 
 def _cmd_stats(args) -> int:
@@ -626,6 +719,12 @@ def _cmd_check(args) -> int:
         f"Outcomes file:    {outcomes} "
         f"({'found' if outcomes.exists() else 'absent. Scoring works without it'})"
     )
+    if settings.applications_dir is not None:
+        folder = settings.applications_dir
+        print(
+            f"Applications:     {folder} "
+            f"({'found' if folder.is_dir() else 'NOT FOUND. Runs score without outcomes'})"
+        )
 
     # Scoring backend.
     print("\nSCORING BACKEND")
@@ -770,7 +869,17 @@ def _print_backends(check_all, preflight) -> None:
 
 
 def _cmd_run(args) -> int:
+    # The pull comes first, so the files the run loads are the ones just pulled.
+    # A dry run changes nothing on disk, so it does not pull.
+    from . import sync
     from .run import RunResult, run_once, setup_logging
+
+    synced = None
+    if not args.dry_run:
+        try:
+            synced = sync.before_run(resolve_config_dir(args.config_dir))
+        except ConfigError:
+            synced = None  # load_settings below reports the same problem properly
 
     try:
         settings = load_settings(args.config_dir, args.data_dir)
@@ -779,6 +888,12 @@ def _cmd_run(args) -> int:
         return 2
 
     setup_logging(settings.data_dir, verbose=args.verbose)
+
+    if synced is not None and synced.attempted:
+        from .notifiers import Dispatcher, build
+
+        sync.report(synced, Dispatcher(build(settings.notifier_specs, settings.data_dir)))
+
     result: RunResult = run_once(settings, dry_run=args.dry_run, limit=args.limit)
 
     if args.dry_run:

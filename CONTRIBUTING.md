@@ -125,8 +125,14 @@ It checks three things:
 
 That last one needs a word list, and it cannot live in this repository, because
 writing your details here would publish the very thing it exists to keep out.
-Put one term per line in `.git/denylist.txt`, which git cannot commit, or point
-`$JOB_SCOUT_DENYLIST` at a file elsewhere.
+Build it with `job-scout privacy init`, which asks for your own names,
+employers, town, server addresses and key file names and saves them, with their
+spelling variants, to `.git/denylist.txt` (in a git worktree, the shared git
+directory, which the script finds itself). Git cannot commit that file. You can
+also write one term per line by hand, or point `$JOB_SCOUT_DENYLIST` at a file
+elsewhere. Neither the script nor `job-scout privacy` ever prints a term; a hit
+names its entry by file name and position, and a commit finding names the
+commit and the field, never the identity. See [docs/privacy.md](docs/privacy.md).
 
 Run it by hand any time:
 

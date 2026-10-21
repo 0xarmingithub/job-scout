@@ -113,6 +113,44 @@ class ConfigError(RuntimeError):
     to the user as-is, so it must say what to do next."""
 
 
+# Defaults for the optional `sync:` block in config.yaml: a `git pull` of the
+# config directory before each run, so a profile pushed from another machine is
+# live the next morning.
+SYNC_DEFAULTS: dict[str, Any] = {
+    "git_pull": False,
+    "retries": 2,
+    "retry_wait_seconds": 10,
+}
+
+
+def merge_sync(config: dict) -> dict:
+    """The `sync:` block with every default filled in. Raises ConfigError on a wrong value."""
+    configured = config.get("sync")
+    if configured is None:
+        return dict(SYNC_DEFAULTS)
+    if not isinstance(configured, dict):
+        raise ConfigError(
+            "config.yaml: 'sync' must be a mapping, for example:\n\n"
+            "sync:\n"
+            "  git_pull: true"
+        )
+    unknown = sorted(set(configured) - set(SYNC_DEFAULTS))
+    if unknown:
+        raise ConfigError(
+            f"config.yaml: unknown key(s) under sync: {', '.join(unknown)}. "
+            f"Known keys: {', '.join(SYNC_DEFAULTS)}."
+        )
+    merged = dict(SYNC_DEFAULTS)
+    merged.update(configured)
+    if not isinstance(merged["git_pull"], bool):
+        raise ConfigError("config.yaml: sync.git_pull must be true or false.")
+    for key in ("retries", "retry_wait_seconds"):
+        value = merged[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ConfigError(f"config.yaml: sync.{key} must be a whole number, 0 or more.")
+    return merged
+
+
 # ─── Locating the config directory ────────────────────────────────────────────
 
 def resolve_config_dir(cli_value: str | None = None) -> Path:
@@ -276,7 +314,32 @@ class Settings:
         if configured:
             path = Path(configured).expanduser()
             return path if path.is_absolute() else (self.config_dir / path)
+        # With applications_dir set the file is generated on every run, so it
+        # belongs with the other output. "Config in, data out": a run never
+        # writes into the config directory.
+        if self.applications_dir is not None:
+            return self.data_dir / OUTCOMES_FILENAME
         return self.config_dir / OUTCOMES_FILENAME
+
+    @property
+    def applications_dir(self) -> Path | None:
+        """The folder of per-application folders, or None when tracking is off."""
+        raw = self.config.get("applications_dir")
+        if raw is None or not str(raw).strip():
+            return None
+        path = Path(str(raw).strip()).expanduser()
+        return path if path.is_absolute() else (self.config_dir / path)
+
+    @property
+    def status_ignore_phrases(self) -> tuple[str, ...]:
+        """Phrases removed from a Status line before it is read. Empty by default."""
+        raw = self.config.get("status_ignore_phrases") or []
+        return tuple(str(item) for item in raw if str(item).strip())
+
+    @property
+    def sync(self) -> dict[str, Any]:
+        """The optional `sync:` block, every default filled in."""
+        return merge_sync(self.config)
 
     @property
     def advanced(self) -> dict[str, Any]:
@@ -384,6 +447,23 @@ def validate(settings: Settings) -> None:
             "profile.yaml has no 'candidate' block. The scorer needs at least a "
             "name, a seniority and a location to judge a posting against."
         )
+
+    raw_applications = settings.config.get("applications_dir")
+    if raw_applications is not None and not isinstance(raw_applications, str):
+        raise ConfigError(
+            "config.yaml: applications_dir must be a folder path, for example:\n\n"
+            "applications_dir: applications"
+        )
+    phrases = settings.config.get("status_ignore_phrases")
+    if phrases is not None and (
+        not isinstance(phrases, list) or not all(isinstance(item, str) for item in phrases)
+    ):
+        raise ConfigError(
+            "config.yaml: status_ignore_phrases must be a list of text, for example:\n\n"
+            "status_ignore_phrases:\n"
+            "  - \"interview prep\""
+        )
+    merge_sync(settings.config)
 
     if not settings.notifier_specs:
         raise ConfigError(
