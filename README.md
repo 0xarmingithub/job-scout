@@ -439,6 +439,15 @@ one report. It is opt-in and never runs during the daily run. Set
 `cv_validator_models` in `config.yaml`, or choose the models when prompted. See
 [configuration.md](docs/configuration.md).
 
+## From a good match to an application
+
+Optional. Eight skills in [.claude/skills/](.claude/skills/) take a posting to a
+tailored CV that claims nothing your own records do not support: posting
+analysis, gap analysis, tailoring, a numbers audit, an ATS text check, cover
+letter, interview prep and upkeep of your master content file. Blank templates
+for that file and your voice rules are in [templates/cv/](templates/cv/). The
+method and the reason for each step: [docs/cv-workflow.md](docs/cv-workflow.md).
+
 ## Documentation
 
 | | |
