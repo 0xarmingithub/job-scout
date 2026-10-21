@@ -33,7 +33,10 @@ create a key. Free, no card, about a minute.
 
 ```bash
 echo "GOOGLE_API_KEY=paste-it-here" > .env
+job-scout init . --scoring-model gemini:gemini-3.7-flash
 ```
+
+The second line chooses the model that scores postings. There is no default.
 
 Then check:
 

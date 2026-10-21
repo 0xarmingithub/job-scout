@@ -12,8 +12,8 @@ If you would rather not, there are two easier routes:
 
 - **Hand it to an AI.** Copy the prompt at the top of the
   [README](../README.md#would-you-rather-not-read-this) into Claude Code, Cursor,
-  Codex or Copilot with this repository open. It asks you five questions and does
-  the rest.
+  Codex or Copilot with this repository open. It asks about your search, offers
+  each optional feature, and does the rest.
 - **Ask someone.** Anyone who writes software will get this running in ten
   minutes.
 
@@ -149,7 +149,10 @@ Now save your key. Replace `AIza-your-key-here` with the real one:
 
 ```bash
 echo "GOOGLE_API_KEY=AIza-your-key-here" > .env
+job-scout init . --scoring-model gemini:gemini-3.7-flash
 ```
+
+The second line chooses the model that scores postings. There is no default.
 
 Check it worked:
 

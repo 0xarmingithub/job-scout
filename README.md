@@ -19,18 +19,69 @@ for. There is no code to edit.
 
 ---
 
+## What it can do
+
+Only the first three rows are needed. Every other row is optional and switches on
+by itself when you set it up. Each says what it does, the command, and where the
+detail is.
+
+| | What it does | Command | Detail |
+|---|---|---|---|
+| **Search** | Twelve sources: LinkedIn, Indeed, Glassdoor, ZipRecruiter and Google through one library; Careerjet; Jobindex by browser; the Danish portals Jobbank, Jobnet and Jobdanmark; `jobindex_cli`, a second route to Jobindex; and Apify, which is paid | `job-scout run` | [configuration.md](docs/configuration.md) |
+| **Judge** | A free location filter, a free keyword filter, then a model reads the posting and returns a score, the real gaps and one sentence of reasoning | `job-scout run` | [scoring.md](docs/scoring.md) |
+| **Tell you** | A file on disk, Telegram, email, or a webhook for Slack, Discord, Mattermost and others | `job-scout check`, then the first run | [configuration.md](docs/configuration.md) |
+| **The week in one message** | The best postings of the last few days, re-read from the database, no model calls | `job-scout roundup` | [roundup.md](docs/roundup.md) |
+| **Learn from your results** | One folder per application with a Status line. The scorer is told what converted, and you can ask whether the score predicted anything | `job-scout outcomes`, `calibrate` | [applications.md](docs/applications.md) |
+| **Chase what went quiet** | Asks about applications with no result recorded, and shows where applications stop and which gaps keep coming back | `job-scout nudge`, `patterns` | [applications.md](docs/applications.md) |
+| **Draft a tailored CV** | Runs a command on the best match, after asking you a few questions on Telegram | `job-scout ask` | [tailoring.md](docs/tailoring.md) |
+| **Turn a CV into documents** | Reads a Word, PDF or text CV into `resume.yaml`, fills your own template, builds a PDF, and checks that an applicant tracking system can read it | `job-scout cv` | [cv.md](docs/cv.md) |
+| **A second opinion** | Up to four models review a CV against a job description. Opt-in, costs model calls | `job-scout validate` | [configuration.md](docs/configuration.md) |
+| **The method** | Twelve skills for AI coding tools: four to set up and tune the scout, eight to take a posting to a tailored CV that claims nothing your records do not support | | [cv-workflow.md](docs/cv-workflow.md) |
+| **Keep private things private** | A word list of your own names and employers, checked before anything reaches a public repository | `job-scout privacy` | [privacy.md](docs/privacy.md) |
+| **Run itself** | By hand, a systemd timer, GitHub Actions or Docker, with timers for the daily run, the weekly roundup and the question collector | | [setup-systemd.md](docs/setup-systemd.md) |
+
+### Every command
+
+| Command | Use it to | Model calls | Sends a message |
+|---|---|---|---|
+| `job-scout init <dir>` | Create `config.yaml` and `profile.yaml`. `--from-cv` drafts the profile from your CV, `--with-tailoring` adds the tailoring blocks | With `--from-cv` | No |
+| `job-scout check` | See what is configured and what each backend, notifier and source still needs. Run it first when anything is wrong | No | No |
+| `job-scout run` | Do a run. `--dry-run --limit 10` scores ten postings and records and sends nothing | Yes, scoring | The digest, unless `--dry-run` |
+| `job-scout stats` | See where postings go and what they score | No | No |
+| `job-scout calibrate` | Find out whether higher scores really converted better | No | No |
+| `job-scout roundup` | Send the best of the last few days. `--dry-run` prints it | No | Yes |
+| `job-scout outcomes` | Build the outcomes file from your application folders. `--print` shows it | No | No |
+| `job-scout nudge` | Ask about applications with no result recorded. `--dry-run` prints it | No | Yes |
+| `job-scout patterns` | Read your application folders together | No | No |
+| `job-scout ask` | Collect your answers to a tailoring question, then run your tailoring command. `--status` and `--cancel` | Yes, your command | Yes |
+| `job-scout cv ...` | `doctor`, `import`, `convert`, `render`, `build`, `verify`, `example` | `import` only | No |
+| `job-scout validate` | Get a second opinion on a CV | Yes | No |
+| `job-scout privacy ...` | `init`, `add`, `list --count`, `check` | No | No |
+
+---
+
 ## Would you rather not read this?
 
 Hand the job to an AI. Clone the repo, open it in Claude Code, Cursor, Codex,
 Copilot or anything else that can run commands, and paste the prompt below. It
-asks you five questions and then does the setup itself.
+asks about your search, then offers every optional feature above one by one,
+sets up the ones you pick, proves each one works, and tells you what is on and
+what is off. It asks before anything that costs money or sends a message.
 
 <details>
 <summary><b>Click to expand the setup prompt, then copy the whole block</b></summary>
 
 ````text
-You are setting me up with Job Scout, the repository you are in. Read README.md
-first, then the setup guide under docs/ for whichever path I pick.
+You are setting me up with Job Scout, the repository you are in. Your job is not
+only to make it run. It is to switch on every part of it that is useful to me,
+prove each part works, and leave me knowing what is on and what is off.
+
+READ FIRST, in this order: README.md (the table "What it can do" is your map),
+then AGENTS.md. Before you set up a feature, read its guide under docs/. If a
+skill exists for the job, read it too: .claude/skills/ has setup-profile,
+tune-threshold, debug-run, add-job-source and eight CV skills (jd-analyzer,
+gap-analysis, resume-tailor, metrics-auditor, ats-compatibility-check,
+cover-letter, interview-prep, master-resume-curator).
 
 Before anything else, check you can actually see the repository's files. If you
 cannot, stop and tell me to clone
@@ -42,12 +93,48 @@ time and wait for the output before the next.
 Do not paste instructions at me. Interview me, then do the work yourself, then
 tell me only the parts I have to do with my own hands.
 
-STEP 1. Ask me these five questions in one message and wait for my answers.
+RULES THAT NEVER BEND
+
+  - Ask before anything that spends money or sends a message, and wait for a
+    yes. That means: a real `job-scout run`, `roundup`, `nudge`, `ask`,
+    `validate`, `cv import`, `init --from-cv`, and any command that runs a
+    model. Say what it will do first. `job-scout check`, `stats`, `calibrate`,
+    `patterns`, `outcomes --print`, `nudge --dry-run`, `roundup --dry-run`,
+    `cv doctor` and `privacy list --count` are safe to run without asking.
+    `run --dry-run` still calls the scoring model, so tell me the limit first.
+  - Ask before installing anything outside this project's virtual environment.
+  - Never start or enable a timer or a service without my yes.
+  - Pick one config directory outside this clone, for example ~/job-search, and
+    pass `--config-dir <dir>` to every job-scout command (or tell me to export
+    JOB_SCOUT_CONFIG_DIR=<dir>). Without it a command reads this clone's own
+    files. Keep everything personal in that directory: config.yaml,
+    profile.yaml, .env, my master content file, resume.yaml, voice rules, CV
+    output and the private word list. This clone's .gitignore does not know
+    those names.
+  - Never put a key, token or password in config.yaml or profile.yaml, which get
+    committed. When a key is needed, say exactly where to get it, then tell me
+    to paste it into <dir>/.env myself, in my own editor. Do not ask me to type
+    it into this chat and do not read the file back. `job-scout check` tells you
+    whether it is set.
+  - Never write a skill, employer, level, date or number about me that I did not
+    tell you. A claim I cannot discuss in an interview produces matches I cannot
+    use.
+  - My CV and my application notes are personal. Before any command sends them
+    to a model, name the backend that receives them and let me choose, including
+    a local CLI backend that keeps the text on this machine.
+  - Never read, print or paste my private word list. `job-scout privacy list
+    --count` shows a count and nothing else.
+
+STEP 1. Interview me in two messages. Send the second only after I answer the
+first.
+
+  MESSAGE ONE, the search. Ask these five in one message.
 
   1. What job are you after, and in which city or country?
   2. Where should this run?
        a) on this computer, by hand when I feel like it
-       b) on this computer, automatically every day
+       b) on this computer, automatically every day (cron on macOS or Linux,
+          Task Scheduler on Windows)
        c) on a small always-on server, so it runs whether or not I am here
        d) on GitHub's machines, because I do not want a server
        e) I do not know, recommend one
@@ -61,8 +148,48 @@ STEP 1. Ask me these five questions in one message and wait for my answers.
      visa sponsorship, a security clearance you do not have, places you will not
      commute to.
 
+  MESSAGE TWO, the features. Show this list. For each one I answer yes, no or
+  "tell me more". Put your recommended answer in brackets, based on message one.
+
+  a) Weekly roundup: one message on Friday with the week's best matches. [yes]
+  b) Track my applications: one folder per application with a Status line. The
+     scorer learns what converted, a nudge asks about the ones that went quiet,
+     and a patterns report shows where they stop. [yes if I apply to jobs]
+  c) A private word list of my own names and employers, checked before anything
+     reaches a public repository. [yes if I keep any repository that could
+     become public]
+  d) A tailored CV drafted for the day's best match, after the scout asks me a
+     few questions on Telegram. Needs Telegram, a model CLI, and something that
+     runs every five minutes, so only on paths (b) and (c). [only if I have a CV
+     and use Telegram]
+  e) The CV pipeline: read my CV into resume.yaml, fill my own template, build a
+     PDF, and check an applicant tracking system can read it. [yes if I have a
+     CV]
+  f) A second opinion on a tailored CV from several models. Costs model calls
+     each time. [no, unless I ask]
+  g) Extra sources for my country. In Denmark: jobbank, jobnet, jobdanmark and
+     jobindex_cli, which need bun and a checkout of the portal CLI repository
+     (see docs/configuration.md). Elsewhere: ask which national job boards I use
+     and follow the add-job-source skill. Careerjet needs a free key and my
+     registered IP; Apify needs a paid token. [yes if it applies]
+  h) Config sync: my config folder is a git repository the scout pulls before
+     each run. [only on a server]
+
+  Also ask which model I want for each job. They are separate settings and the
+  data consequences differ: scoring_model reads every posting (the free Gemini
+  tier is the easy option; there is no built-in default); cv_model reads my whole
+  CV once; the tailoring command runs on the day's best match;
+  cv_validator_models is opt-in, up to four. Recommend a local CLI backend
+  (claude:, codex:, grok:) for anything that reads my CV.
+
 STEP 2. Set it up.
 
+  Core:
+
+  - If `job-scout version` fails, follow docs/setup-local.md section 1 (a virtual
+    environment, then `pip install -r requirements.txt`) and run everything from
+    it. For feature (e) also `pip install -e ".[cv]"`, which PDF and Word CVs
+    need.
   - Answer (e) to question 2 means: recommend (b) if their computer is usually
     on, (c) otherwise. Say why in one sentence. Never recommend (d) without
     telling them LinkedIn and Indeed throttle datacenter IP addresses hard, so
@@ -70,39 +197,135 @@ STEP 2. Set it up.
   - Follow the guide for the path they chose: docs/setup-local.md,
     docs/setup-systemd.md, docs/setup-github-actions.md or docs/setup-docker.md.
     Run the commands yourself. Do not make them copy anything you can run.
-  - Profile. With a CV: `job-scout init <dir> --from-cv <path-to-cv>`. Tell them
-    first that this sends the CV text to whichever model scoring_model names,
-    and that a local CLI backend keeps it on their machine. Let them choose.
-    Without a CV: interview them, and read .claude/skills/setup-profile/SKILL.md
-    first.
+  - Create the config directory with the model I chose:
+    `job-scout init <dir> --scoring-model BACKEND:MODEL`. There is no default
+    model, and `init` only asks when it runs in a real terminal, which you are
+    not in. If the backend needs an API key, I paste it into <dir>/.env.
+  - Profile. With a CV: tell them first that this sends the CV text to whichever
+    model scoring_model names, and that a local CLI backend keeps it on their
+    machine. Let them choose, then run
+    `job-scout init <dir> --from-cv <path-to-cv> --force`. Without a CV:
+    interview them, and read .claude/skills/setup-profile/SKILL.md first.
+  - Write my answers into the config. In <dir>/config.yaml set `searches:` (the
+    terms, location, country_indeed and sites) and `notify_threshold`. In
+    <dir>/profile.yaml put the deal-breakers: hard_exclude_location_patterns,
+    hard_exclude_title_patterns, the candidate's languages and work
+    authorisation. Set up the notifier I chose: `file` needs nothing; the others
+    follow docs/configuration.md under notifiers.
   - confirmed_gaps is the section that decides whether this is useful, and it
-    can never come from a CV. Ask them directly what comes up in job adverts in
-    their field that they have genuinely never done. Prompt by category if they
-    stall: frontend, mobile, machine learning, data engineering, embedded,
-    security operations, SAP or Salesforce, managing people. Push for the
-    specific boundary, so "has operated databases, never owned the pipelines"
-    rather than "no data engineering".
-  - Never write a skill, employer, level or date into profile.yaml that they did
-    not tell you. A profile with a skill they cannot discuss in an interview
-    produces matches they cannot use.
-  - Stop and ask when you need an API key or a password. Say exactly where to
-    get it. Never put one in config.yaml or profile.yaml; those get committed.
+    can never come from a CV. After `--from-cv`, confirmed_gaps and the two
+    hard_exclude lists are empty on purpose, so fill all three with me. Ask them
+    directly what comes up in job adverts in their field that they have
+    genuinely never done. Prompt by category if they stall: frontend, mobile,
+    machine learning, data engineering, embedded, security operations, SAP or
+    Salesforce, managing people. Push for the specific boundary, so "has
+    operated databases, never owned the pipelines" rather than "no data
+    engineering".
+  - If scoring errors partway through a run on the free tier, set
+    `scoring_delay_seconds: 2` in config.yaml.
 
-STEP 3. Prove it works before you hand back.
+  Then, for each feature I said yes to, in this order, run the commands
+  yourself:
 
-  - `job-scout check` until everything says READY.
-  - `job-scout run --dry-run --limit 10`, then read the scores back to them and
-    ask whether they agree. Their corrections are the real setup step.
+  a) Roundup. `job-scout roundup --days 5 --dry-run --config-dir <dir>` shows the
+     message. It is empty until the first real run has recorded postings. The
+     roundup also sends the nudge when applications are tracked; `--no-nudge`
+     skips it. Scheduling is below.
+  b) Applications. Ask where my application folders live, or create
+     applications/ in <dir>. Set `applications_dir` in config.yaml. Explain the
+     Status words in docs/applications.md, then create one folder with me from
+     my most recent application, with a notes.md whose Status line is what
+     really happened (`submitted`, `rejected` and so on, not `drafted` unless
+     that is true). docs/applications.md says how the company and role are
+     read. Run `job-scout outcomes --print --no-prompt --config-dir <dir>` and
+     show me the row. If some Status lines contain words that mean something
+     other than an employer outcome (for example a step of my own that includes
+     the word "interview"), list them under `status_ignore_phrases`. If this
+     repository is cloned, `python tools/check_applications.py` checks every
+     folder has a Status line.
+  c) Private word list. Tell me to run `job-scout privacy init` myself, in my
+     own terminal, because the answers are my own identifiers and must not be
+     typed into this chat. Afterwards run `job-scout privacy list --count` and
+     `job-scout privacy check`.
+  d) Tailoring. On path (d) say it is unavailable. Otherwise run
+     `job-scout init <dir> --with-tailoring`, read docs/tailoring.md (start with
+     "The posting is untrusted"), set `tailor.command` (it ships empty, so
+     nothing runs until it is set), the `ask:` block and the Telegram notifier.
+     Copy templates/cv/master-content.md to <dir>/master-resume.md and help me
+     fill it from my CV; the master-resume-curator skill covers this. Explain
+     that the scout stops waiting for answers when I send /done, after 30 quiet
+     minutes, or after 24 hours.
+  e) CV pipeline. Run `job-scout cv doctor` and install only what is missing,
+     and only with my yes (latexmk matters only if I want a PDF from LaTeX).
+     For the import, name the backend that will receive the CV and get my yes in
+     chat, then run
+     `job-scout cv import <my-cv> --out <dir>/resume.yaml --model BACKEND:MODEL --yes --config-dir <dir>`.
+     `--yes` is allowed only because I agreed in chat. Read resume.yaml back to
+     me and fix mistakes together. Ask for my own template (.tex or .docx). With
+     none, `job-scout cv example <dir>` copies a neutral one. Then
+     `job-scout cv build <dir>/resume.yaml --template <tpl.tex> --out <dir>/cv.pdf`
+     for a PDF, or `job-scout cv render <dir>/resume.yaml --template <tpl.docx> --out <dir>/cv.docx`
+     for Word, or `--out <dir>/cv.md` for Markdown, which needs no template.
+     Then `job-scout cv verify <dir>/cv.pdf --resume <dir>/resume.yaml`.
+     `job-scout cv convert <draft.md>` turns a tailored Markdown draft into a
+     resume.yaml.
+  f) Second opinion. Set `cv_validator_models` in config.yaml and explain the
+     cost. Do not run it unless I ask.
+  g) Extra sources. Set `sites:` per search. For the Danish portals set
+     JOB_SCOUT_BUN and JOB_SCOUT_PORTAL_CLIS. Say which sources need nothing and
+     which need a key.
+  h) Sync. The config folder must already be a git repository with a remote;
+     I do the commit and push myself. Add the `sync:` block and explain that it
+     alerts only when the local copy is behind its upstream.
 
-STEP 4. Finish with four short things, and nothing else.
+  Scheduling, for the path I chose. Do nothing here without my yes.
 
-  - What you set up, in two sentences.
-  - The one command they run, or the fact that it now runs itself and when.
+  - Path (b): cron on macOS or Linux (docs/setup-local.md has the line), Task
+    Scheduler on Windows. For the roundup, a Friday line such as
+    `0 17 * * 5 cd <clone> && .venv/bin/job-scout roundup --days 5 --config-dir <dir>`.
+  - Path (c): `sudo bash deploy/install-systemd.sh` enables the daily timer
+    immediately, so tell me that and get my yes first. It installs the roundup
+    and ask timers switched off. Enable each only for a feature I accepted:
+    `sudo systemctl enable --now job-scout-roundup.timer` or
+    `sudo systemctl enable --now job-scout-ask.timer`.
+  - Path (d): the workflow runs the daily job only. Say plainly that there is no
+    roundup and no tailoring questions there.
+  - Docker: docs/setup-docker.md. It has no scheduler for the roundup or ask.
+
+STEP 3. Prove it works before you hand back. Show me the output of each that
+applies.
+
+  - `job-scout check --config-dir <dir>` until the backend I chose, my notifiers
+    and my sources say READY. Backends I did not choose can stay NOT READY.
+  - `job-scout run --dry-run --limit 10 --config-dir <dir>`. It searches every
+    source before it scores, so it takes minutes: run it in the background and
+    read <dir>/data/scout.log. Then read the scores back to me and ask whether I
+    agree. My corrections are the real setup step. Use the tune-threshold skill
+    to act on them.
+  - Once I agree, offer the first real `job-scout run --config-dir <dir>`, in the
+    background. A Telegram, email or webhook notifier is proven only by that
+    run's digest.
+  - After that run: (a) `job-scout roundup --dry-run`. (b)
+    `job-scout outcomes --print` and `job-scout nudge --dry-run`. Also
+    `job-scout stats`. (c) `job-scout privacy list --count`. (d)
+    `job-scout ask --status`. (e) `job-scout cv verify` on the PDF.
+
+STEP 4. Finish with these five short things, and nothing else.
+
+  - A table of the features (a) to (h): on or off, and the one command that
+    changes it.
+  - The one command I run, or the fact that it now runs itself and when.
   - Where the results appear.
   - What day one looks like: the first run scores every posting currently
     listed, so it takes about fifteen minutes and can return twenty or more
-    matches. That is the backlog, not a broken setting. Tell them to judge it on
-    day three.
+    matches. That is the backlog, not a broken setting. Judge it on day three.
+  - How it keeps getting better. On day three, if the matches are wrong, tell me
+    to say so and use the tune-threshold skill. After two weeks of recorded
+    outcomes, `job-scout calibrate` says whether the score predicted anything.
+    If a run returns nothing, use the debug-run skill, then `job-scout check`
+    and `job-scout stats`. To add a board, use the add-job-source skill. When I
+    apply to something, offer the CV skills in the order the README gives under
+    "From a good match to a sent application".
 ````
 
 </details>
@@ -129,14 +352,16 @@ python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activa
 pip install -r requirements.txt
 
 echo "GOOGLE_API_KEY=your-key-here" > .env       # free, from the link below
+job-scout init . --scoring-model gemini:gemini-3.7-flash
 job-scout run
 ```
 
 Get the key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 It is free, takes about a minute, and needs no credit card.
 
-Results land in `data/matches.md`. Nothing else is configured, so nothing else
-happens. No bot, no email, no account anywhere.
+The second line chooses the model that scores postings. There is no default,
+because this project does not pick one for you. Results land in
+`data/matches.md`. Nothing else is configured, so nothing else happens. No bot, no email, no account anywhere.
 
 Not sure it is set up right? `job-scout check` tells you exactly what is missing
 and what to do about it.
@@ -226,6 +451,7 @@ Nothing, in the normal case.
 | Scoring | Google's free tier covers it. At the time of writing it allows 1,500 model calls a day. A steady-state run makes 30 to 60. |
 | Hosting | The author's runs on an Oracle Cloud always-free VM. A laptop and `cron` works too. |
 | Job boards | LinkedIn, Indeed and JobIndex are free. Careerjet's partner API is free. Apify is paid and optional. |
+| Optional model features | `init --from-cv`, `cv import`, `validate` and tailoring each make model calls, and only when you run them. On a CLI backend they use your subscription, not a per-token bill. |
 
 **Day one costs several times more than day two.** The database starts empty, so
 every posting is new and every one gets scored. Two runs of the shipped config,
@@ -285,13 +511,18 @@ them is independently skippable.
 
 | | What it adds | What it costs you |
 |---|---|---|
-| **JobIndex source** | jobindex.dk, for Danish postings that reach no other board | Playwright and a headless Chromium. Denmark only. |
+| **Danish portals** | `jobbank`, `jobnet`, `jobdanmark` and `jobindex_cli`, with a detail call for each description. Denmark only | bun, and a checkout of the portal CLI repository ([configuration.md](docs/configuration.md)) |
+| **JobIndex by browser** | `jobindex`, a second route to jobindex.dk. Measured against `jobindex_cli`, the CLI route found more and parsed companies more reliably | Playwright and a headless Chromium. Denmark only |
 | **Careerjet source** | A licensed aggregator API across many countries | A free partner key, plus registering your IP |
 | **Apify source** | Scraping run on someone else's infrastructure, with proxies | A paid API token |
-| **`outcomes.csv`** | The scorer learns what actually converted for you | Keeping a three-column CSV up to date, or one folder per application (`applications_dir`) |
+| **Application tracking** | The scorer learns what converted. `outcomes`, `nudge` and `patterns` | One folder per application with a Status line (`applications_dir`), or a three-column `outcomes.csv` |
+| **Tailoring and questions** | A tailored CV drafted for the day's best match, after asking you | A model CLI, Telegram, and a few minutes answering on your phone |
+| **The CV pipeline** | `job-scout cv`: resume.yaml, your own template, a PDF, an ATS text check | Nothing for Markdown or Word. `latexmk` for a PDF from LaTeX. `cv import` makes one model call |
+| **Second opinion** | `job-scout validate`, up to four models | Model calls, each time you run it |
+| **Private word list** | `job-scout privacy` | Answering its questions once |
 | **Scheduling** | It runs without you | A systemd timer, a cron line, or GitHub Actions |
 | **Telegram / email / webhook** | Results on your phone instead of in a file | Five minutes each |
-| **Claude Code skills** | Guided setup and tuning inside an AI coding tool | Nothing. Every workflow also has manual steps |
+| **Skills for AI coding tools** | Guided setup, tuning and debugging, and the CV workflow, in [.claude/skills/](.claude/skills/) | Nothing. Every skill is plain Markdown with manual steps too |
 
 None of these can break a run by being absent. That is enforced by the tests,
 not just claimed here: `tests/test_run.py` runs the whole pipeline with no
@@ -306,7 +537,7 @@ produces a sentence telling you what to install, never a stack trace.
 
 | Backend | Needs | Notes |
 |---|---|---|
-| `gemini:gemini-3.7-flash` | `google-genai`, `GOOGLE_API_KEY` | Free tier. The documented default. |
+| `gemini:gemini-3.7-flash` | `google-genai`, `GOOGLE_API_KEY` | Free tier. The easy option; there is no built-in default. |
 | `openrouter:google/gemini-3.7-flash` | `requests`, `OPENROUTER_API_KEY` | Pay per token, many models. |
 | `claude:sonnet` | the `claude` CLI | Runs on your subscription. |
 | `grok:grok-4` | the `grok` CLI | Never calibrated for this task. |
@@ -367,6 +598,21 @@ capped at 40 however well everything else lines up.
 
 Full detail in [docs/scoring.md](docs/scoring.md). Model comparisons, with the
 sample sizes, in [docs/benchmarks.md](docs/benchmarks.md).
+
+### What keeps the data honest
+
+- **Cleaning.** Invisible characters in a posting are removed and counted. Words
+  that mix Latin letters with Cyrillic or Greek ones, a common look-alike trick,
+  are flagged. A flagged posting is still scored, and the flag travels with it.
+- **Source health.** A source that returned jobs before and then nothing for
+  three runs in a row, or that returns output that looks broken (no company, HTML
+  in titles), raises an alert. A rate limit is reported as a rate limit, not as a
+  broken source.
+- **Duplicates.** One advert on several boards is kept once, from the board
+  earlier in `source_priority`. A posting you have seen never reaches the scorer
+  again, and near copies of a posting you already have are skipped.
+- **Secrets.** Everything a notifier sends passes through a step that strips
+  credentials, because error text routinely contains the token that caused it.
 
 ---
 
@@ -431,22 +677,33 @@ not point this at a company you are trying to annoy.
 
 ---
 
-## Checking a CV with more than one model
+## From a good match to a sent application
 
-`job-scout validate --jd jd.md --cv cv.md --output report.md` asks up to four
-models for their own analysis of a CV against a job description, and writes
-one report. It is opt-in and never runs during the daily run. Set
-`cv_validator_models` in `config.yaml`, or choose the models when prompted. See
-[configuration.md](docs/configuration.md).
+Optional. One path, with the command or skill for each step. Every step also
+has manual instructions in its guide.
 
-## From a good match to an application
+1. **A match arrives.** With tailoring set up, the scout asks you a few
+   questions and drafts a Markdown CV for the best one
+   ([tailoring.md](docs/tailoring.md)).
+2. **Check it against your records.** The skills in
+   [.claude/skills/](.claude/skills/) work in this order: `jd-analyzer`,
+   `gap-analysis`, `resume-tailor`, `metrics-auditor` and, if you want a human
+   voice pass, the third-party [humanizer](https://github.com/blader/humanizer).
+   Then `cover-letter` and `interview-prep` when you need them. Blank templates
+   for your master content file and voice rules are in
+   [templates/cv/](templates/cv/).
+3. **Make the document.** `job-scout cv render` or `build` fills your own
+   template ([cv.md](docs/cv.md)).
+4. **Check what an applicant tracking system will read.**
+   `job-scout cv verify`, and the `ats-compatibility-check` skill.
+5. **Get a second opinion.** `job-scout validate --jd jd.md --cv cv.md --output
+   report.md` asks up to four models. Opt-in, and never part of the daily run.
+   Set `cv_validator_models` in `config.yaml`, or choose when prompted.
+6. **Check before anything goes public.** `job-scout privacy check`.
+7. **Record what happened.** Put the result in the application's `Status:`
+   line. The scorer reads it on the next run.
 
-Optional. Eight skills in [.claude/skills/](.claude/skills/) take a posting to a
-tailored CV that claims nothing your own records do not support: posting
-analysis, gap analysis, tailoring, a numbers audit, an ATS text check, cover
-letter, interview prep and upkeep of your master content file. Blank templates
-for that file and your voice rules are in [templates/cv/](templates/cv/). The
-method and the reason for each step: [docs/cv-workflow.md](docs/cv-workflow.md).
+The method, and the reason for each step: [docs/cv-workflow.md](docs/cv-workflow.md).
 
 ## Documentation
 
@@ -466,24 +723,24 @@ method and the reason for each step: [docs/cv-workflow.md](docs/cv-workflow.md).
 | [Troubleshooting](docs/troubleshooting.md) | Start here when it returns nothing. `job-scout stats` is the first command to run |
 | [Examples](examples/) | A complete Denmark setup |
 | [The CV pipeline](docs/cv.md) | `job-scout cv`: turn a CV you already have into `resume.yaml`, fill your own template, compile a PDF, and check an applicant tracking system can read it |
+| [The CV method](docs/cv-workflow.md) | The workflow behind the skills, and why each step exists |
 | [AGENTS.md](AGENTS.md) | Instructions for AI coding tools. Not Claude-specific. |
 | [Contributing](CONTRIBUTING.md) | |
 
 ---
 
-## What is coming
+## What is shipped, and what is not
 
-**Release 2, the CV toolkit.** Planned, not fully built. The same profile that
-scores a posting can tailor a CV against it: analyse the job description, map
-it onto a master résumé, find the real gaps, draft a cover letter, check the
-result parses in an applicant tracking system, and prepare interview answers.
+The CV side that this file once listed as "coming" now exists: the
+[skills](.claude/skills/), the [templates](templates/cv/), the
+[method](docs/cv-workflow.md) and [`job-scout cv`](docs/cv.md). Limits worth
+knowing:
 
-One piece of that shipped: [`job-scout cv`](docs/cv.md)
-generalizes the CV-rendering side, so a tailored draft -- or any CV you
-already have -- becomes a real document in whatever format you use, without
-assuming one specific LaTeX structure. Still missing: a master résumé file
-with no public equivalent yet, and the job-description analysis, gap-mapping,
-and cover-letter logic built around it.
+- One neutral CV template ships. Bring your own for anything you send.
+- `cv import` is a model reading your CV. Read the draft it writes.
+- The skills are written for Claude Code and are plain Markdown, so any tool can
+  follow them. Nothing about them runs unattended.
+- The Grok and Codex scoring backends have never been calibrated for this task.
 
 Not planned: a web interface, a hosted version, or anything that stores your
 profile on someone else's machine.
