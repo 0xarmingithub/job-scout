@@ -408,6 +408,15 @@ searches:
 `jobindex`. Both can be listed. Dedup keeps one copy and prefers the one from
 the board earlier in `source_priority`.
 
+If you want one Jobindex route, use `jobindex_cli`. Measured on 13 Danish
+searches, twice on one day: the CLI route found more postings each time (130,
+against 102 and 129), about four in five postings were on both, and the browser
+route sometimes parsed the company wrongly ("Se jobbet", or the title repeated).
+The two routes also use different URL shapes, so the seen-jobs store cannot
+tell that they found the same posting; only the title and company key can.
+When `jobindex` is not in your sites list, `jobindex_cli` shows as `jobindex` in
+the run summary. When both run, each keeps its own name.
+
 Each description comes from a detail call when the search result has none. A
 detail result is cached for the run, so a posting found by two searches costs
 one call.

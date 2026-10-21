@@ -58,13 +58,27 @@ class FetchReport:
     def total(self) -> int:
         return sum(self.per_source.values())
 
+    def _label(self, name: str) -> str:
+        """
+        The name shown in a message. `jobindex_cli` reads as `jobindex` when the
+        browser route is not in use, because to a reader it is the same board.
+        When both run, each keeps its own name so the line is not ambiguous.
+        """
+        if name == "jobindex_cli" and "jobindex" not in (
+            set(self.per_source) | set(self.errors) | set(self.degraded)
+        ):
+            return "jobindex"
+        return name
+
     def summary(self) -> str:
         if not self.per_source and not self.errors:
             return "no sources ran"
-        parts = [f"{name}: {count}" for name, count in sorted(self.per_source.items())]
+        parts = [f"{self._label(name)}: {count}" for name, count in sorted(self.per_source.items())]
         for name, message in sorted(self.errors.items()):
-            parts.append(f"{name}: " + ("rate-limited" if is_rate_limited(message) else "FAILED"))
-        parts += [f"{name}: DEGRADED" for name in sorted(self.degraded)]
+            parts.append(
+                f"{self._label(name)}: " + ("rate-limited" if is_rate_limited(message) else "FAILED")
+            )
+        parts += [f"{self._label(name)}: DEGRADED" for name in sorted(self.degraded)]
         return " | ".join(parts)
 
 

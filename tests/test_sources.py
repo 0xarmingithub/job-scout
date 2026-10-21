@@ -361,3 +361,21 @@ def test_jobspy_salary_formatting():
         "EUR 60,000-80,000 / yearly"
     assert _format_salary({"min_amount": None, "max_amount": None}) == ""
     assert _format_salary({"min_amount": "not a number"}) == ""
+
+
+# ─── How a source is named in a message ───────────────────────────────────────
+
+def test_the_cli_jobindex_reads_as_jobindex_when_the_browser_route_is_off():
+    report = sources.FetchReport(per_source={"jobindex_cli": 130, "careerjet": 5})
+    assert report.summary() == "careerjet: 5 | jobindex: 130"
+
+
+def test_both_jobindex_routes_keep_their_own_names_when_both_run():
+    report = sources.FetchReport(per_source={"jobindex": 129, "jobindex_cli": 130})
+    assert report.summary() == "jobindex: 129 | jobindex_cli: 130"
+
+
+def test_a_failing_cli_jobindex_is_named_jobindex_too():
+    report = sources.FetchReport(per_source={"careerjet": 1}, errors={"jobindex_cli": "boom"})
+    assert "jobindex: FAILED" in report.summary()
+    assert "jobindex_cli" not in report.summary()
