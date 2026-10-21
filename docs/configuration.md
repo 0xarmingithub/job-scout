@@ -45,7 +45,7 @@ job-scout run --config-dir ~/job-search --data-dir /var/lib/job-scout
 | Key | Type | Default | What it does |
 |---|---|---|---|
 | `notify_threshold` | int 0-100 | `65` | Lowest score you get told about. Everything below is still recorded. |
-| `scoring_model` | string | `gemini:gemini-2.5-flash` | `"backend:model"`. See below. |
+| `scoring_model` | string | none | `"backend:model"`. There is no default: `job-scout init` asks you. See below. |
 | `scoring_retries` | int | `1` | Retries per posting when the model call fails. |
 | `scoring_delay_seconds` | number | `0` | Pause between model calls. Raise it if you hit a rate limit. |
 | `pre_filter` | bool | `true` | The free keyword filter. Turn it off only to see what it was dropping. |
@@ -77,6 +77,32 @@ current one. For Gemini, at
 [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models).
 
 `job-scout check` reports all five at once.
+
+### Two model choices
+
+This project uses a model in two separate places, and you choose each one.
+
+| Step | Setting | Runs on | Cost grows with |
+|---|---|---|---|
+| Scoring postings | `scoring_model` | every posting that passes the keyword filter | how many postings your searches return |
+| Drafting a CV | `tailor.command` | only the day's best match, if you turn it on | how many days you get a strong match |
+
+Each can be an **API** (a hosted model you call with a key: `gemini`,
+`openrouter`) or a **CLI** (a coding assistant already installed on your machine:
+`claude`, `codex`, `grok`). The scoring model takes the `backend:model` form
+above. The tailoring step is any command you write, so it can use a different
+model, or a different tool, than scoring does. See [tailoring.md](tailoring.md).
+
+`job-scout init <directory>` asks about the scoring model when it runs in a
+terminal. Where there is no terminal (Docker, a CI job), name it with a flag:
+
+```bash
+job-scout init myconfig --scoring-model claude:sonnet
+```
+
+On an existing config the flag changes only the `scoring_model` line. It leaves
+your profile and every other setting alone. Until a model is chosen, `job-scout
+run` stops and says so, and `job-scout check` shows `NOT SET`.
 
 ### `source_priority`
 
@@ -245,6 +271,38 @@ one of them logs which one and skips the source.
 The locale is what widens the net in a non-English market: the search terms stay
 in English, and `da_DK` returns Danish-language listings that English terms alone
 would miss.
+
+## Danish portals: `jobbank`, `jobnet`, `jobdanmark`, `jobindex_cli`
+
+These four call the portal CLIs in
+[MadsLorentzen/ai-job-search](https://github.com/MadsLorentzen/ai-job-search)
+(MIT). They need no keys, but they need three things on the machine that runs
+the scout:
+
+1. bun on `PATH`, or its path in `JOB_SCOUT_BUN`
+2. a checkout of that repo, with `bun install` run in each
+   `.agents/skills/<portal>-search/cli` folder
+3. `JOB_SCOUT_PORTAL_CLIS` set to the checkout's root folder
+
+Missing any of the three logs one line and the source returns nothing.
+
+```yaml
+searches:
+  - term: "IoT solution architect"
+    sites: [jobbank, jobnet, jobdanmark, jobindex_cli]
+    results_wanted: 20    # passed to each CLI as its result cap
+```
+
+`jobindex_cli` is a second route to Jobindex, next to the browser-based
+`jobindex`. Both can be listed. Dedup keeps one copy and prefers the one from
+the board earlier in `source_priority`.
+
+Each description comes from a detail call when the search result has none. A
+detail result is cached for the run, so a posting found by two searches costs
+one call.
+
+Read the portal terms before you enable a source. The CLIs do not check
+`robots.txt`. Jobindex's `robots.txt` disallows every path for every bot.
 
 ## `apify`
 

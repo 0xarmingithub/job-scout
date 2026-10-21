@@ -90,7 +90,7 @@ def test_the_shipped_config_is_valid_yaml_and_complete():
     assert config["notifiers"] == [
         {"type": "file", "path": "matches.md", "format": "markdown", "append": True}
     ], "the zero-credential notifier must be the default"
-    assert config["scoring_model"].startswith("gemini:")
+    assert config["scoring_model"] == "", "the project must not choose a model for the user"
     assert 0 <= config["notify_threshold"] <= 100
 
 

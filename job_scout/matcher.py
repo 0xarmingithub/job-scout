@@ -40,7 +40,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from . import track_record
-from .config import merge_advanced
+from .config import SCORING_MODEL_UNSET, merge_advanced
 from .llm import ModelError, label_for, preflight, run_model
 
 logger = logging.getLogger(__name__)
@@ -401,7 +401,9 @@ def score_jobs(
     if not jobs:
         return []
 
-    model_spec = str(config.get("scoring_model") or "gemini:gemini-2.5-flash").strip()
+    model_spec = str(config.get("scoring_model") or "").strip()
+    if not model_spec:
+        raise ScoringUnavailable(SCORING_MODEL_UNSET)
     problem = preflight(model_spec)
     if problem:
         raise ScoringUnavailable(problem)

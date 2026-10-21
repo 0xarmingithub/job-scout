@@ -99,7 +99,9 @@ def test_default_priority_puts_linkedin_first():
 
 def test_store_filters_out_jobs_it_has_seen(tmp_path, sample_jobs):
     store = JobStore(tmp_path / "jobs.db")
-    assert len(store.filter_new(sample_jobs)) == 3
+    # Two of the three are one advert from two boards. The store now also
+    # treats a copy inside the same batch as a repeat, so only two are new.
+    assert len(store.filter_new(sample_jobs)) == 2
 
     store.mark_seen(sample_jobs)
     assert store.count() == 3

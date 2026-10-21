@@ -25,6 +25,7 @@ from . import __version__
 from .config import (
     CONFIG_FILENAME,
     PROFILE_FILENAME,
+    SCORING_MODEL_UNSET,
     ConfigError,
     Settings,
     load_settings,
@@ -89,6 +90,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--from-cv", metavar="PATH",
         help="draft profile.yaml from your CV (.txt, .md, .pdf or .docx) instead "
              "of copying the example. Needs a working model backend.",
+    )
+    init_parser.add_argument(
+        "--scoring-model", metavar="BACKEND:MODEL",
+        help="the model that scores postings, for example claude:sonnet. Without "
+             "this, init asks you when it runs in a terminal. There is no default.",
     )
 
     stats_parser = subparsers.add_parser(
@@ -172,7 +178,7 @@ def _cmd_init(args) -> int:
     target = Path(args.directory).expanduser()
     written = seed_config_dir(target, overwrite=args.force)
 
-    if not written and not args.from_cv and not args.with_tailoring:
+    if not written and not args.from_cv and not args.with_tailoring and not args.scoring_model:
         print(f"{target} already has a {CONFIG_FILENAME} and a {PROFILE_FILENAME}. "
               f"Pass --force to overwrite them.")
         return 0
@@ -181,6 +187,11 @@ def _cmd_init(args) -> int:
         print(f"Wrote into {target}:")
         for path in written:
             print(f"  {path.name}")
+
+    if CONFIG_FILENAME in {path.name for path in written} or args.scoring_model:
+        status = _choose_scoring_model(target / CONFIG_FILENAME, args.scoring_model)
+        if status:
+            return status
 
     if args.with_tailoring:
         added = seed_tailoring(target, overwrite=args.force)
@@ -193,7 +204,8 @@ def _cmd_init(args) -> int:
                 "  1. Edit " + str(target / "tailor" / "prompt.md") + ". It is "
                 "full of [PLACEHOLDERS] and\n"
                 "     knows nothing about you until you replace them.\n"
-                "  2. Set tailor.command in " + str(target / CONFIG_FILENAME) + "\n"
+                "  2. Set tailor.command in " + str(target / CONFIG_FILENAME) + ". It is a separate\n"
+                "     model choice from scoring_model: it drafts the CV for the best match only.\n"
                 "  3. Check it: job-scout check --config-dir " + str(target)
             )
         else:
@@ -213,6 +225,48 @@ def _cmd_init(args) -> int:
         f"  4. job-scout run --config-dir {target}\n"
         f"\nFaster: job-scout init {target} --from-cv path/to/your-cv.pdf"
     )
+    return 0
+
+
+def _choose_scoring_model(config_path: Path, given: str | None) -> int:
+    """
+    Put the person's scoring model into config.yaml. Asks, unless it was given on
+    the command line. Returns a non-zero exit code only for a malformed --scoring-model.
+    """
+    from .llm import preflight
+    from .llm.backend import KNOWN_BACKENDS
+    from .setup_prompt import SetupCancelled, choose_scoring_model, set_scoring_model
+
+    if given:
+        spec = given.strip()
+        backend, colon, model = spec.partition(":")
+        if not colon or backend not in KNOWN_BACKENDS or not model.strip():
+            print(
+                f"--scoring-model {spec!r} must be BACKEND:MODEL, where BACKEND is one of "
+                f"{', '.join(KNOWN_BACKENDS)}. For example: claude:sonnet",
+                file=sys.stderr,
+            )
+            return 2
+    elif sys.stdin.isatty() and sys.stdout.isatty():
+        try:
+            spec = choose_scoring_model()
+        except SetupCancelled:
+            print(f"\nNo model chosen. Set scoring_model in {config_path} before the first run.")
+            return 0
+    else:
+        print(
+            "\nscoring_model is empty, and this project does not choose one for you.\n"
+            f"Set it in {config_path}, or run (this changes only that one line):\n"
+            f"  job-scout init {config_path.parent} --scoring-model BACKEND:MODEL"
+        )
+        return 0
+
+    if not set_scoring_model(config_path, spec):
+        print(f'{config_path} has no scoring_model line to update. Add:  scoring_model: "{spec}"')
+        return 0
+    print(f'\nscoring_model set to "{spec}" in {config_path}.')
+    problem = preflight(spec)
+    print("  Ready." if not problem else f"  Not ready yet: {problem}")
     return 0
 
 
@@ -244,14 +298,22 @@ def _draft_profile_from_cv(target: Path, cv_path: Path, overwrite: bool) -> int:
     load_env(target)
 
     config_path = target / CONFIG_FILENAME
-    model_spec = "gemini:gemini-3.7-flash"
+    model_spec = ""
     if config_path.exists():
         try:
             with open(config_path, encoding="utf-8") as handle:
                 loaded = yaml.safe_load(handle) or {}
-            model_spec = str(loaded.get("scoring_model") or model_spec).strip()
+            model_spec = str(loaded.get("scoring_model") or "").strip()
         except (OSError, yaml.YAMLError):
-            pass  # fall back to the default and let preflight complain usefully
+            pass  # treated as unset below
+
+    if not model_spec:
+        print(f"\n{SCORING_MODEL_UNSET}\n", file=sys.stderr)
+        print(
+            f"The example profile is still in place at {target / PROFILE_FILENAME}.",
+            file=sys.stderr,
+        )
+        return 1
 
     print(f"\nReading {cv_path} and drafting a profile with {model_spec} ...")
     try:
@@ -509,8 +571,12 @@ def _cmd_check(args) -> int:
     # Scoring backend.
     print("\nSCORING BACKEND")
     spec = settings.scoring_model
-    problem = preflight(spec)
-    if problem:
+    problem = SCORING_MODEL_UNSET if not spec else preflight(spec)
+    if not spec:
+        print("  NOT SET    no scoring_model chosen")
+        for line in SCORING_MODEL_UNSET.splitlines():
+            print("             " + line)
+    elif problem:
         print(f"  NOT READY  {label_for(spec)}\n             {problem}")
     else:
         print(f"  READY      {label_for(spec)}")

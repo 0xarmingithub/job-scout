@@ -63,7 +63,7 @@ def test_init_twice_does_not_complain_or_clobber(tmp_path, capsys):
 
 def test_from_cv_replaces_the_shipped_example(tmp_path, cv, stub_draft, capsys):
     target = tmp_path / "cfg"
-    assert cli.main(["init", str(target), "--from-cv", str(cv)]) == 0
+    assert cli.main(["init", str(target), "--from-cv", str(cv), "--scoring-model", "gemini:x"]) == 0
 
     written = yaml.safe_load((target / "profile.yaml").read_text(encoding="utf-8"))
     assert written["candidate"]["name"] == "Morgan Reyes"
@@ -93,14 +93,14 @@ def test_force_overwrites_an_edited_profile(tmp_path, cv, stub_draft):
     cli.main(["init", str(target)])
     (target / "profile.yaml").write_text("candidate: {name: Mine}\n", encoding="utf-8")
 
-    assert cli.main(["init", str(target), "--from-cv", str(cv), "--force"]) == 0
+    assert cli.main(["init", str(target), "--from-cv", str(cv), "--force", "--scoring-model", "gemini:x"]) == 0
     written = yaml.safe_load((target / "profile.yaml").read_text(encoding="utf-8"))
     assert written["candidate"]["name"] == "Morgan Reyes"
 
 
 def test_from_cv_into_an_empty_directory(tmp_path, cv, stub_draft):
     target = tmp_path / "brand-new"
-    assert cli.main(["init", str(target), "--from-cv", str(cv)]) == 0
+    assert cli.main(["init", str(target), "--from-cv", str(cv), "--scoring-model", "gemini:x"]) == 0
     assert (target / "config.yaml").exists()
     assert yaml.safe_load(
         (target / "profile.yaml").read_text(encoding="utf-8")
@@ -117,7 +117,7 @@ def test_a_cv_that_cannot_be_read_leaves_the_example_in_place(tmp_path, capsys):
 
 def test_the_drafted_file_keeps_a_header_explaining_the_empty_gaps(tmp_path, cv, stub_draft):
     target = tmp_path / "cfg"
-    cli.main(["init", str(target), "--from-cv", str(cv)])
+    cli.main(["init", str(target), "--from-cv", str(cv), "--scoring-model", "gemini:x"])
     text = (target / "profile.yaml").read_text(encoding="utf-8")
     assert text.startswith("# profile.yaml")
     assert "confirmed_gaps is empty on purpose" in text

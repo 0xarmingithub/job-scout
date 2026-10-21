@@ -22,10 +22,28 @@ import json
 import logging
 import re
 import sqlite3
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
+from .normalize import (
+    company_key,
+    description_head,
+    jaccard,
+    shingles,
+    title_words,
+)
+from .normalize import (
+    content_key as advert_key,
+)
+
 logger = logging.getLogger(__name__)
+
+# Two postings from the same company count as one advert when their titles
+# share at least this share of words. Set high on purpose: "Solution Architect"
+# and "Solution Architect IoT" must stay two jobs.
+_NEAR_TITLE_JACCARD = 0.8
+# Two descriptions count as one advert when they share this share of 3-word runs.
+_NEAR_DESCRIPTION_JACCARD = 0.6
 
 # Lower number = higher priority when the same job is found on several boards.
 # Anything not listed sorts last, which is the right default for a source
@@ -69,6 +87,54 @@ def _verdict_json(job: dict) -> str:
         return json.dumps(verdict, ensure_ascii=False)
     except (TypeError, ValueError):
         return ""
+
+
+class KnownJobs:
+    """
+    What the store holds, read once per run, so the checks do not each query the
+    database. add() lets a job accepted in this batch count against the next ones.
+    """
+
+    def __init__(self, url_ids, content_keys, by_company):
+        self.url_ids: set[str] = set(url_ids)
+        self.content_keys: set[str] = set(content_keys)
+        # company key -> [(title words, description shingles), ...]
+        self.by_company: dict[str, list] = by_company
+
+    def known_by(self, job: dict) -> str:
+        """"url" or "content" when the job is already known exactly, else ""."""
+        url = job.get("url") or ""
+        if url and make_job_id(url) in self.url_ids:
+            return "url"
+        key = advert_key(job.get("title"), job.get("company"))
+        if key and key in self.content_keys:
+            return "content"
+        return ""
+
+    def near_duplicate(self, job: dict) -> str:
+        """Why the job is a near-copy of a known one from the same company, or "" if it is not."""
+        company = company_key(job.get("company"))
+        if not company:
+            return ""
+        words = title_words(job.get("title"))
+        desc = shingles(description_head(job.get("description") or ""))
+        for known_words, known_desc in self.by_company.get(company, ()):
+            if len(words) >= 2 and len(known_words) >= 2:
+                if jaccard(words, known_words) >= _NEAR_TITLE_JACCARD:
+                    return "similar title"
+            if desc and known_desc and jaccard(desc, known_desc) >= _NEAR_DESCRIPTION_JACCARD:
+                return "similar description"
+        return ""
+
+    def add(self, job: dict) -> None:
+        self.url_ids.add(make_job_id(job.get("url") or ""))
+        key = advert_key(job.get("title"), job.get("company"))
+        if key:
+            self.content_keys.add(key)
+        company = company_key(job.get("company"))
+        if company and job.get("title"):
+            desc = shingles(description_head(job.get("description") or ""))
+            self.by_company.setdefault(company, []).append((title_words(job.get("title")), desc))
 
 
 class JobStore:
@@ -121,6 +187,11 @@ class JobStore:
         # posting that failed before the upgrade gets its retries too.
         if "attempts" not in columns:
             conn.execute("ALTER TABLE seen_jobs ADD COLUMN attempts INTEGER DEFAULT 1")
+        # desc_head arrived in 1.6.0: the start of the description, normalized, so a
+        # later board's copy of the same advert can be recognised. Rows from before
+        # have none, and only the title rule applies to them.
+        if "desc_head" not in columns:
+            conn.execute("ALTER TABLE seen_jobs ADD COLUMN desc_head TEXT")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_seen_jobs_first_seen "
             "ON seen_jobs (first_seen)"
@@ -137,13 +208,57 @@ class JobStore:
         """
         return self._conn()
 
+    def snapshot(self) -> "KnownJobs":
+        """
+        Read what the store holds, once. URLs are kept for the whole history.
+        Titles, companies and descriptions are kept for the lookback window,
+        because only those are compared fuzzily.
+        """
+        cutoff = (date.today() - timedelta(days=self.lookback_days)).isoformat()
+        conn = self._conn()
+        try:
+            settled = "NOT (status = 'scoring_error' AND COALESCE(attempts, 1) <= ?)"
+            rows = conn.execute(
+                "SELECT job_id, title, company, desc_head, first_seen FROM seen_jobs "
+                f"WHERE {settled}",
+                (self.error_retries,),
+            ).fetchall()
+        finally:
+            conn.close()
+
+        url_ids = set()
+        content_keys = set()
+        by_company: dict[str, list] = {}
+        for job_id, title, company, desc_head, first_seen in rows:
+            url_ids.add(job_id)
+            if (first_seen or "") < cutoff:
+                continue
+            key = advert_key(title, company)
+            if key:
+                content_keys.add(key)
+            company_name = company_key(company)
+            if company_name and title:
+                by_company.setdefault(company_name, []).append(
+                    (title_words(title), shingles(desc_head or ""))
+                )
+        return KnownJobs(url_ids, content_keys, by_company)
+
     def filter_new(self, jobs: list[dict]) -> list[dict]:
         """
-        Return only the jobs this store has not seen before.
+        Return only the jobs this store has not seen before, and not repeats of
+        them from another board or on another day.
 
-        Two checks. The URL check is exact and always runs. The title+company
-        check catches the same advert re-posted under a new URL, and only looks
-        at the last 7 days.
+        Four checks, cheapest first:
+          1. The same URL. Exact.
+          2. The same title and company after normalizing spelling, within the
+             lookback window. "Contoso Denmark A/S" matches "Contoso".
+          3. The same company with a near-identical title (word overlap of at
+             least _NEAR_TITLE_JACCARD).
+          4. The same company with a near-identical description, where both
+             descriptions are known (_NEAR_DESCRIPTION_JACCARD).
+
+        Checks 3 and 4 only look at postings from the same company, so they stay
+        cheap. A job accepted earlier in this batch counts against later ones.
 
         A posting recorded as `scoring_error` counts as unseen until it has used
         up its retries, so a timeout does not lose it for good.
@@ -151,52 +266,31 @@ class JobStore:
         if not jobs:
             return []
 
-        ids = [make_job_id(job["url"]) for job in jobs]
-        conn = self._conn()
-        try:
-            placeholders = ",".join("?" * len(ids))
-            settled = (
-                "NOT (status = 'scoring_error' AND COALESCE(attempts, 1) <= ?)"
-            )
-            already_seen_ids = {
-                row[0]
-                for row in conn.execute(
-                    f"SELECT job_id FROM seen_jobs WHERE job_id IN ({placeholders}) "
-                    f"AND {settled}",
-                    [*ids, self.error_retries],
-                )
-            }
-            already_seen_content = {
-                (row[0].lower().strip(), row[1].lower().strip())
-                for row in conn.execute(
-                    "SELECT title, company FROM seen_jobs "
-                    f"WHERE date(first_seen) >= date('now', ?) AND {settled}",
-                    (f"-{self.lookback_days} days", self.error_retries),
-                )
-                if row[0] and row[1]
-            }
-        finally:
-            conn.close()
-
+        known = self.snapshot()
         new_jobs: list[dict] = []
-        skipped_url = 0
-        skipped_content = 0
-        for job, job_id in zip(jobs, ids, strict=True):
-            if job_id in already_seen_ids:
+        skipped_url = skipped_content = skipped_near = 0
+        for job in jobs:
+            reason = known.known_by(job)
+            if reason == "url":
                 skipped_url += 1
                 continue
-            content_key = (
-                (job.get("title") or "").lower().strip(),
-                (job.get("company") or "").lower().strip(),
-            )
-            if all(content_key) and content_key in already_seen_content:
+            if reason == "content":
                 skipped_content += 1
                 continue
+            near = known.near_duplicate(job)
+            if near:
+                skipped_near += 1
+                logger.info(
+                    "Near-duplicate skipped (%s): %s at %s",
+                    near, job.get("title", ""), job.get("company", ""),
+                )
+                continue
+            known.add(job)
             new_jobs.append(job)
 
         logger.info(
-            "Dedup: %d raw -> %d new (skipped %d by URL, %d by title+company)",
-            len(jobs), len(new_jobs), skipped_url, skipped_content,
+            "Dedup: %d raw -> %d new (skipped %d by URL, %d by title+company, %d near-duplicate)",
+            len(jobs), len(new_jobs), skipped_url, skipped_content, skipped_near,
         )
         return new_jobs
 
@@ -220,8 +314,8 @@ class JobStore:
                 INSERT INTO seen_jobs
                     (job_id, url, title, company, location, site,
                      score, status, first_seen, date_posted, search_term,
-                     verdict_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     verdict_json, desc_head)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(job_id) DO UPDATE SET
                     score = excluded.score,
                     status = excluded.status,
@@ -243,6 +337,7 @@ class JobStore:
                         job.get("date_posted", ""),
                         job.get("search_term", ""),
                         _verdict_json(job),
+                        description_head(job.get("description") or ""),
                     )
                     for job in jobs
                 ],

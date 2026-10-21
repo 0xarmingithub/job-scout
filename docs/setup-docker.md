@@ -20,7 +20,9 @@ docker build -t job-scout .
 # directory your user owns. Skip this line on Docker Desktop for Mac or Windows.
 sudo chown 10001:10001 myconfig
 
-docker run --rm -v "$PWD/myconfig:/config" job-scout init /config
+# Docker has no terminal prompt, so name the scoring model here.
+# BACKEND:MODEL, for example gemini:<model> (an API) or claude:sonnet (a CLI).
+docker run --rm -v "$PWD/myconfig:/config" job-scout init /config --scoring-model BACKEND:MODEL
 
 # edit myconfig/profile.yaml and myconfig/config.yaml
 echo "GOOGLE_API_KEY=your-key" > myconfig/.env

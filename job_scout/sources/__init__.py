@@ -28,6 +28,11 @@ See docs/adding-a-job-source.md.
 
 import logging
 from dataclasses import dataclass, field
+from functools import partial
+
+from ..guard import guard_job, is_flagged
+from ..source_health import degraded_reasons, is_rate_limited
+from .danish_cli import DANISH_CLI_SITES, fetch_danish_jobs
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +40,7 @@ logger = logging.getLogger(__name__)
 JOBSPY_SITES = frozenset({"linkedin", "indeed", "glassdoor", "zip_recruiter", "google"})
 
 # Sites with their own module. Name here is what you write in `sites:`.
-STANDALONE_SITES = ("jobindex", "careerjet", "apify")
+STANDALONE_SITES = ("jobindex", "careerjet", "apify") + DANISH_CLI_SITES
 
 ALL_SITES = tuple(sorted(JOBSPY_SITES)) + STANDALONE_SITES
 
@@ -46,6 +51,8 @@ class FetchReport:
 
     per_source: dict[str, int] = field(default_factory=dict)
     errors: dict[str, str] = field(default_factory=dict)
+    degraded: dict[str, list[str]] = field(default_factory=dict)
+    guard_flags: int = 0
 
     @property
     def total(self) -> int:
@@ -55,11 +62,17 @@ class FetchReport:
         if not self.per_source and not self.errors:
             return "no sources ran"
         parts = [f"{name}: {count}" for name, count in sorted(self.per_source.items())]
-        parts += [f"{name}: FAILED" for name in sorted(self.errors)]
+        for name, message in sorted(self.errors.items()):
+            parts.append(f"{name}: " + ("rate-limited" if is_rate_limited(message) else "FAILED"))
+        parts += [f"{name}: DEGRADED" for name in sorted(self.degraded)]
         return " | ".join(parts)
 
 
-def fetch_jobs(searches: list[dict], config: dict | None = None) -> tuple[list[dict], FetchReport]:
+def fetch_jobs(
+    searches: list[dict],
+    config: dict | None = None,
+    known=None,
+) -> tuple[list[dict], FetchReport]:
     """
     Run every configured search against every configured source.
 
@@ -73,12 +86,20 @@ def fetch_jobs(searches: list[dict], config: dict | None = None) -> tuple[list[d
     report = FetchReport()
 
     def _absorb(name: str, jobs: list[dict]) -> None:
+        reasons = degraded_reasons(name, jobs)
+        if reasons:
+            report.degraded[name] = reasons
+            logger.warning("%s output looks broken: %s", name, "; ".join(reasons))
         added = 0
         for job in jobs:
             url = (job.get("url") or "").strip()
             if not url or url in seen_urls:
                 continue
             seen_urls.add(url)
+            guard_job(job)
+            if is_flagged(job["guard"]):
+                report.guard_flags += 1
+                logger.warning("%s posting %s flagged: %s", name, url, job["guard"])
             all_jobs.append(job)
             added += 1
         report.per_source[name] = report.per_source.get(name, 0) + added
@@ -104,6 +125,10 @@ def fetch_jobs(searches: list[dict], config: dict | None = None) -> tuple[list[d
         "jobindex": _load_jobindex,
         "careerjet": _load_careerjet,
         "apify": _load_apify,
+        **{
+            name: (lambda n=name: partial(fetch_danish_jobs, n, known=known))
+            for name in DANISH_CLI_SITES
+        },
     }
     for name, loader in loaders.items():
         matching = [s for s in searches if name in _sites_for(s)]

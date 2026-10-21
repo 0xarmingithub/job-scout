@@ -12,6 +12,10 @@ job-scout init ~/job-search --with-tailoring
 ```
 
 That writes `tailor/prompt.md` and appends two blocks to your `config.yaml`.
+
+The command you set here is a separate model choice from `scoring_model`. Scoring
+runs on every posting; this runs only on the day's best match. You can use a
+different model, or a different tool, for each.
 Nothing runs until you set `tailor.command`.
 
 ## What happens on a normal day

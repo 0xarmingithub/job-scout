@@ -60,7 +60,7 @@ python3 -m venv .venv
 ### 2. Configure
 
 ```bash
-.venv/bin/job-scout init /opt/job-scout
+.venv/bin/job-scout init /opt/job-scout    # asks which scoring model to use
 cp job_scout/templates/.env.example .env
 chmod 600 .env
 nano .env             # your API key

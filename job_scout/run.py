@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from . import sources
+from . import source_health, sources
 from .config import Settings
 from .dedup import DEFAULT_SITE_PRIORITY, JobStore, dedup_by_content
 from .matcher import ScoringUnavailable, score_jobs
@@ -173,9 +173,17 @@ def _execute(settings: Settings, dispatcher: Dispatcher, dry_run: bool,
     site_priority = _site_priority(settings.config)
 
     # 1. Fetch.
-    raw_jobs, report = sources.fetch_jobs(settings.searches, settings.config)
+    # Read what the store already holds before fetching. A posting we know is
+    # not worth a detail request.
+    known = store.snapshot()
+    raw_jobs, report = sources.fetch_jobs(settings.searches, settings.config, known=known)
     stats.total_fetched = len(raw_jobs)
     stats.source_summary = report.summary()
+
+    # 1b. Are the sources still healthy? Record this run's counts, and say so if one has gone quiet.
+    health = source_health.check_run(settings.data_dir, report, record_history=not dry_run)
+    if health and not dry_run:
+        dispatcher.send_alert("Source health\n\n" + "\n".join(health))
 
     if not raw_jobs:
         logger.warning("No jobs returned by any source.")

@@ -38,6 +38,18 @@ TEMPLATE_DIR = PACKAGE_DIR / "templates"
 
 CONFIG_FILENAME = "config.yaml"
 PROFILE_FILENAME = "profile.yaml"
+
+# Said whenever a run or a check finds no scoring_model. The scout does not pick
+# one for you: a hosted API and a coding assistant on your machine differ in
+# cost, setup and results.
+SCORING_MODEL_UNSET = (
+    "config.yaml has no scoring_model, and this project does not choose one for you.\n"
+    "Set it as backend:model in config.yaml, for example\n"
+    "  scoring_model: \"claude:sonnet\"     (a CLI on this machine)\n"
+    "  scoring_model: \"gemini:<model>\"    (an API, needs GOOGLE_API_KEY)\n"
+    "or run `job-scout init <directory> --scoring-model BACKEND:MODEL`, which changes\n"
+    "only that one line. See docs/configuration.md, section \"Two model choices\"."
+)
 OUTCOMES_FILENAME = "outcomes.csv"
 ENV_FILENAME = ".env"
 ENV_EXAMPLE_FILENAME = ".env.example"
@@ -255,8 +267,8 @@ class Settings:
 
     @property
     def scoring_model(self) -> str:
-        spec = str(self.config.get("scoring_model") or "").strip()
-        return spec or "gemini:gemini-2.5-flash"
+        """The "backend:model" that scores postings. Empty when none was chosen. There is no default."""
+        return str(self.config.get("scoring_model") or "").strip()
 
     @property
     def outcomes_path(self) -> Path:

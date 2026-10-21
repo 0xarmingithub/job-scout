@@ -169,7 +169,7 @@ Email and Slack or Discord webhooks are in
 If you would rather not have your details sitting in a git clone:
 
 ```bash
-job-scout init ~/job-search
+job-scout init ~/job-search     # asks which scoring model to use: an API or a CLI
 # edit ~/job-search/config.yaml and ~/job-search/profile.yaml
 # put your key in ~/job-search/.env
 job-scout run --config-dir ~/job-search

@@ -90,7 +90,8 @@ committed a `git pull` could clobber your edits. `git add config.yaml` at the
 root will simply refuse.
 
 ```bash
-job-scout init myconfig
+job-scout init myconfig       # asks which scoring model to use
+# or, without a terminal: job-scout init myconfig --scoring-model BACKEND:MODEL
 # edit myconfig/profile.yaml and myconfig/config.yaml
 git add myconfig
 git commit -m "My job search config"

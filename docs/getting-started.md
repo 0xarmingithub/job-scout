@@ -183,6 +183,10 @@ before writing anything about yourself.
 
 ## 8. Make it about you
 
+`job-scout init` first asks which model should score postings: an API you call
+with a key, or a coding assistant (CLI) already installed on your machine. There
+is no default; the choice is yours.
+
 If you have your CV as a file, this is one command:
 
 ```bash

@@ -48,7 +48,7 @@ def fake_boards(monkeypatch):
     report = sources.FetchReport(per_source={"jobspy": 2})
     monkeypatch.setattr(
         run_module.sources, "fetch_jobs",
-        lambda searches, config: (list(jobs), report),
+        lambda searches, config, known=None: (list(jobs), report),
     )
     return jobs
 
@@ -156,7 +156,7 @@ def test_a_backend_that_is_not_set_up_alerts_instead_of_crashing(
 def test_an_unexpected_failure_reaches_the_notifiers(config_dir, monkeypatch):
     settings = load_settings(str(config_dir))
 
-    def explode(searches, config):
+    def explode(searches, config, known=None):
         raise RuntimeError("the database is on fire")
 
     monkeypatch.setattr(run_module.sources, "fetch_jobs", explode)
@@ -171,7 +171,7 @@ def test_an_unexpected_failure_reaches_the_notifiers(config_dir, monkeypatch):
 def test_a_failure_message_never_carries_a_credential(config_dir, monkeypatch):
     settings = load_settings(str(config_dir))
 
-    def explode(searches, config):
+    def explode(searches, config, known=None):
         raise RuntimeError(
             "auth failed for https://user:hunter2@example.com"  # pre-push-check: allow
         )
@@ -188,7 +188,7 @@ def test_no_jobs_at_all_is_reported_as_probably_broken(config_dir, monkeypatch, 
     settings = load_settings(str(config_dir))
     monkeypatch.setattr(
         run_module.sources, "fetch_jobs",
-        lambda searches, config: ([], sources.FetchReport(errors={"jobspy": "blocked"})),
+        lambda searches, config, known=None: ([], sources.FetchReport(errors={"jobspy": "blocked"})),
     )
     result = run_module.run_once(settings)
 

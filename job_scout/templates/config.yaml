@@ -17,9 +17,18 @@
 notify_threshold: 65
 
 # ─── Which model scores the jobs ──────────────────────────────────────────────
+# There is no default. `job-scout init` asks you: a hosted API, or a coding
+# assistant (CLI) already installed on your machine. Or set it here yourself.
+#
+# Two model choices exist in this project, and they are separate:
+#   1. scoring_model (below). Runs on every posting that passes the keyword
+#      filter, so its cost grows with how many postings you search.
+#   2. tailor.command (optional). Runs only on the day's best match, to draft a
+#      CV. Add it with `job-scout init <dir> --with-tailoring`.
+#
 # Format is "backend:model". All five backends are optional; you install what
 # the one you pick needs and nothing else. Run `job-scout check` to see the
-# state of all of them.
+# state of all of them. Examples of what each looks like:
 #
 #   gemini:gemini-3.7-flash        Google API. Free tier covers a daily run
 #                                  comfortably. Needs GOOGLE_API_KEY.
@@ -32,7 +41,7 @@ notify_threshold: 65
 #
 # Model names change. If a run fails saying the model was not found, check
 # https://ai.google.dev/gemini-api/docs/models and put a current one here.
-scoring_model: "gemini:gemini-3.7-flash"
+scoring_model: ""
 
 # Retry a failed model call this many times before giving up on that posting.
 scoring_retries: 1

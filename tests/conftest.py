@@ -112,7 +112,10 @@ def sample_jobs() -> list[dict]:
 def config_dir(tmp_path) -> Path:
     """A throwaway config directory seeded from the shipped templates."""
     from job_scout.config import seed_config_dir
+    from job_scout.setup_prompt import set_scoring_model
 
     target = tmp_path / "config"
     seed_config_dir(target)
+    # The shipped template has no scoring model on purpose. Tests pick one.
+    set_scoring_model(target / "config.yaml", "gemini:test-model")
     return target
