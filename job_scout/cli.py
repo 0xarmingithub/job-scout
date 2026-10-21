@@ -13,6 +13,7 @@ cli.py, the `job-scout` command.
     job-scout nudge                  ask about applications with no result recorded
     job-scout patterns               what your application folders say together
     job-scout privacy init           build your private word list
+    job-scout cv ...                 turn a CV into resume.yaml, and that into a finished PDF
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
     job-scout version
 
@@ -167,6 +168,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     _add_tracking_parsers(subparsers, _common)
+    from .cv.cli import add_cv_parser
+
+    add_cv_parser(subparsers)
 
     subparsers.add_parser("version", help="print the version")
     return parser
@@ -292,6 +296,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_validate(args)
     if command in ("outcomes", "nudge", "patterns", "privacy"):
         return _cmd_tracking(command, args)
+    if command == "cv":
+        from .cv.cli import run_cv
+
+        return run_cv(args)
     return _cmd_run(args)
 
 

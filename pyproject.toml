@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "job-scout"
-version = "1.9.0"
+version = "1.10.0"
 description = "A job-hunting agent that searches job boards daily, scores every posting against a profile you write, and sends you the good ones."
 readme = "README.md"
 license = { text = "MIT" }
@@ -40,8 +40,10 @@ gemini = ["google-genai>=1.0"]
 # jobindex.dk. Denmark only, and needs a headless browser:
 #   playwright install chromium --with-deps
 jobindex = ["playwright>=1.40", "beautifulsoup4>=4.12", "lxml>=5.0"]
-# Reading a CV with `job-scout init --from-cv`. .txt and .md need neither.
-cv = ["pypdf>=4.0", "python-docx>=1.1"]
+# Reading a CV with `job-scout init --from-cv` and `job-scout cv import` (.txt and
+# .md need neither pypdf nor python-docx), checking a PDF with `job-scout cv
+# verify`, and filling a .tex template with `job-scout cv render` and `build`.
+cv = ["pypdf>=4.0", "python-docx>=1.1", "jinja2>=3.1"]
 # Everything above.
 all = [
     "python-jobspy>=1.1.80",
@@ -52,8 +54,10 @@ all = [
     "lxml>=5.0",
     "pypdf>=4.0",
     "python-docx>=1.1",
+    "jinja2>=3.1",
 ]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+# and the template renderer instead of skipping their tests.
+dev = ["pytest>=8.0", "ruff>=0.6", "pypdf>=4.0", "jinja2>=3.1"]
 
 [project.scripts]
 job-scout = "job_scout.cli:main"
@@ -66,7 +70,10 @@ Issues = "https://github.com/0xarmingithub/job-scout/issues"
 include = ["job_scout*"]
 
 [tool.setuptools.package-data]
-job_scout = ["templates/*"]
+job_scout = [
+    "templates/*",
+    "cv/templates/*",  # The neutral example template and example resume.yaml
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

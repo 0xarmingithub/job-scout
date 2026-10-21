@@ -1,11 +1,14 @@
-"""Parses the ATS-safe Markdown CV format (# Name, a pipe-separated contact line,
-then `## Heading` sections) into resume.yaml's dict shape. This is the format
-job-scout's tailoring step writes today -- see job-scout/tailor/prompt.md's
-"Output" section for the spec this parser follows.
+"""
+ats_markdown.py. Parse job-scout's ATS-safe Markdown CV into resume.yaml's shape.
 
-Best-effort: education dates are pulled out of free-text bullets with a regex,
-not a real parser. Check the education entries in the generated resume.yaml
-before trusting the dates."""
+The format is `# Name`, a pipe-separated contact line, then `## Heading`
+sections. It is what the tailoring step writes (see docs/tailoring.md and
+job_scout/templates/tailor-prompt.md, "Output"). Regex-based, no model call.
+
+Best effort: education dates are pulled out of free-text bullets with a regular
+expression, not a real parser. Check the education entries in the generated
+resume.yaml before you trust the dates.
+"""
 import re
 
 DATE_RE = re.compile(r'([A-Z][a-z]+ \d{4}|\d{4})\s*-\s*(Present|[A-Z][a-z]+ \d{4}|\d{4})')

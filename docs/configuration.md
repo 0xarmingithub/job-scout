@@ -46,6 +46,7 @@ job-scout run --config-dir ~/job-search --data-dir /var/lib/job-scout
 |---|---|---|---|
 | `notify_threshold` | int 0-100 | `65` | Lowest score you get told about. Everything below is still recorded. |
 | `scoring_model` | string | none | `"backend:model"`. There is no default: `job-scout init` asks you. See below. |
+| `cv_model` | string | none | `"backend:model"` for `job-scout cv import`. No default: it asks the first time. See [`cv_model`](#cv_model). |
 | `scoring_retries` | int | `1` | Retries per posting when the model call fails. |
 | `scoring_delay_seconds` | number | `0` | Pause between model calls. Raise it if you hit a rate limit. |
 | `pre_filter` | bool | `true` | The free keyword filter. Turn it off only to see what it was dropping. |
@@ -90,6 +91,37 @@ cv_validator_models:
   - "claude:sonnet"
   - "codex:gpt-5"
 ```
+
+### `cv_model`
+
+`"backend:model"`, in the same format as `scoring_model`. It names the model that
+reads your CV for [`job-scout cv import`](cv.md#job-scout-cv-import). Nothing else
+uses it, and a search run never does.
+
+It is a separate setting because import sends the whole text of your CV to the
+backend: your name, contact details and every employer. That is a different
+decision from which model scores job postings.
+
+There is no default. With no `cv_model`, `job-scout cv import` run in a terminal
+asks which model to use. When a scoring model is set, the first question is:
+
+```
+Use the same model as scoring? (Y/n):
+```
+
+Yes copies your `scoring_model`. No walks you through choosing another. Either way
+the answer is written to `cv_model` here, and either way every import still asks
+"Send it? (y/N)" first, naming the backend that receives the text. `--yes` skips
+that second question for scripts. `--model BACKEND:MODEL` overrides the setting for
+one run.
+
+```yaml
+cv_model: "claude:sonnet"
+```
+
+It is checked when config.yaml loads: a value that is not `backend:model` stops the
+run with a message saying so. This is separate from the two model choices described
+under [Two model choices](#two-model-choices) below.
 
 ## `job-scout validate`
 

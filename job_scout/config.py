@@ -309,6 +309,11 @@ class Settings:
         return str(self.config.get("scoring_model") or "").strip()
 
     @property
+    def cv_model(self) -> str:
+        """The "backend:model" that reads a CV for `job-scout cv import`. Empty when none was chosen. There is no default."""
+        return str(self.config.get("cv_model") or "").strip()
+
+    @property
     def outcomes_path(self) -> Path:
         configured = str(self.config.get("outcomes_file") or "").strip()
         if configured:
@@ -434,6 +439,19 @@ def validate(settings: Settings) -> None:
             f"config.yaml: notify_threshold is {settings.notify_threshold}, "
             f"must be between 0 and 100."
         )
+
+    raw_cv_model = settings.config.get("cv_model")
+    if raw_cv_model is not None and not isinstance(raw_cv_model, str):
+        raise ConfigError(
+            f"config.yaml: cv_model must be text like \"claude:sonnet\", got {type(raw_cv_model).__name__}."
+        )
+    if settings.cv_model:
+        from .llm import parse_spec
+
+        try:
+            parse_spec(settings.cv_model)
+        except ValueError as exc:
+            raise ConfigError(f"config.yaml: cv_model {settings.cv_model!r} is not usable: {exc}") from exc
 
     mode = str(settings.profile.get("pattern_match") or "substring").strip().lower()
     if mode not in ("substring", "word"):

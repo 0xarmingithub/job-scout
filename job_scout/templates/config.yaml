@@ -20,7 +20,8 @@ notify_threshold: 65
 # There is no default. `job-scout init` asks you: a hosted API, or a coding
 # assistant (CLI) already installed on your machine. Or set it here yourself.
 #
-# Two model choices exist in this project, and they are separate:
+# Two model choices decide a run, and they are separate (a third, cv_model, is
+# used only by `job-scout cv import`, further down):
 #   1. scoring_model (below). Runs on every posting that passes the keyword
 #      filter, so its cost grows with how many postings you search.
 #   2. tailor.command (optional). Runs only on the day's best match, to draft a
@@ -56,6 +57,18 @@ pre_filter: true
 
 # Reject postings the model judges to be above your level as well as below it.
 reject_too_senior: false
+
+# ─── Which model reads your CV ────────────────────────────────────────────────
+# Used only by `job-scout cv import`, which drafts resume.yaml from a CV you
+# already have. A third model choice, separate from scoring_model, because a CV
+# holds your name, contact details and whole employment history, and import
+# sends it to this model in full. It always asks before it sends.
+#
+# There is no default. Leave this commented out and `job-scout cv import` asks
+# the first time ("Use the same model as scoring? (Y/n)"), then writes the answer
+# here. Same "backend:model" format as scoring_model. A search run never uses it.
+#
+# cv_model: "claude:sonnet"
 
 # ─── Where results go ─────────────────────────────────────────────────────────
 # You need at least one. `file` needs no credentials and is the right one to

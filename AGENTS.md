@@ -150,6 +150,7 @@ job_scout/
   sync.py           the optional git pull of the config directory
   redact.py         stripping credentials out of text
   llm/backend.py    all five model backends, and preflight()
+  cv/               the `job-scout cv` pipeline: import, render, build, verify
   sources/          one module per job board
   notifiers/        one module per output channel
   templates/        the shipped config.yaml, profile.yaml and .env.example

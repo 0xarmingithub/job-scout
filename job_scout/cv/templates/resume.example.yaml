@@ -1,0 +1,51 @@
+# A fictional example. Replace every value with your own, or let
+# `job-scout cv import` draft this file from the CV you already have.
+name: Morgan Reyes
+contact:
+  email: morgan.reyes@example.com
+  phone: "+45 12 34 56 78"
+  location: Odense, Denmark
+  links:
+    LinkedIn: https://linkedin.example/in/morgan-reyes
+    GitHub: https://github.example/morgan-reyes
+
+summary: >
+  Platform engineer with eight years of experience running Kubernetes clusters
+  and build pipelines for Contoso and Fabrikam. Cut deploy time from 40 minutes
+  to 6 by rebuilding the CI pipeline.
+
+experience:
+  - title: Senior Platform Engineer
+    company: Contoso Ltd
+    location: Odense
+    dates: "2022-2026"
+    bullets:
+      - "Cut deploy time from 40 min to 6 min by rebuilding the CI pipeline on GitHub Actions"
+      - "Led the migration of 12 services from virtual machines to Kubernetes, cutting hosting cost by 30%"
+      - "Wrote the on-call runbooks that the whole platform team still uses"
+  - title: Backend Engineer
+    company: Fabrikam Inc
+    location: Aarhus
+    dates: "2019-2022"
+    bullets:
+      - "Built the payments service, which handled 50,000 transactions a day"
+      - "Moved the nightly reconciliation job from cron to a queue-based worker"
+
+skills:
+  - Python
+  - Kubernetes
+  - Terraform
+  - PostgreSQL
+  - GitHub Actions
+
+education:
+  - degree: BSc Computer Science
+    institution: Example University
+    dates: "2015-2019"
+
+certifications:
+  - Certified Kubernetes Administrator
+
+interests:
+  - Trail running
+  - Home networking

@@ -1,8 +1,9 @@
-% Generic example template -- bare-bones, not styled for any one person.
-% Copy this file and rework the styling however you like; the VAR and
-% BLOCK placeholders below (see renderers/latex_renderer.py) are the
-% contract the renderer fills in.
-% Compile with: latexmk -pdf example.tex   (or pdflatex, run twice for links)
+% Neutral example template. Bare-bones, not styled for anyone in particular.
+% Copy this file and rework the styling however you like. The VAR and BLOCK
+% placeholders below are the contract `job-scout cv render` and `job-scout cv build`
+% fill in (see docs/cv.md). Plain LaTeX is left alone.
+% Do not compile this file directly: it holds placeholders, not content.
+% Use: job-scout cv build resume.yaml --template example.tex
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{enumitem}
