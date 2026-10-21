@@ -16,7 +16,8 @@ applications/
   contoso-warehouse-planner-20250421/
     notes.md          required: the Status line lives here
     jd.md             optional: the posting, saved as you read it
-    CV.tex            optional: whatever you sent
+    gap-analysis.md   optional: how you measured up against it
+    CV.tex            optional: whatever you sent (CV.md, CV-ats.md or CV.pdf also count)
   fabrikam-claims-handler-20250502/
     notes.md
 ```
@@ -91,6 +92,21 @@ Company: Contoso
 Role title: Platform Engineer
 ```
 
+### gap-analysis.md (optional)
+
+`job-scout patterns` reads a Markdown table with the requirement in the first
+column, the priority in the second and the coverage in the third:
+
+```markdown
+| JD requirement | Priority | Coverage | Evidence | Action |
+|---|---|---|---|---|
+| Depot scheduling | P0 | Strongly covered | Ran the weekly rota | Lead with it |
+| Quillcad | P1 | Not covered | None | Do not claim it |
+```
+
+The coverage words it recognises are `Not covered`, `Weak` and `Strongly`,
+`Covered`, `Fully` or `Transferable`.
+
 ## Turning the folders into the outcomes file
 
 Set the folder in `config.yaml`:
@@ -158,6 +174,83 @@ python tools/check_applications.py path/to/applications
 Exit code 0 means every folder has a `notes.md` with a Status line that has a
 value. 1 names the folders that do not. This is in `tools/` in the job-scout
 repository; it needs the job-scout package importable.
+
+## The weekly question: `job-scout nudge`
+
+Folders go quiet. A CV gets written, the application goes out, and the Status
+line still says `drafted` three weeks later. `job-scout nudge` asks about them:
+
+```bash
+job-scout nudge --dry-run     # print it, send nothing
+job-scout nudge               # send it
+job-scout nudge --stale-days 30
+```
+
+Two lists, kept apart because they need different answers:
+
+* **No status line at all.** "What happened?"
+* **Drafted, and 21 or more days old.** "Sent or not?"
+
+The age is counted from the date in the folder name, the trailing `YYYYMMDD`.
+File times are not used, because copying or cloning a folder resets them. A
+folder whose name has no date never counts as stale: its age is unknown, and a
+guess would nag about the wrong things. (It still appears under "no status line"
+if it has none.)
+
+A folder with no CV in it is not listed, because there is nothing to chase. A
+folder whose status is `acknowledged` or later is not listed either. The
+message is capped at six lines per list so it can be read on a phone, and ends
+with how many results you are short of the number `job-scout calibrate` needs.
+
+It goes out through your notifiers as a note, not an alert.
+
+**It rides along with the weekly roundup.** When `applications_dir` is set,
+`job-scout roundup` sends the nudge right after the roundup, so the Friday
+timer from [roundup.md](roundup.md) is the only timer you need. Pass
+`--no-nudge` to the roundup to skip it. Without `applications_dir` nothing
+happens.
+
+## What your folders say together: `job-scout patterns`
+
+```bash
+job-scout patterns
+job-scout patterns --stale-days 30 --top 20
+job-scout patterns --output reports/patterns.md
+```
+
+It reads the folders and writes a report. It changes nothing. Four sections:
+
+* **Where applications stop.** How many were never sent, are waiting, reached
+  an interview, were rejected. It states no conversion rate until enough sent
+  applications have a recorded result; a percentage over a handful is an
+  anecdote.
+* **What keeps coming back as a gap.** The terms that are Not Covered in two or
+  more gap analyses and that no gap analysis ever marked covered.
+* **Which kinds of role get furthest.** Applications grouped by role family.
+* **Drafted, tailored, and still sitting there.** The stale list.
+
+### Role families
+
+The third section groups applications by the kind of role. Add your own groups
+to `profile.yaml`:
+
+```yaml
+role_families:
+  - name: Platform and SRE
+    keywords: [platform, sre, reliability, devops]
+  - name: Architecture
+    keywords: [architect, architecture]
+```
+
+A title belongs to a family when it contains any of its keywords. A keyword with
+a space in it, such as `machine learning`, must appear as that phrase.
+
+If you do not write `role_families`, there is one family per entry of
+`target_roles`, and a title belongs to it when it contains the words that make
+that entry specific. `Site Reliability Engineer` is recognised by `site` and
+`reliability`, not by `engineer`, which every engineering title shares. A title
+can belong to several families or to none, which is why the columns add up to
+more than the number of applications.
 
 ## Keeping the config directory in step: `sync`
 

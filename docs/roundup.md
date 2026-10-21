@@ -86,6 +86,15 @@ source broke. A roundup reporting zero means five daily runs each found nothing,
 which is a fact about the market, not about your setup. If you think it is
 actually broken, `job-scout stats` shows where postings are being lost.
 
+## The nudge that follows it
+
+If you keep application folders (`applications_dir` in `config.yaml`, see
+[applications.md](applications.md)), `job-scout roundup` follows the roundup with
+one more message: the applications that have no result recorded. That makes the
+Friday timer the only one you need. Pass `--no-nudge` to leave it out. Without
+`applications_dir` nothing is added, and a failure in the nudge never changes the
+roundup's exit code.
+
 ## Upgrading from 1.0.0
 
 The roundup needs the scorer's reasoning, and 1.0.0 did not store it. Opening

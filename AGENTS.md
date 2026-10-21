@@ -144,6 +144,8 @@ job_scout/
   dedup.py          the seen-jobs store and cross-source deduplication
   track_record.py   the optional outcomes.csv
   outcomes.py       application folders -> outcomes.csv (`job-scout outcomes`)
+  nudge.py          applications with no result recorded, after the roundup
+  patterns.py       what the application folders say together
   privacy.py        the user's own private word list (`job-scout privacy`)
   sync.py           the optional git pull of the config directory
   redact.py         stripping credentials out of text

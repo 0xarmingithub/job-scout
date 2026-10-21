@@ -162,9 +162,10 @@ is a Friday timer in `deploy/`. Detail in [docs/roundup.md](docs/roundup.md).
 
 Keep one folder per application with a `**Status:**` line in its `notes.md`, set
 `applications_dir` in `config.yaml`, and the scorer is told what actually
-converted for you. `job-scout outcomes` builds the file from your folders, and
-`job-scout run` rebuilds it before it scores. Detail in
-[docs/applications.md](docs/applications.md).
+converted for you. `job-scout outcomes` builds the file, `job-scout nudge` asks
+about applications that went quiet (it rides along with the weekly roundup), and
+`job-scout patterns` shows where your applications stop and which requirements
+keep coming back as a gap. Detail in [docs/applications.md](docs/applications.md).
 
 If you work in a repository that might become public, `job-scout privacy init`
 builds a private word list of your own names and employers, kept on your machine
@@ -449,7 +450,7 @@ one report. It is opt-in and never runs during the daily run. Set
 | [Benchmarks](docs/benchmarks.md) | Which model actually discriminates, and the sample size |
 | [Weekly roundup](docs/roundup.md) | One message for the week, and the Friday timer that sends it |
 | [Tailoring](docs/tailoring.md) | Running a command on the day's best match, and asking you first |
-| [Tracking applications](docs/applications.md) | One folder per application, the Status words, `outcomes` and `sync` |
+| [Tracking applications](docs/applications.md) | One folder per application, the Status words, `outcomes`, `nudge`, `patterns` and `sync` |
 | [Your private word list](docs/privacy.md) | `job-scout privacy`: names and employers that must never reach a public repository |
 | [Adding a job source](docs/adding-a-job-source.md) | About 40 lines of work |
 | [Adding a notifier](docs/adding-a-notifier.md) | About 30 |

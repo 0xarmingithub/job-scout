@@ -62,6 +62,19 @@ target_roles:
   - Systems Architect
   - Engineering Lead (Infrastructure)
 
+# ─── Role families (optional) ─────────────────────────────────────────────────
+# Only `job-scout patterns` reads this. It groups your applications by kind of
+# role, to show which kinds get furthest. Leave it out and there is one family
+# per entry of target_roles above, matched on the words that make that title
+# specific ("Site Reliability Engineer" by "site" and "reliability", not by
+# "engineer"). A title can belong to several families, or to none.
+#
+# role_families:
+#   - name: Platform and SRE
+#     keywords: [platform, sre, reliability, devops, kubernetes]
+#   - name: Architecture
+#     keywords: [architect, architecture]
+
 # ─── Skills ───────────────────────────────────────────────────────────────────
 # core_skills are things you would happily be interviewed on tomorrow.
 core_skills:

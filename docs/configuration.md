@@ -467,6 +467,7 @@ if you say elementary, and that rejection is separate from the work-permit one:
 | Key | What it is for |
 |---|---|
 | `target_roles` | Every title the job you want goes by. Titles vary wildly between companies. |
+| `role_families` | Optional. Kinds of role, each a `name` and a list of `keywords`, used only by `job-scout patterns` to group your applications. Without it there is one family per entry of `target_roles`. See [applications.md](applications.md#role-families). |
 | `core_skills` | Things you would happily be interviewed on tomorrow. |
 | `secondary_skills` | Things you have used once, or could pick up fast. Weighed lower. |
 | `confirmed_gaps` | **The important one.** What you genuinely cannot do. |

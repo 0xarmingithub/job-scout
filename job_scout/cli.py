@@ -10,6 +10,8 @@ cli.py, the `job-scout` command.
     job-scout roundup                the best of the last 7 days, in one message
     job-scout ask                    collect answers to an outstanding question
     job-scout outcomes               turn application folders into outcomes.csv
+    job-scout nudge                  ask about applications with no result recorded
+    job-scout patterns               what your application folders say together
     job-scout privacy init           build your private word list
     job-scout init ~/my-job-search   put a config.yaml and profile.yaml somewhere
     job-scout version
@@ -134,6 +136,11 @@ def build_parser() -> argparse.ArgumentParser:
     roundup_parser.add_argument(
         "--dry-run", action="store_true", help="print it, send nothing",
     )
+    roundup_parser.add_argument(
+        "--no-nudge", action="store_true",
+        help="do not follow the roundup with the question about applications that "
+             "have no result recorded (it only runs when applications_dir is set)",
+    )
 
     ask_parser = subparsers.add_parser(
         "ask",
@@ -186,6 +193,34 @@ def _add_tracking_parsers(subparsers, _common) -> None:
     outcomes_parser.add_argument(
         "--no-prompt", action="store_true",
         help="never ask whether to add a new employer to the privacy list",
+    )
+
+    nudge_parser = subparsers.add_parser(
+        "nudge",
+        help="ask about applications with no result recorded (also runs after roundup)",
+    )
+    _common(nudge_parser)
+    nudge_parser.add_argument(
+        "--stale-days", type=int, default=21,
+        help="how old a drafted application has to be before it is asked about (default: 21)",
+    )
+    nudge_parser.add_argument("--dry-run", action="store_true", help="print it, send nothing")
+
+    patterns_parser = subparsers.add_parser(
+        "patterns",
+        help="what your application folders say when read together",
+    )
+    _common(patterns_parser)
+    patterns_parser.add_argument(
+        "--stale-days", type=int, default=21,
+        help="how old a drafted application has to be to be named (default: 21)",
+    )
+    patterns_parser.add_argument(
+        "--top", type=int, default=15,
+        help="how many recurring gap terms to list (default: 15)",
+    )
+    patterns_parser.add_argument(
+        "--output", metavar="PATH", help="write the report here instead of printing it",
     )
 
     privacy_parser = subparsers.add_parser(
@@ -255,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_ask(args)
     if command == "validate":
         return _cmd_validate(args)
-    if command in ("outcomes", "privacy"):
+    if command in ("outcomes", "nudge", "patterns", "privacy"):
         return _cmd_tracking(command, args)
     return _cmd_run(args)
 
@@ -456,7 +491,7 @@ def _is_shipped_example(profile_path: Path) -> bool:
 
 
 def _cmd_tracking(command: str, args) -> int:
-    """outcomes and privacy. The work is in their own modules."""
+    """outcomes, nudge, patterns and privacy. The work is in their own modules."""
     if command == "privacy":
         from . import privacy
 
@@ -468,10 +503,18 @@ def _cmd_tracking(command: str, args) -> int:
         print(f"Configuration problem:\n\n{exc}\n", file=sys.stderr)
         return 2
 
-    from . import outcomes
+    if command == "outcomes":
+        from . import outcomes
 
-    interactive = sys.stdin.isatty() and sys.stdout.isatty()
-    return outcomes.command(args, settings, interactive=interactive)
+        interactive = sys.stdin.isatty() and sys.stdout.isatty()
+        return outcomes.command(args, settings, interactive=interactive)
+    if command == "nudge":
+        from . import nudge
+
+        return nudge.command(args, settings)
+    from . import patterns
+
+    return patterns.command(args, settings)
 
 
 def _cmd_stats(args) -> int:
@@ -537,6 +580,10 @@ def _cmd_roundup(args) -> int:
 
     if args.dry_run:
         print(full_digest_text(jobs, stats))
+        if not args.no_nudge:
+            from . import nudge
+
+            nudge.after_roundup(settings, dry_run=True)
         return 0
 
     # A roundup that reaches nobody is worth saying out loud, because the
@@ -552,6 +599,10 @@ def _cmd_roundup(args) -> int:
         )
         return 1
     print(f"Roundup sent to {sent} notifier(s): {len(jobs)} of {total} matches.")
+    if not args.no_nudge:
+        from . import nudge
+
+        nudge.after_roundup(settings, dry_run=False)
     return 0
 
 
