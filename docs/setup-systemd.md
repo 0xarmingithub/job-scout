@@ -184,8 +184,9 @@ with a `job-scout-alert.service` that sends you something. Or simply check
 
 ## Getting a free Oracle Cloud VM, step by step
 
-Skip this if you already have a Linux box. This is the free option, and it is
-the one the author uses.
+Skip this if you already have a Linux box. This is the free option. Oracle's
+Always Free tier gives two small VMs to an account that is verified with a card
+(the card is only checked, not charged, while you stay inside the free limits).
 
 ### Which shape to pick
 
@@ -206,6 +207,36 @@ Oracle halved the ARM allowance from 4 OCPU and 24 GB to 2 OCPU and 12 GB in
 June 2026. Older guides still quote the bigger number. Check the current
 allowance on
 [Oracle's Always Free page](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm).
+
+### Fast path: the setup script
+
+If the OCI command-line tool (`oci`) already works on your PC, this does steps 2
+and 3 below for you. It runs on your PC, not on the VM.
+
+```bash
+oci os ns get                       # must print a namespace; if not, see below
+bash deploy/oci-setup.sh            # dry run: checks everything, creates nothing
+bash deploy/oci-setup.sh --yes      # creates the network, an SSH key and the VM
+```
+
+The script creates only Always Free resources: one Ubuntu 24.04 VM, a network
+that opens SSH and nothing else inbound, and an SSH key at `~/.ssh/job_scout_oci`.
+It chooses the VM with `--shape`:
+
+| `--shape` | VM | RAM | Notes |
+|---|---|---|---|
+| `auto` (default) | the 1 GB micro if a slot is free, else the ARM VM | 1 GB or up to 12 GB | Recommended |
+| `micro` | `VM.Standard.E2.1.Micro`, x86-64 | 1 GB, 2 GB swap added | Runs every source, including JobIndex |
+| `a1` | `VM.Standard.A1.Flex`, ARM64 | the free ARM allowance, read from Oracle at creation (12 GB on the account this was tested on) | Cannot run the JobIndex source (no Chromium for ARM). Creation can fail with "Out of host capacity"; retry later or use `micro` | It stops, before
+creating anything, if both free micro slots are already in use or if an instance
+named `job-scout` exists. Pick another name with `JOB_SCOUT_VM_NAME=...`.
+
+If `oci os ns get` fails, set the CLI up first with `oci setup config` (an API
+key, which keeps working unattended) or `oci session authenticate` (a browser
+login, which expires after a while). Then run the dry run again.
+
+The steps below do the same by hand. Use them if the script stops or you want to
+see each step.
 
 ### 1. Sign up
 
@@ -298,8 +329,8 @@ price. Pick whichever annoyance you mind less.
 
 ## Small VMs
 
-The always-free Oracle VM has under 1 GB of RAM, which is enough, but two things
-matter:
+A fresh always-free Oracle VM has about 950 MB of RAM it can use. That is enough,
+but two things matter:
 
 - **The CLI backends need 200-400 MB each.** They run one at a time by default
   (`LLM_CLI_CONCURRENCY`). Leave that alone on a small box.

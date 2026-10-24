@@ -104,6 +104,11 @@ RULES THAT NEVER BEND
     `run --dry-run` still calls the scoring model, so tell me the limit first.
   - Ask before installing anything outside this project's virtual environment.
   - Never start or enable a timer or a service without my yes.
+  - Never ask me to paste an Oracle key, token, fingerprint or OCID into this
+    chat. The OCI command-line tool reads its own config file. If `oci os ns get`
+    fails, tell me which command to run myself, `oci setup config` or
+    `oci session authenticate`, and wait for the result.
+  - Never create a cloud resource without my yes, even one the free tier covers.
   - Pick one config directory outside this clone, for example ~/job-search, and
     pass `--config-dir <dir>` to every job-scout command (or tell me to export
     JOB_SCOUT_CONFIG_DIR=<dir>). Without it a command reads this clone's own
@@ -135,7 +140,10 @@ first.
        a) on this computer, by hand when I feel like it
        b) on this computer, automatically every day (cron on macOS or Linux,
           Task Scheduler on Windows)
-       c) on a small always-on server, so it runs whether or not I am here
+       c) on an always-on server, so it runs whether or not I am here. That is
+          a free Oracle Cloud VM, a cheap VPS, or a machine at home. Recommend
+          the free Oracle VM if I have or can make an Oracle account, otherwise a
+          cheap VPS, and say in one sentence what each costs.
        d) on GitHub's machines, because I do not want a server
        e) I do not know, recommend one
   3. Do you have your CV as a file? Give me the path if so. It saves you about
@@ -267,6 +275,10 @@ STEP 2. Set it up.
      for a PDF, or `job-scout cv render <dir>/resume.yaml --template <tpl.docx> --out <dir>/cv.docx`
      for Word, or `--out <dir>/cv.md` for Markdown, which needs no template.
      Then `job-scout cv verify <dir>/cv.pdf --resume <dir>/resume.yaml`.
+     If I would rather have Overleaf compile the PDF, I upload the .tex there
+     myself. The scout does not connect to Overleaf and does not need it. Tell me
+     that Overleaf's GitHub sync may need a paid plan, and that I should check the
+     current plan page before relying on it.
      `job-scout cv convert <draft.md>` turns a tailored Markdown draft into a
      resume.yaml.
   f) Second opinion. Set `cv_validator_models` in config.yaml and explain the
@@ -283,6 +295,16 @@ STEP 2. Set it up.
   - Path (b): cron on macOS or Linux (docs/setup-local.md has the line), Task
     Scheduler on Windows. For the roundup, a Friday line such as
     `0 17 * * 5 cd <clone> && .venv/bin/job-scout roundup --days 5 --config-dir <dir>`.
+  - Path (c) on a new Oracle VM: check `oci os ns get` on this computer first.
+    It must print a namespace. If not, I run `oci setup config` myself. Then run
+    `bash deploy/oci-setup.sh` here. It is a dry run and creates nothing. Show me
+    the shape it picks and why. With my yes, run `bash deploy/oci-setup.sh --yes`.
+    The script picks the 1 GB micro VM when a free slot exists. For more memory,
+    `--shape=a1` makes a larger ARM VM, but ARM cannot run the JobIndex source,
+    and creation can fail with "Out of host capacity" for a while. Then follow
+    the install steps in docs/setup-systemd.md. Tell me that Oracle reclaims
+    idle Always Free VMs and that the guide covers it. Oracle asks for a card to
+    verify the account. Always Free resources are not charged within the limits.
   - Path (c): `sudo bash deploy/install-systemd.sh` enables the daily timer
     immediately, so tell me that and get my yes first. It installs the roundup
     and ask timers switched off. Enable each only for a feature I accepted:
